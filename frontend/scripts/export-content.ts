@@ -15,7 +15,8 @@ const target = resolve(here, '../../backend-java/src/main/resources/content/port
 const json = JSON.stringify({ projects: PROJECTS, parcours: PARCOURS, stages: STAGES }, null, 2) + '\n'
 
 if (process.argv.includes('--check')) {
-  const current = existsSync(target) ? readFileSync(target, 'utf8') : ''
+  // git peut convertir les fins de ligne sous Windows : on compare le contenu, pas les octets
+  const current = existsSync(target) ? readFileSync(target, 'utf8').replace(/\r\n/g, '\n') : ''
   if (current !== json) {
     console.error(`${target} n'est plus à jour : lancez npm run export-content`)
     process.exit(1)
