@@ -279,7 +279,7 @@ function Chapter({ step, index, total, onActive }: {
 // ─── Compétences ─────────────────────────────────────────────────────────────
 
 const SKILLS_GROUPS = [
-  { label: 'Machine Learning & IA',        color: colors.accent, skills: ['PyTorch', 'Scikit-learn', 'Transfer Learning', 'CNN', 'ViT', 'Python', 'Pandas'] },
+  { label: 'Machine Learning & IA',        color: colors.accent, skills: ['PyTorch', 'Scikit-learn', 'Transfer Learning', 'CNN', 'Python', 'Pandas'] },
   { label: 'Bio-informatique',             color: colors.green,  skills: ['Séquençage Nanopore', 'Metabarcoding 16S / COI', 'vsearch', 'SILVA / BOLD', 'R', 'Linux · Slurm'] },
   { label: 'Embarqué & Instrumentation',   color: colors.green,  skills: ['Arduino', 'C/C++', 'MATLAB', 'Simulink', 'LabVIEW', 'Capteurs', 'Métrologie ISO 17025', 'Électronique'] },
   { label: 'Développement web & logiciel', color: '#8b5cf6',     skills: ['React', 'TypeScript', 'Vite', 'Spring Boot', 'Rust', 'Three.js', 'REST API', 'PostgreSQL'] },

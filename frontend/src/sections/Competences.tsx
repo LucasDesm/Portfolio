@@ -22,7 +22,7 @@ const SKILLS_GROUPS = [
     skills: [
       { name: 'PyTorch', level: 85 },
       { name: 'Scikit-learn', level: 88 }, { name: 'Python', level: 90 },
-      { name: 'CNN / ViT', level: 80 }, { name: 'Transfer Learning', level: 78 },
+      { name: 'CNN', level: 80 }, { name: 'Transfer Learning', level: 78 },
       { name: 'Pandas / NumPy', level: 88 },
     ],
   },
