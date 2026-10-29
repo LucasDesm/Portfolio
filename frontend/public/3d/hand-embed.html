@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<title>Main robotique EMG — 3D</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:transparent}
+#scene{position:fixed;inset:0}
+canvas{display:block}
+</style>
+</head>
+<body>
+<div id="scene"></div>
+
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.161.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.161.0/examples/jsm/"}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader }      from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+// ─── Renderer ─────────────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.setClearColor(0x000000, 0);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.getElementById('scene').appendChild(renderer.domElement);
+
+// ─── Scene / Camera ───────────────────────────────────────────────────────────
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.01, 100);
+camera.position.set(0, 0, 5);
+
+// Environnement pour le clearcoat
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+// ─── Lumières ─────────────────────────────────────────────────────────────────
+scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+const dl1 = new THREE.DirectionalLight(0xffffff, 2.0); dl1.position.set(4, 6, 3);   scene.add(dl1);
+const dl2 = new THREE.DirectionalLight(0xc8d8f0, 0.5); dl2.position.set(-3, 2, -2); scene.add(dl2);
+const dl3 = new THREE.DirectionalLight(0xf0ece8, 0.25); dl3.position.set(0, -3, 2); scene.add(dl3);
+
+// ─── Matériau ─────────────────────────────────────────────────────────────────
+const mat = new THREE.MeshPhysicalMaterial({
+  color: 0x2a6db5,
+  roughness: 0.35,
+  metalness: 0.08,
+  clearcoat: 0.4,
+  clearcoatRoughness: 0.3,
+});
+
+// ─── États de préhension ──────────────────────────────────────────────────────
+const GRIP_STATES = [
+  { fingers: [0,   0,   0,   0,   0  ] },
+  { fingers: [1,   1,   1,   1,   1  ] },
+  { fingers: [1,   1,   0.5, 0,   0  ] },
+  { fingers: [1,   1,   0.3, 0,   0  ] },
+  { fingers: [0.1, 0.1, 0.1, 0.1, 0.1] },
+];
+const STATE_DUR  = 3.5;
+const MAX_CURL   = Math.PI / 2.5;
+const MAX_CURLS  = [-Math.PI / 3, MAX_CURL, MAX_CURL, MAX_CURL, MAX_CURL];
+const AXES       = ['y', 'x', 'x', 'x', 'x'];
+const SPEED      = 2;
+
+let group = null;
+let fingerNodes = [];
+
+// ─── Chargement du modèle ─────────────────────────────────────────────────────
+new GLTFLoader().load('/models/hand_blender.glb', gltf => {
+  const s = gltf.scene;
+
+  s.traverse(c => { if (c.isMesh) c.material = mat; });
+
+  // Centrage
+  const box    = new THREE.Box3().setFromObject(s);
+  const center = box.getCenter(new THREE.Vector3());
+  const size   = box.getSize(new THREE.Vector3());
+  s.position.sub(center);
+
+  // Ajustement caméra
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const dist   = (maxDim / 2) / Math.tan((camera.fov * Math.PI / 180) / 2) * 1.4;
+  camera.position.set(0, 0, dist);
+  camera.updateProjectionMatrix();
+
+  group = new THREE.Group();
+  group.add(s);
+  scene.add(group);
+
+  // Noeuds doigts
+  const nodes = {};
+  gltf.scene.traverse(n => { nodes[n.name] = n; });
+  fingerNodes = [
+    nodes['pouce'],
+    nodes['index'],
+    nodes['majeur'],
+    nodes['annualaire'],
+    nodes['orriculaire'],
+  ];
+});
+
+// ─── Resize ───────────────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+});
+
+// ─── Boucle d'animation ───────────────────────────────────────────────────────
+const clock = new THREE.Clock();
+
+(function animate() {
+  requestAnimationFrame(animate);
+  const delta = clock.getDelta();
+  const t     = clock.elapsedTime;
+
+  if (group) {
+    group.rotation.y += delta * 0.3;
+
+    const si  = Math.floor(t / STATE_DUR) % GRIP_STATES.length;
+    const ni  = (si + 1) % GRIP_STATES.length;
+    const bld = Math.max(0, ((t % STATE_DUR) / STATE_DUR - 0.85) / 0.15);
+    const cur = GRIP_STATES[si], nxt = GRIP_STATES[ni];
+    const targets = cur.fingers.map((f, i) => f + (nxt.fingers[i] - f) * bld);
+
+    fingerNodes.forEach((node, i) => {
+      if (!node) return;
+      const target  = targets[i] * MAX_CURLS[i];
+      const current = node.rotation[AXES[i]];
+      const diff    = target - current;
+      const step    = SPEED * delta;
+      node.rotation[AXES[i]] = Math.abs(diff) <= step ? target : current + Math.sign(diff) * step;
+    });
+  }
+
+  renderer.render(scene, camera);
+})();
+</script>
+</body>
+</html>

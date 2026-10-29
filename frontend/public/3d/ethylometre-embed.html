@@ -1,0 +1,1076 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<title>Éthylomètre — CAO 3D</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root{
+    --bg: #eef1f4;
+    --bg-2: #e3e7ec;
+    --ink: #1a1f24;
+    --ink-dim: #5b6670;
+    --line: #c9d0d8;
+    --accent: #2f6fed;
+    --mono: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+    --sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; background:transparent; color:var(--ink); font-family:var(--sans); overflow:hidden; }
+  #scene{ position:fixed; inset:0; }
+  canvas{ display:block; }
+  /* embed mode — hide HUD */
+  .titleblock, .ruler, .hint, .legend, .tweaks, .partlabel { display: none !important; }
+
+
+  /* ----- Technical header ----- */
+  .hud{
+    position:fixed; inset:0; pointer-events:none; z-index:5;
+  }
+  .hud > *{ pointer-events:auto; }
+  .titleblock{
+    position:absolute; top:20px; left:20px;
+    border:1px solid var(--ink); background:rgba(255,255,255,0.85); backdrop-filter:blur(6px);
+    padding:0; font-family:var(--mono); font-size:11px; line-height:1.25;
+    min-width:340px;
+  }
+  .titleblock .row{ display:grid; grid-template-columns: 95px 1fr; border-bottom:1px solid var(--ink); }
+  .titleblock .row:last-child{ border-bottom:none; }
+  .titleblock .k{ padding:6px 8px; border-right:1px solid var(--ink); color:var(--ink-dim); text-transform:uppercase; letter-spacing:.06em; }
+  .titleblock .v{ padding:6px 8px; color:var(--ink); }
+  .titleblock .big{ font-size:14px; font-weight:700; letter-spacing:.02em; }
+
+  /* ----- Scale / ruler bottom ----- */
+  .ruler{
+    position:absolute; bottom:18px; left:50%; transform:translateX(-50%);
+    font-family:var(--mono); font-size:10px; color:var(--ink-dim);
+    display:flex; align-items:center; gap:10px; user-select:none;
+  }
+  .ruler .bar{ width:140px; height:10px; border:1px solid var(--ink); display:flex; }
+  .ruler .bar span{ flex:1; border-right:1px solid var(--ink); }
+  .ruler .bar span:last-child{ border-right:none; }
+  .ruler .bar span:nth-child(odd){ background:var(--ink); }
+
+  /* ----- Cam hint ----- */
+  .hint{
+    position:absolute; top:20px; right:20px;
+    font-family:var(--mono); font-size:10px; color:var(--ink-dim);
+    text-align:right; line-height:1.5;
+  }
+  .hint kbd{ border:1px solid var(--ink); padding:1px 5px; font-family:var(--mono); font-size:10px; background:#fff; border-radius:2px; }
+
+  /* ----- Tweaks panel ----- */
+  .tweaks{
+    position:absolute; bottom:20px; right:20px;
+    width:280px; background:rgba(255,255,255,0.94); border:1px solid var(--ink);
+    font-family:var(--mono); font-size:11px;
+    display:none; /* default hidden, toggled via parent message */
+  }
+  .tweaks.visible{ display:block; }
+  .tweaks header{
+    padding:8px 10px; border-bottom:1px solid var(--ink);
+    display:flex; justify-content:space-between; align-items:center;
+    background:var(--ink); color:#fff; text-transform:uppercase; letter-spacing:.1em; font-size:10px;
+  }
+  .tweaks .body{ padding:6px 10px 10px; }
+  .tweak-row{ padding:7px 0; border-bottom:1px dashed var(--line); }
+  .tweak-row:last-child{ border-bottom:none; }
+  .tweak-row label{ display:flex; justify-content:space-between; align-items:center; gap:8px; cursor:pointer; }
+  .tweak-row .lbl{ color:var(--ink); text-transform:uppercase; letter-spacing:.04em; font-size:10px; }
+  .tweak-row .val{ color:var(--ink-dim); font-size:10px; }
+  .tweak-row input[type="range"]{ width:100%; margin-top:6px; accent-color:var(--ink); }
+  .tweak-row input[type="checkbox"]{ accent-color:var(--ink); }
+  .tweak-row .btnrow{ display:flex; gap:4px; margin-top:6px; }
+  .tweak-row .btnrow button{
+    flex:1; font-family:var(--mono); font-size:10px; padding:5px 4px;
+    background:#fff; border:1px solid var(--ink); color:var(--ink); cursor:pointer; text-transform:uppercase;
+  }
+  .tweak-row .btnrow button.on{ background:var(--ink); color:#fff; }
+
+  /* ----- Labels for parts ----- */
+  .partlabel{
+    position:absolute; font-family:var(--mono); font-size:10px; color:var(--ink);
+    background:rgba(255,255,255,0.9); border:1px solid var(--ink); padding:2px 6px;
+    white-space:nowrap; transform:translate(-50%,-50%);
+    pointer-events:none; opacity:0; transition:opacity .25s;
+  }
+  .partlabel.visible{ opacity:1; }
+  .partlabel::before{
+    content:""; position:absolute; left:-1px; top:-1px; width:5px; height:5px; background:var(--ink);
+  }
+
+  /* Legend at bottom left */
+  .legend{
+    position:absolute; left:20px; bottom:18px;
+    font-family:var(--mono); font-size:10px; color:var(--ink-dim);
+    line-height:1.6;
+  }
+  .legend .num{ display:inline-block; width:18px; height:18px; border:1px solid var(--ink); text-align:center; line-height:16px; color:var(--ink); background:#fff; margin-right:6px; }
+</style>
+</head>
+<body>
+
+<div id="scene"></div>
+
+<!-- HUD -->
+<div class="hud">
+  <div class="titleblock" aria-label="Bloc titre CAO">
+    <div class="row"><div class="k">Projet</div><div class="v big">ÉTHYLOMÈTRE</div></div>
+    <div class="row"><div class="k">Rev.</div><div class="v">A · 04-2026</div></div>
+    <div class="row"><div class="k">Vue</div><div class="v" id="viewname">ISO · Perspective libre</div></div>
+    <div class="row"><div class="k">Échelle</div><div class="v">1 : 2 (approx.)</div></div>
+    <div class="row"><div class="k">Unité</div><div class="v">mm</div></div>
+    <div class="row"><div class="k">Matière</div><div class="v">PLA imp. 3D · ABS · Alu</div></div>
+  </div>
+
+  <div class="hint">
+    <kbd>clic+drag</kbd> orbit · <kbd>scroll</kbd> zoom · <kbd>clic-droit</kbd> pan<br/>
+    <kbd>1</kbd> face · <kbd>2</kbd> côté · <kbd>3</kbd> dessus · <kbd>0</kbd> iso
+  </div>
+
+  <div class="ruler">
+    <span>0</span>
+    <div class="bar"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    <span>60 mm</span>
+  </div>
+
+  <div class="legend" id="legend">
+    <div><span class="num">1</span>Boîtier PLA · corps vert</div>
+    <div><span class="num">2</span>Couvercle ABS noir</div>
+    <div><span class="num">3</span>Tube de soufflage &amp; embout</div>
+    <div><span class="num">4</span>Écran OLED 0.96"</div>
+    <div><span class="num">5</span>LED rouge / LED verte</div>
+    <div><span class="num">6</span>Interrupteur à bascule</div>
+    <div><span class="num">7</span>Buzzer piézo</div>
+  </div>
+
+  <!-- Tweaks -->
+  <div class="tweaks" id="tweaks">
+    <header>
+      <span>Tweaks</span>
+      <span id="tweaksbadge">CAO</span>
+    </header>
+    <div class="body">
+      <div class="tweak-row">
+        <div class="lbl">Vue éclatée</div>
+        <label><input type="range" id="tw_explode" min="0" max="1" step="0.01" value="0"/></label>
+        <div class="val" id="tw_explode_v">0 %</div>
+      </div>
+      <div class="tweak-row">
+        <label><span class="lbl">Wireframe</span><input type="checkbox" id="tw_wire"/></label>
+      </div>
+      <div class="tweak-row">
+        <label><span class="lbl">Rotation auto</span><input type="checkbox" id="tw_auto" checked/></label>
+      </div>
+      <div class="tweak-row">
+        <label><span class="lbl">Câbles visibles</span><input type="checkbox" id="tw_wires" checked/></label>
+      </div>
+      <div class="tweak-row">
+        <label><span class="lbl">Écran OLED animé</span><input type="checkbox" id="tw_oled" checked/></label>
+      </div>
+      <div class="tweak-row">
+        <label><span class="lbl">Annotations</span><input type="checkbox" id="tw_labels"/></label>
+      </div>
+      <div class="tweak-row">
+        <div class="lbl">Finition corps</div>
+        <div class="btnrow" id="tw_finish">
+          <button data-v="green" class="on">PLA vert</button>
+          <button data-v="black">PLA noir</button>
+          <button data-v="grey">PLA gris</button>
+        </div>
+      </div>
+      <div class="tweak-row">
+        <div class="lbl">Fond</div>
+        <div class="btnrow" id="tw_bg">
+          <button data-v="light" class="on">Studio clair</button>
+          <button data-v="grid">Grille CAO</button>
+          <button data-v="dark">Dark</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Part labels (positioned in JS) -->
+  <div class="partlabel" data-id="body">1 · BOÎTIER PLA</div>
+  <div class="partlabel" data-id="lid">2 · COUVERCLE</div>
+  <div class="partlabel" data-id="tube">3 · TUBE SOUFFLEUR</div>
+  <div class="partlabel" data-id="oled">4 · OLED 0.96"</div>
+  <div class="partlabel" data-id="leds">5 · LED R / V</div>
+  <div class="partlabel" data-id="switch">6 · INTERRUPTEUR</div>
+  <div class="partlabel" data-id="buzzer">7 · BUZZER</div>
+</div>
+
+<!-- TWEAK_DEFAULTS persisted -->
+<script>
+  window.__TWEAKS = /*EDITMODE-BEGIN*/{
+    "autoRotate": true,
+    "wires": true,
+    "oledAnim": true,
+    "finish": "grey",
+    "background": "dark"
+  }/*EDITMODE-END*/;
+</script>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+// ---------- Scene ----------
+const container = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+container.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = null;
+
+const camera = new THREE.PerspectiveCamera(35, innerWidth/innerHeight, 0.1, 2000);
+camera.position.set(160, 80, 190);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.target.set(0, 10, 0);
+controls.minDistance = 80;
+controls.maxDistance = 500;
+
+// ---------- Lighting ----------
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const key = new THREE.DirectionalLight(0xffffff, 2.2);
+key.position.set(120, 180, 100);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.camera.left = -200; key.shadow.camera.right = 200;
+key.shadow.camera.top = 200; key.shadow.camera.bottom = -200;
+key.shadow.camera.near = 1; key.shadow.camera.far = 600;
+key.shadow.bias = -0.0003;
+scene.add(key);
+
+const fill = new THREE.DirectionalLight(0xdce7ff, 0.5);
+fill.position.set(-100, 80, -60);
+scene.add(fill);
+
+const rim = new THREE.DirectionalLight(0xffffff, 0.5);
+rim.position.set(-60, 40, -120);
+scene.add(rim);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.15));
+
+const grid = { visible: true }; // stub for applyBackground refs
+
+// ---------- Materials ----------
+// PLA look: slightly anisotropic layer lines — approximate via normal map noise
+function plaMaterial(color){
+  const mat = new THREE.MeshPhysicalMaterial({
+    color,
+    roughness: 0.55,
+    metalness: 0.0,
+    clearcoat: 0.05,
+    clearcoatRoughness: 0.6,
+    sheen: 0.15,
+    sheenRoughness: 0.8,
+  });
+  return mat;
+}
+
+const M = {
+  bodyGreen: plaMaterial(0x2f6b3a),
+  bodyBlack: plaMaterial(0x18191b),
+  bodyGrey:  plaMaterial(0x6f7782),
+  lid:       plaMaterial(0x111214),
+  tubeAlu: new THREE.MeshPhysicalMaterial({ color:0xb8bcc2, metalness:0.85, roughness:0.35 }),
+  tubeInner: new THREE.MeshStandardMaterial({ color:0x22252a, roughness:0.9, metalness:0 }),
+  mouthpiece: new THREE.MeshPhysicalMaterial({
+    color:0xeaf2f6, metalness:0, roughness:0.1, transmission:0.85, thickness:2.0,
+    ior:1.45, clearcoat:0.6, attenuationColor:0xcfe3ea, attenuationDistance:40
+  }),
+  foam: new THREE.MeshStandardMaterial({ color:0x15161a, roughness:1.0 }),
+  pcb:  new THREE.MeshStandardMaterial({ color:0x0e3b24, roughness:0.6, metalness:0.1 }),
+  solder: new THREE.MeshPhysicalMaterial({ color:0xcfd2d6, metalness:1.0, roughness:0.3 }),
+  oledGlass: new THREE.MeshPhysicalMaterial({ color:0x0b0e14, metalness:0.1, roughness:0.12, clearcoat:1, clearcoatRoughness:0.05 }),
+  oledScreen: null, // set after canvas texture created
+  ledRedOff: new THREE.MeshPhysicalMaterial({ color:0x4a0b12, transmission:0.4, roughness:0.25, ior:1.5, thickness:3, emissive:0x220204 }),
+  ledGreenOff: new THREE.MeshPhysicalMaterial({ color:0x0a4a1b, transmission:0.4, roughness:0.25, ior:1.5, thickness:3, emissive:0x022208 }),
+  ledRedOn:  new THREE.MeshPhysicalMaterial({ color:0xff2a2a, transmission:0.3, roughness:0.2, ior:1.5, thickness:3, emissive:0xff1515, emissiveIntensity:2 }),
+  ledGreenOn:new THREE.MeshPhysicalMaterial({ color:0x22ff44, transmission:0.3, roughness:0.2, ior:1.5, thickness:3, emissive:0x22ff44, emissiveIntensity:2 }),
+  ledLeg: new THREE.MeshStandardMaterial({ color:0xc8ccd1, metalness:0.9, roughness:0.35 }),
+  switchBody: new THREE.MeshPhysicalMaterial({ color:0x1a1b1e, roughness:0.45, metalness:0.1 }),
+  switchLever: new THREE.MeshPhysicalMaterial({ color:0x15161a, roughness:0.35, clearcoat:0.5 }),
+  switchChrome: new THREE.MeshPhysicalMaterial({ color:0xcfd3d8, metalness:1, roughness:0.25 }),
+  buzzer: new THREE.MeshPhysicalMaterial({ color:0x111214, roughness:0.5, metalness:0.2 }),
+  buzzerRing: new THREE.MeshPhysicalMaterial({ color:0xb8bcc2, metalness:0.9, roughness:0.35 }),
+  sticker: new THREE.MeshStandardMaterial({ color:0xf6f6f6, roughness:0.7 }),
+  label:   null, // dynamic canvas
+};
+
+// ---------- Root group ----------
+const root = new THREE.Group();
+scene.add(root);
+
+// Logical "parts" grouped so we can animate explode + apply finish
+const parts = {
+  body: new THREE.Group(),
+  lid: new THREE.Group(),
+  tube: new THREE.Group(),
+  frontPanel: new THREE.Group(),
+  topGear: new THREE.Group(), // LEDs + buzzer + their PCBs
+  sideSwitch: new THREE.Group(),
+  wires: new THREE.Group(),
+};
+for (const g of Object.values(parts)) root.add(g);
+
+// ---------- Dimensions (mm) ----------
+const DIM = {
+  bodyW: 110, bodyH: 60, bodyD: 52, // main body
+  lidT: 4, // lid thickness
+  bezelH: 3,
+  tubeLen: 70, tubeR: 16,
+  mouthpieceLen: 30, mouthpieceR1: 14, mouthpieceR2: 22,
+};
+
+// ========== BOÎTIER (body) ==========
+// A hollow-ish box, printed in PLA; with slight seam line
+function buildBody(){
+  const g = new THREE.BoxGeometry(DIM.bodyW, DIM.bodyH, DIM.bodyD, 4, 4, 4);
+  const mesh = new THREE.Mesh(g, M.bodyGreen);
+  mesh.name = 'bodyMesh';
+  mesh.castShadow = true; mesh.receiveShadow = true;
+  parts.body.add(mesh);
+
+  // horizontal layer line groove at mid-height (purely decorative)
+  const groove = new THREE.Mesh(
+    new THREE.BoxGeometry(DIM.bodyW+0.2, 0.6, DIM.bodyD+0.2),
+    new THREE.MeshStandardMaterial({ color:0x1a3b21, roughness:0.9 })
+  );
+  groove.position.y = -8;
+  parts.body.add(groove);
+
+  // bottom base (slightly wider foot)
+  const base = new THREE.Mesh(
+    new THREE.BoxGeometry(DIM.bodyW+2, 4, DIM.bodyD+2),
+    M.bodyGreen
+  );
+  base.position.y = -DIM.bodyH/2 - 2;
+  base.castShadow = true; base.receiveShadow = true;
+  parts.body.add(base);
+
+  // vent slits on side (printed)
+  const ventMat = new THREE.MeshStandardMaterial({ color:0x0d1f12, roughness:0.9 });
+  for (let i=0;i<5;i++){
+    const v = new THREE.Mesh(new THREE.BoxGeometry(0.8, 16, 20), ventMat);
+    v.position.set(-DIM.bodyW/2+0.01, 0, -12 + i*6);
+    v.rotation.y = Math.PI/2;
+    v.position.set(-DIM.bodyW/2 - 0.4, 0, -12 + i*6);
+    parts.body.add(v);
+  }
+
+  // hole on right side where tube exits
+  const holeRing = new THREE.Mesh(
+    new THREE.TorusGeometry(DIM.tubeR+0.8, 1, 8, 28),
+    M.bodyBlack
+  );
+  holeRing.rotation.y = Math.PI/2;
+  holeRing.position.set(DIM.bodyW/2, 10, 0);
+  parts.body.add(holeRing);
+}
+
+// ========== COUVERCLE (top lid) ==========
+function buildLid(){
+  const lid = new THREE.Mesh(
+    new THREE.BoxGeometry(DIM.bodyW+1, DIM.lidT, DIM.bodyD+1),
+    M.lid
+  );
+  lid.position.y = DIM.bodyH/2 + DIM.lidT/2;
+  lid.castShadow = true; lid.receiveShadow = true;
+  parts.lid.add(lid);
+
+  // gaffer-tape strip across (mimicking photo)
+  const tape = new THREE.Mesh(
+    new THREE.BoxGeometry(DIM.bodyW+2, 0.3, DIM.bodyD*0.55),
+    new THREE.MeshStandardMaterial({ color:0x0a0b0d, roughness:0.95 })
+  );
+  tape.position.set(0, DIM.bodyH/2 + DIM.lidT + 0.15, 6);
+  parts.lid.add(tape);
+}
+
+// ========== TUBE SOUFFLEUR ==========
+function buildTube(){
+  const tubeGroup = new THREE.Group();
+
+  // Aluminum cylinder (tube principal)
+  const tube = new THREE.Mesh(
+    new THREE.CylinderGeometry(DIM.tubeR, DIM.tubeR, DIM.tubeLen, 40, 1, false),
+    M.tubeAlu
+  );
+  tube.rotation.z = Math.PI/2;
+  tube.position.x = DIM.tubeLen/2;
+  tube.castShadow = true; tube.receiveShadow = true;
+  tubeGroup.add(tube);
+
+  // End cap inner (dark)
+  const inner = new THREE.Mesh(
+    new THREE.CylinderGeometry(DIM.tubeR-1.5, DIM.tubeR-1.5, DIM.tubeLen+0.2, 40, 1, true),
+    M.tubeInner
+  );
+  inner.rotation.z = Math.PI/2;
+  inner.position.x = DIM.tubeLen/2;
+  tubeGroup.add(inner);
+
+  // Ribbed ridges along tube (like in the photo, the flex tube has ridges)
+  const ridgeMat = new THREE.MeshPhysicalMaterial({ color:0xa8acb3, metalness:0.8, roughness:0.4 });
+  for (let i=0;i<6;i++){
+    const r = new THREE.Mesh(
+      new THREE.TorusGeometry(DIM.tubeR+0.4, 0.8, 6, 32),
+      ridgeMat
+    );
+    r.rotation.y = Math.PI/2;
+    r.position.x = 8 + i*9;
+    tubeGroup.add(r);
+  }
+
+  // Mouthpiece (transparent flared end)
+  const mp = new THREE.Mesh(
+    new THREE.CylinderGeometry(DIM.mouthpieceR2, DIM.mouthpieceR1, DIM.mouthpieceLen, 40, 1, true),
+    M.mouthpiece
+  );
+  mp.rotation.z = -Math.PI/2;
+  mp.position.x = DIM.tubeLen + DIM.mouthpieceLen/2 - 2;
+  mp.castShadow = true;
+  tubeGroup.add(mp);
+
+  // Inner dark cone so opening reads as a hole
+  const mpInner = new THREE.Mesh(
+    new THREE.CylinderGeometry(DIM.mouthpieceR2-2, DIM.mouthpieceR1-2, DIM.mouthpieceLen-1, 40, 1, true),
+    new THREE.MeshStandardMaterial({ color:0x1a1d22, roughness:0.9, side:THREE.BackSide })
+  );
+  mpInner.rotation.z = -Math.PI/2;
+  mpInner.position.x = DIM.tubeLen + DIM.mouthpieceLen/2 - 2;
+  tubeGroup.add(mpInner);
+
+  // Collar where tube meets body
+  const collar = new THREE.Mesh(
+    new THREE.CylinderGeometry(DIM.tubeR+1.2, DIM.tubeR+1.2, 4, 40),
+    new THREE.MeshPhysicalMaterial({ color:0x222428, roughness:0.5, metalness:0.3 })
+  );
+  collar.rotation.z = Math.PI/2;
+  collar.position.x = 2;
+  tubeGroup.add(collar);
+
+  // Position the whole tube on the right side of body
+  tubeGroup.position.set(DIM.bodyW/2, 10, 0);
+  parts.tube.add(tubeGroup);
+}
+
+// ========== FRONT PANEL (OLED + stickers) ==========
+function buildFrontPanel(){
+  const faceZ = DIM.bodyD/2 + 0.01;
+
+  // Left sticker: pictogramme "pas d'alcool" — generic circle + bar
+  const stickerL = makeStickerPicto(30, 30);
+  stickerL.position.set(-DIM.bodyW/2 + 22, 8, faceZ + 0.05);
+  parts.frontPanel.add(stickerL);
+
+  // OLED module (center-left)
+  const oledBase = new THREE.Mesh(
+    new THREE.BoxGeometry(28, 16, 2),
+    new THREE.MeshStandardMaterial({ color:0x0a0b0d, roughness:0.6 })
+  );
+  oledBase.position.set(-8, 2, faceZ + 1);
+  parts.frontPanel.add(oledBase);
+
+  // OLED tiny PCB back border (green) peeking
+  const oledBack = new THREE.Mesh(
+    new THREE.BoxGeometry(30, 18, 1),
+    M.pcb
+  );
+  oledBack.position.set(-8, 2, faceZ + 0.2);
+  parts.frontPanel.add(oledBack);
+
+  // OLED glass (animated canvas)
+  const oledTex = makeOledTexture();
+  M.oledScreen = new THREE.MeshBasicMaterial({ map: oledTex });
+  const oledScreen = new THREE.Mesh(
+    new THREE.PlaneGeometry(24, 12),
+    M.oledScreen
+  );
+  oledScreen.position.set(-8, 2, faceZ + 2.06);
+  parts.frontPanel.add(oledScreen);
+
+  // Right sticker: neutral "ÉTHYLOMÈTRE / PROTOTYPE"
+  const stickerR = makeStickerLabel();
+  stickerR.position.set(DIM.bodyW/2 - 22, 2, faceZ + 0.05);
+  parts.frontPanel.add(stickerR);
+}
+
+function makeStickerPicto(w,h){
+  const cnv = document.createElement('canvas');
+  cnv.width = 256; cnv.height = 256;
+  const c = cnv.getContext('2d');
+  c.fillStyle = '#f5f5f5'; c.fillRect(0,0,256,256);
+  // border
+  c.strokeStyle = '#1a1f24'; c.lineWidth = 3; c.strokeRect(4,4,248,248);
+  // red circle
+  c.beginPath(); c.arc(128,128,80,0,Math.PI*2);
+  c.lineWidth = 14; c.strokeStyle = '#c9302c'; c.stroke();
+  // bottle silhouette (very abstract — no brand)
+  c.fillStyle = '#1a1f24';
+  c.beginPath();
+  c.moveTo(118,78); c.lineTo(138,78); c.lineTo(138,98);
+  c.lineTo(148,112); c.lineTo(148,178); c.lineTo(108,178); c.lineTo(108,112); c.lineTo(118,98);
+  c.closePath(); c.fill();
+  // diagonal bar
+  c.save();
+  c.translate(128,128); c.rotate(-Math.PI/4);
+  c.fillStyle = '#c9302c'; c.fillRect(-80,-8,160,16);
+  c.restore();
+  const tex = new THREE.CanvasTexture(cnv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(w,h),
+    new THREE.MeshStandardMaterial({ map:tex, roughness:0.7 })
+  );
+  return mesh;
+}
+
+function makeStickerLabel(){
+  const cnv = document.createElement('canvas');
+  cnv.width = 512; cnv.height = 340;
+  const c = cnv.getContext('2d');
+  c.fillStyle = '#f6f6f6'; c.fillRect(0,0,512,340);
+  c.strokeStyle = '#1a1f24'; c.lineWidth = 4; c.strokeRect(6,6,500,328);
+  // header bar
+  c.fillStyle = '#1a1f24'; c.fillRect(10,10,492,50);
+  c.fillStyle = '#f6f6f6';
+  c.font = 'bold 26px Helvetica, Arial, sans-serif';
+  c.textAlign='center'; c.textBaseline='middle';
+  c.fillText('ÉTHYLOMÈTRE', 256, 35);
+  // body
+  c.fillStyle = '#1a1f24';
+  c.font = '700 46px Helvetica, Arial, sans-serif';
+  c.fillText('PROTOTYPE', 256, 130);
+  c.font = '500 20px Helvetica, Arial, sans-serif';
+  c.fillStyle = '#5b6670';
+  c.fillText('Mesure du taux d\u2019alcool\u00e9mie', 256, 180);
+  c.fillText('dans l\u2019air expir\u00e9', 256, 208);
+  // tricolor underline
+  const y = 250, w = 300, x = (512-w)/2;
+  c.fillStyle = '#0055a4'; c.fillRect(x,y,w/3,14);
+  c.fillStyle = '#ffffff'; c.fillRect(x+w/3,y,w/3,14);
+  c.fillStyle = '#ef4135'; c.fillRect(x+2*w/3,y,w/3,14);
+  c.strokeStyle = '#1a1f24'; c.lineWidth = 1; c.strokeRect(x,y,w,14);
+  // ref
+  c.fillStyle = '#5b6670';
+  c.font = '400 16px ui-monospace, Menlo, monospace';
+  c.textAlign='right';
+  c.fillText('REV-A · 04/2026', 490, 310);
+  c.textAlign='left';
+  c.fillText('P/N 001', 22, 310);
+  const tex = new THREE.CanvasTexture(cnv);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(44, 29),
+    new THREE.MeshStandardMaterial({ map:tex, roughness:0.75 })
+  );
+  return mesh;
+}
+
+// OLED animated texture
+let oledCanvas, oledCtx, oledTex;
+function makeOledTexture(){
+  oledCanvas = document.createElement('canvas');
+  oledCanvas.width = 256; oledCanvas.height = 128;
+  oledCtx = oledCanvas.getContext('2d');
+  oledTex = new THREE.CanvasTexture(oledCanvas);
+  oledTex.minFilter = THREE.LinearFilter;
+  oledTex.magFilter = THREE.NearestFilter;
+  oledTex.colorSpace = THREE.SRGBColorSpace;
+  drawOled(0);
+  return oledTex;
+}
+
+let oledState = { phase: 0, t: 0, bac: 0.0 };
+function drawOled(dt){
+  const c = oledCtx;
+  c.fillStyle = '#000'; c.fillRect(0,0,256,128);
+  // border
+  c.strokeStyle = '#39b0ff'; c.lineWidth = 2; c.strokeRect(1,1,254,126);
+
+  oledState.t += dt;
+  // phases: IDLE -> MEASURING -> RESULT -> repeat
+  const cycle = 9; // seconds
+  const t = oledState.t % cycle;
+  c.fillStyle = '#4fc4ff';
+  c.font = 'bold 18px ui-monospace, Menlo, monospace';
+
+  if (t < 2){
+    // IDLE
+    c.textAlign='center';
+    c.fillText('ETHYLOMETRE', 128, 28);
+    c.font = '14px ui-monospace, Menlo, monospace';
+    c.fillText('Pret a mesurer', 128, 56);
+    // blinking prompt
+    if (Math.floor(oledState.t*2)%2===0){
+      c.fillText('> Soufflez <', 128, 88);
+    }
+    // battery indicator top-right
+    drawBattery(c, 222, 10, 0.82);
+  } else if (t < 6){
+    // MEASURING
+    c.textAlign='center';
+    c.fillText('MESURE EN COURS', 128, 26);
+    // progress bar
+    const p = Math.min(1, (t-2)/4);
+    c.strokeStyle = '#4fc4ff'; c.lineWidth = 2;
+    c.strokeRect(28, 50, 200, 16);
+    c.fillStyle = '#4fc4ff';
+    c.fillRect(30, 52, 196*p, 12);
+    // fake waveform
+    c.strokeStyle = '#4fc4ff'; c.lineWidth = 1;
+    c.beginPath();
+    for (let x=0;x<256;x++){
+      const y = 100 + Math.sin((x*0.15)+oledState.t*6)*8*Math.sin(oledState.t*2+x*0.02);
+      if (x===0) c.moveTo(x,y); else c.lineTo(x,y);
+    }
+    c.stroke();
+    oledState.bac = p * 0.52;
+  } else {
+    // RESULT
+    c.textAlign='center';
+    c.fillText('RESULTAT', 128, 22);
+    c.font = 'bold 36px ui-monospace, Menlo, monospace';
+    const val = oledState.bac.toFixed(2);
+    c.fillStyle = (oledState.bac > 0.25) ? '#ff5a5a' : '#6bff8a';
+    c.fillText(val + ' g/L', 128, 70);
+    c.font = '12px ui-monospace, Menlo, monospace';
+    c.fillStyle = '#9fd7ff';
+    c.fillText(oledState.bac > 0.25 ? 'LIMITE DEPASSEE' : 'SOUS LIMITE', 128, 100);
+  }
+
+  oledTex.needsUpdate = true;
+}
+
+function drawBattery(c, x, y, pct){
+  c.strokeStyle = '#4fc4ff'; c.lineWidth = 1;
+  c.strokeRect(x, y, 22, 10);
+  c.fillStyle = '#4fc4ff';
+  c.fillRect(x+23, y+3, 2, 4);
+  c.fillRect(x+2, y+2, 18*pct, 6);
+}
+
+// ========== TOP GEAR : LEDs, buzzer, little PCB ==========
+let ledRedMesh, ledGreenMesh;
+function buildTopGear(){
+  const topY = DIM.bodyH/2 + DIM.lidT;
+
+  // Small perfboard near tube
+  const pcb = new THREE.Mesh(
+    new THREE.BoxGeometry(30, 1.2, 22),
+    M.pcb
+  );
+  pcb.position.set(30, topY + 2, -8);
+  pcb.castShadow = true;
+  parts.topGear.add(pcb);
+
+  // LED red
+  ledRedMesh = buildLed(M.ledRedOff);
+  ledRedMesh.position.set(24, topY + 10, -10);
+  parts.topGear.add(ledRedMesh);
+
+  // LED green
+  ledGreenMesh = buildLed(M.ledGreenOff);
+  ledGreenMesh.position.set(38, topY + 10, -10);
+  parts.topGear.add(ledGreenMesh);
+
+  // Buzzer piezo (round black disc with silver rim)
+  const buzzerBase = new THREE.Mesh(
+    new THREE.CylinderGeometry(7, 7, 3, 32),
+    M.buzzer
+  );
+  buzzerBase.position.set(-20, topY + 2, -8);
+  buzzerBase.castShadow = true;
+  parts.topGear.add(buzzerBase);
+  const buzzerRim = new THREE.Mesh(
+    new THREE.TorusGeometry(7, 0.6, 8, 40),
+    M.buzzerRing
+  );
+  buzzerRim.rotation.x = Math.PI/2;
+  buzzerRim.position.set(-20, topY + 3.5, -8);
+  parts.topGear.add(buzzerRim);
+  // buzzer hole
+  const buzzerHole = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.2, 1.2, 3.2, 16),
+    new THREE.MeshStandardMaterial({ color:0x000000, roughness:1 })
+  );
+  buzzerHole.position.set(-20, topY + 2, -8);
+  parts.topGear.add(buzzerHole);
+}
+
+function buildLed(mat){
+  const g = new THREE.Group();
+  // dome
+  const dome = new THREE.Mesh(
+    new THREE.SphereGeometry(2.6, 24, 16, 0, Math.PI*2, 0, Math.PI/2),
+    mat
+  );
+  dome.position.y = 3.5;
+  g.add(dome);
+  // cylinder
+  const cyl = new THREE.Mesh(
+    new THREE.CylinderGeometry(2.6, 2.6, 3.5, 24),
+    mat
+  );
+  cyl.position.y = 1.75;
+  g.add(cyl);
+  // flat base
+  const base = new THREE.Mesh(
+    new THREE.CylinderGeometry(3.1, 3.1, 0.5, 24),
+    new THREE.MeshStandardMaterial({ color:0x0a0a0a, roughness:0.8 })
+  );
+  base.position.y = 0;
+  g.add(base);
+  // legs
+  for (let i=-1;i<=1;i+=2){
+    const leg = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.3, 0.3, 8, 8),
+      M.ledLeg
+    );
+    leg.position.set(i*1.2, -4, 0);
+    g.add(leg);
+  }
+  g.userData.dome = dome; g.userData.cyl = cyl;
+  return g;
+}
+
+// ========== INTERRUPTEUR (rocker switch in foam) ==========
+let switchLever;
+function buildSwitch(){
+  const gX = DIM.bodyW/2 - 32;
+  const gY = -6;
+  const gZ = -DIM.bodyD/2 - 0.01;
+
+  // foam frame around
+  const foam = new THREE.Mesh(
+    new THREE.BoxGeometry(22, 22, 3),
+    M.foam
+  );
+  foam.position.set(gX, gY, gZ - 1.5);
+  parts.sideSwitch.add(foam);
+
+  // switch body
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(13, 19, 4),
+    M.switchBody
+  );
+  body.position.set(gX, gY, gZ - 3.5);
+  parts.sideSwitch.add(body);
+
+  // chrome mount
+  const chrome = new THREE.Mesh(
+    new THREE.BoxGeometry(15, 21, 1),
+    M.switchChrome
+  );
+  chrome.position.set(gX, gY, gZ - 1);
+  parts.sideSwitch.add(chrome);
+
+  // lever pivot
+  switchLever = new THREE.Mesh(
+    new THREE.BoxGeometry(10, 8, 6),
+    M.switchLever
+  );
+  switchLever.position.set(gX, gY, gZ + 1);
+  switchLever.rotation.x = -0.35; // "on" position-ish
+  parts.sideSwitch.add(switchLever);
+}
+
+// ========== WIRES (colored ribbon) ==========
+function buildWires(){
+  const topY = DIM.bodyH/2 + DIM.lidT + 2;
+  const colors = [0xefc94c, 0xd84a3a, 0x1a1a1a, 0xef4f3d]; // yellow, red, black, red
+  const offsets = [-2, -0.5, 1, 2.5];
+
+  const startPts = [
+    new THREE.Vector3(24, topY + 4, -10), // near red led
+    new THREE.Vector3(38, topY + 4, -10), // near green led
+    new THREE.Vector3(30, topY + 3, -8),  // perfboard
+    new THREE.Vector3(-20, topY + 3.5, -8), // buzzer
+  ];
+  const endAnchor = new THREE.Vector3(DIM.bodyW/2 - 2, 10, 0); // enters tube collar area
+
+  for (let i=0;i<colors.length;i++){
+    const s = startPts[i].clone();
+    const e = endAnchor.clone().add(new THREE.Vector3(0, offsets[i]*2, offsets[i]*1.5));
+    const mid = new THREE.Vector3(
+      (s.x+e.x)/2 + (Math.random()*4-2),
+      Math.max(s.y, e.y) + 6 + Math.random()*4,
+      (s.z+e.z)/2 + (Math.random()*4-2)
+    );
+    const curve = new THREE.CatmullRomCurve3([s, mid, e]);
+    const geom = new THREE.TubeGeometry(curve, 40, 0.7, 8, false);
+    const mat = new THREE.MeshStandardMaterial({ color: colors[i], roughness:0.55 });
+    const mesh = new THREE.Mesh(geom, mat);
+    mesh.castShadow = true;
+    parts.wires.add(mesh);
+  }
+
+  // black heat-shrink wrap near tube
+  const wrap = new THREE.Mesh(
+    new THREE.CylinderGeometry(4, 4, 10, 16),
+    new THREE.MeshStandardMaterial({ color:0x101114, roughness:0.8 })
+  );
+  wrap.rotation.z = Math.PI/2;
+  wrap.position.set(DIM.bodyW/2 - 2, 10, 0);
+  parts.wires.add(wrap);
+}
+
+// ---------- Build everything ----------
+buildBody();
+buildLid();
+buildTube();
+buildFrontPanel();
+buildTopGear();
+buildSwitch();
+buildWires();
+
+// Center root
+root.position.y = 0;
+root.scale.setScalar(0.8);
+
+// ---------- Explode offsets ----------
+// base positions captured, explode moves each group along a direction
+const explodeDirs = {
+  body: new THREE.Vector3(0, 0, 0),
+  lid:  new THREE.Vector3(0, 1, 0),
+  tube: new THREE.Vector3(1.2, 0, 0),
+  frontPanel: new THREE.Vector3(0, 0, 1),
+  topGear: new THREE.Vector3(0, 1.1, 0),
+  sideSwitch: new THREE.Vector3(0, -0.1, -1.1),
+  wires: new THREE.Vector3(0, 0.6, 0),
+};
+const basePos = {};
+for (const [k,g] of Object.entries(parts)) basePos[k] = g.position.clone();
+
+function applyExplode(t){
+  for (const [k,g] of Object.entries(parts)){
+    const d = explodeDirs[k];
+    g.position.copy(basePos[k]).add(d.clone().multiplyScalar(t * 55));
+  }
+}
+
+// ---------- Interaction / Tweaks ----------
+const tweaks = window.__TWEAKS;
+
+// Apply initial finish
+function applyFinish(v){
+  const m = v==='green' ? M.bodyGreen : v==='black' ? M.bodyBlack : M.bodyGrey;
+  parts.body.traverse(o=>{
+    if (o.isMesh && (o.material === M.bodyGreen || o.material === M.bodyBlack || o.material === M.bodyGrey || o === parts.body.children[0] || o === parts.body.children[1])){
+      // only swap the two body meshes (main box + base)
+    }
+  });
+  // cleaner: reassign directly on known children
+  parts.body.children[0].material = m; // main box
+  parts.body.children[2].material = m; // base (index 2 since groove is 1)
+  tweaks.finish = v;
+  document.querySelectorAll('#tw_finish button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+  persist();
+}
+
+function applyBackground(v){
+  if (v==='light'){ scene.background = new THREE.Color('#eef1f4'); grid.visible = true; document.body.style.background = '#eef1f4'; document.documentElement.style.setProperty('--bg','#eef1f4'); }
+  else if (v==='grid'){ scene.background = new THREE.Color('#ffffff'); grid.visible = true; document.body.style.background = '#ffffff'; document.documentElement.style.setProperty('--bg','#ffffff'); }
+  else { scene.background = null; grid.visible = false;
+    document.body.style.background = 'transparent';
+    document.documentElement.style.setProperty('--bg','#0f1216');
+    document.documentElement.style.setProperty('--ink','#eaecef');
+    document.documentElement.style.setProperty('--ink-dim','#9aa3ad');
+  }
+  if (v!=='dark'){
+    document.documentElement.style.setProperty('--ink','#1a1f24');
+    document.documentElement.style.setProperty('--ink-dim','#5b6670');
+  }
+  tweaks.background = v;
+  document.querySelectorAll('#tw_bg button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+  persist();
+}
+
+let wireframeOn = false;
+function applyWireframe(on){
+  wireframeOn = on;
+  root.traverse(o=>{
+    if (o.isMesh && o.material){
+      if (Array.isArray(o.material)) o.material.forEach(m=>m.wireframe = on);
+      else o.material.wireframe = on;
+    }
+  });
+}
+
+// Persist (tell host)
+function persist(){
+  try{
+    window.parent?.postMessage({ type:'__edit_mode_set_keys', edits: tweaks }, '*');
+  }catch(e){}
+}
+
+// Edit-mode availability handshake
+window.addEventListener('message', (e)=>{
+  const d = e.data || {};
+  if (d.type === '__activate_edit_mode'){
+    document.getElementById('tweaks').classList.add('visible');
+  } else if (d.type === '__deactivate_edit_mode'){
+    document.getElementById('tweaks').classList.remove('visible');
+  }
+});
+try{ window.parent?.postMessage({type:'__edit_mode_available'},'*'); }catch(e){}
+
+// Bind UI
+const $ = s => document.querySelector(s);
+$('#tw_explode').addEventListener('input', e=>{
+  const v = parseFloat(e.target.value);
+  applyExplode(v);
+  $('#tw_explode_v').textContent = Math.round(v*100)+' %';
+});
+$('#tw_wire').addEventListener('change', e=> applyWireframe(e.target.checked));
+$('#tw_auto').addEventListener('change', e=>{ tweaks.autoRotate = e.target.checked; persist(); });
+$('#tw_wires').addEventListener('change', e=>{ parts.wires.visible = e.target.checked; tweaks.wires = e.target.checked; persist(); });
+$('#tw_oled').addEventListener('change', e=>{ tweaks.oledAnim = e.target.checked; persist(); });
+$('#tw_labels').addEventListener('change', e=>{ labelsOn = e.target.checked; });
+
+document.querySelectorAll('#tw_finish button').forEach(b=>{
+  b.addEventListener('click', ()=> applyFinish(b.dataset.v));
+});
+document.querySelectorAll('#tw_bg button').forEach(b=>{
+  b.addEventListener('click', ()=> applyBackground(b.dataset.v));
+});
+
+// Init from persisted
+applyFinish(tweaks.finish || 'green');
+applyBackground(tweaks.background || 'light');
+$('#tw_auto').checked = !!tweaks.autoRotate;
+$('#tw_wires').checked = !!tweaks.wires;
+$('#tw_oled').checked = !!tweaks.oledAnim;
+parts.wires.visible = !!tweaks.wires;
+
+// View presets
+window.addEventListener('keydown', (e)=>{
+  const d = 260;
+  if (e.key==='1'){ goTo(0,10,d,'FACE'); }
+  else if (e.key==='2'){ goTo(d,10,0,'CÔTÉ DROIT'); }
+  else if (e.key==='3'){ goTo(0.01,d,0.01,'DESSUS'); }
+  else if (e.key==='0'){ goTo(180,130,220,'ISO · Perspective libre'); }
+});
+function goTo(x,y,z,label){
+  camera.position.set(x,y,z);
+  controls.target.set(0,10,0);
+  document.getElementById('viewname').textContent = label;
+}
+
+// ---------- Part label positions ----------
+const labelAnchors = {
+  body:   new THREE.Vector3(0, -10, DIM.bodyD/2),
+  lid:    new THREE.Vector3(-20, DIM.bodyH/2 + DIM.lidT + 4, 0),
+  tube:   new THREE.Vector3(DIM.bodyW/2 + 50, 10, 0),
+  oled:   new THREE.Vector3(-8, 2, DIM.bodyD/2 + 6),
+  leds:   new THREE.Vector3(30, DIM.bodyH/2 + DIM.lidT + 16, -10),
+  switch: new THREE.Vector3(DIM.bodyW/2 - 32, -6, -DIM.bodyD/2 - 10),
+  buzzer: new THREE.Vector3(-20, DIM.bodyH/2 + DIM.lidT + 8, -8),
+};
+let labelsOn = false;
+
+function updateLabels(){
+  document.querySelectorAll('.partlabel').forEach(el=>{
+    const id = el.dataset.id;
+    if (!labelsOn){ el.classList.remove('visible'); return; }
+    const p = labelAnchors[id].clone();
+    p.project(camera);
+    const x = (p.x*0.5+0.5)*innerWidth;
+    const y = (-p.y*0.5+0.5)*innerHeight;
+    el.style.left = x+'px';
+    el.style.top = y+'px';
+    el.classList.add('visible');
+  });
+}
+
+// ---------- Animation loop ----------
+let last = performance.now();
+function tick(now){
+  const dt = Math.min(0.05, (now-last)/1000);
+  last = now;
+
+  if (tweaks.autoRotate && !controls.active){
+    root.rotation.y += dt * 0.25;
+  }
+
+  if (tweaks.oledAnim){
+    drawOled(dt);
+    // LED sync with OLED phases
+    const t = oledState.t % 9;
+    if (t < 2){
+      // idle: both off
+      ledRedMesh.userData.dome.material = M.ledRedOff;
+      ledRedMesh.userData.cyl.material = M.ledRedOff;
+      ledGreenMesh.userData.dome.material = M.ledGreenOff;
+      ledGreenMesh.userData.cyl.material = M.ledGreenOff;
+    } else if (t < 6){
+      // measuring: blink green
+      const on = Math.floor(now/250)%2===0;
+      const m = on ? M.ledGreenOn : M.ledGreenOff;
+      ledGreenMesh.userData.dome.material = m;
+      ledGreenMesh.userData.cyl.material = m;
+      ledRedMesh.userData.dome.material = M.ledRedOff;
+      ledRedMesh.userData.cyl.material = M.ledRedOff;
+    } else {
+      // result
+      if (oledState.bac > 0.25){
+        ledRedMesh.userData.dome.material = M.ledRedOn;
+        ledRedMesh.userData.cyl.material = M.ledRedOn;
+        ledGreenMesh.userData.dome.material = M.ledGreenOff;
+        ledGreenMesh.userData.cyl.material = M.ledGreenOff;
+      } else {
+        ledGreenMesh.userData.dome.material = M.ledGreenOn;
+        ledGreenMesh.userData.cyl.material = M.ledGreenOn;
+        ledRedMesh.userData.dome.material = M.ledRedOff;
+        ledRedMesh.userData.cyl.material = M.ledRedOff;
+      }
+    }
+  }
+
+  controls.update();
+  updateLabels();
+  renderer.render(scene, camera);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+// Track active drag to pause auto-rotate
+controls.addEventListener('start', ()=> controls.active = true);
+controls.addEventListener('end',   ()=> controls.active = false);
+
+// Resize
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+</script>
+
+</body>
+</html>

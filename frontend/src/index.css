@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/* Design tokens — à affiner lors du choix de l'identité visuelle (Phase 0 ébauches) */
+@theme {
+  --color-bg:           oklch(97.2% 0.008 240);
+  --color-bg-card:      oklch(99.2% 0.004 240);
+  --color-bg-subtle:    oklch(95.5% 0.013 240);
+  --color-text:         oklch(22% 0.05 242);
+  --color-text-muted:   oklch(52% 0.04 245);
+  --color-text-light:   oklch(68% 0.035 245);
+  --color-accent:       oklch(51% 0.18 245);
+  --color-accent-light: oklch(94% 0.04 245);
+  --color-green:        oklch(57% 0.14 155);
+  --color-green-light:  oklch(95% 0.04 155);
+  --color-border:       oklch(88% 0.022 240);
+  --color-border-light: oklch(94% 0.012 240);
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+}
+
+/* Reset de base */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
+#root {
+  min-height: 100svh;
+}
+
+/* Piste A — grain film sur tout le site */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.038;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}

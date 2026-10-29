@@ -1,0 +1,510 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<title>CT-Scan Deep Learning — IA Médicale</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#070a10}
+#scene{position:fixed;inset:0}
+canvas{display:block}
+</style>
+</head>
+<body>
+<div id="scene"></div>
+
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.161.0/build/three.module.js"}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+// ─── Renderer ──────────────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.getElementById('scene').appendChild(renderer.domElement);
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// ─── Scene / Camera ────────────────────────────────────────────────────────────
+const scene  = new THREE.Scene();
+scene.background = new THREE.Color('#070a10');
+
+const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.01, 60);
+camera.position.set(0, 0, 8.5);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.2));
+const rim = new THREE.DirectionalLight(0x4a9eff, 1.2);
+rim.position.set(-4, 3, 5);
+scene.add(rim);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CHARGEMENT DES VRAIES IMAGES CT
+// Les images sont dans /3d/ct/  (servies par Vite depuis public/)
+// ═══════════════════════════════════════════════════════════════════════════════
+const CT_FILES = [
+  '000109 (5).png',
+  '000114.png',
+  '000115 (2).png',
+  '000120 (5).png',
+  '000126 (4).png',
+  '000131 (2).png',
+  '12 (2).png',
+  '6 (2) - Copy.png',
+];
+
+// img[0] = niveau cardiaque (phase detect), img[1] = niveau pulmonaire (phase scroll)
+const ctImg = CT_FILES.map(name => {
+  const el = new Image();
+  el.src = '/3d/ct/' + encodeURIComponent(name);
+  return el;
+});
+
+// Attend que les images soient disponibles (best-effort, pas bloquant)
+const imagesReady = () => ctImg.every(i => i.complete && i.naturalWidth > 0);
+
+// ─── Canvas médical 800×600 ────────────────────────────────────────────────────
+const CW = 800, CH = 600;
+const cv  = document.createElement('canvas');
+cv.width  = CW; cv.height = CH;
+const ctx = cv.getContext('2d');
+const tex = new THREE.CanvasTexture(cv);
+tex.minFilter = THREE.LinearFilter;
+tex.magFilter = THREE.LinearFilter;
+
+// Zone image CT dans le canvas (laisser place nav gauche + header + footer)
+const IMG_X = 108, IMG_Y = 52, IMG_W = 584, IMG_H = 452;
+const ICX = IMG_X + IMG_W / 2, ICY = IMG_Y + IMG_H / 2;
+
+// ─── Dessin de l'image CT réelle (avec contain + fond noir) ───────────────────
+// Retourne les coordonnées réelles utilisées pour placer les overlays.
+function drawCTImage(imgEl, alpha) {
+  // Fond image (noir — convention CT)
+  ctx.fillStyle = '#030507';
+  ctx.fillRect(IMG_X, IMG_Y, IMG_W, IMG_H);
+
+  if (!imgEl || !imgEl.complete || imgEl.naturalWidth === 0) return;
+
+  const aspect  = imgEl.naturalWidth / imgEl.naturalHeight;
+  const areaAsp = IMG_W / IMG_H;
+  let dw, dh, dx, dy;
+
+  // "contain" : l'image entière est visible
+  if (aspect > areaAsp) {
+    dw = IMG_W; dh = dw / aspect;
+    dx = IMG_X; dy = ICY - dh / 2;
+  } else {
+    dh = IMG_H; dw = dh * aspect;
+    dy = IMG_Y; dx = ICX - dw / 2;
+  }
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.beginPath();
+  ctx.rect(IMG_X, IMG_Y, IMG_W, IMG_H);
+  ctx.clip();
+  ctx.drawImage(imgEl, dx, dy, dw, dh);
+  ctx.restore();
+}
+
+// ─── Miniature pour la nav latérale (très petite, dessinée avec l'image réelle) ─
+function drawThumb(imgEl, tx, ty, tw, th, active) {
+  ctx.fillStyle = '#020406';
+  ctx.fillRect(tx, ty, tw, th);
+
+  if (imgEl && imgEl.complete && imgEl.naturalWidth > 0) {
+    const asp  = imgEl.naturalWidth / imgEl.naturalHeight;
+    const aAsp = tw / th;
+    let dw, dh, dx, dy;
+    if (asp > aAsp) { dw = tw; dh = dw / asp; dx = tx; dy = ty + (th - dh) / 2; }
+    else             { dh = th; dw = dh * asp; dy = ty; dx = tx + (tw - dw) / 2; }
+
+    ctx.save();
+    ctx.beginPath(); ctx.rect(tx, ty, tw, th); ctx.clip();
+    ctx.drawImage(imgEl, dx, dy, dw, dh);
+    ctx.restore();
+  } else {
+    // Fallback : ellipse corps simplifiée
+    ctx.fillStyle = 'rgba(70,88,110,0.8)';
+    ctx.beginPath(); ctx.ellipse(tx + tw/2, ty + th/2, tw*0.42, th*0.38, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = 'rgba(3,5,10,0.9)';
+    ctx.beginPath(); ctx.ellipse(tx + tw/2 - tw*0.1, ty + th/2, tw*0.14, th*0.20, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(tx + tw/2 + tw*0.1, ty + th/2, tw*0.13, th*0.18, 0, 0, Math.PI*2); ctx.fill();
+  }
+
+  if (active) {
+    ctx.strokeStyle = '#2a6db5';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(tx + 0.75, ty + 0.75, tw - 1.5, th - 1.5);
+  }
+}
+
+// ─── Rendu complet du panneau médical ─────────────────────────────────────────
+// Phase 0 (0–4 s)  : défilement de coupes — alternate img0 / img1 avec fondu
+// Phase 1 (4–7 s)  : faisceau d'analyse IA
+// Phase 2 (7–11 s) : résultat + bounding box de détection
+// Phase 3 (11–12 s): pause
+function drawPanel(sliceT, phase, subT) {
+
+  // ── Fond global ────────────────────────────────────────────────────────────
+  ctx.fillStyle = '#060810';
+  ctx.fillRect(0, 0, CW, CH);
+
+  ctx.strokeStyle = 'rgba(42,109,181,0.03)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < CW; x += 30) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,CH); ctx.stroke(); }
+  for (let y = 0; y < CH; y += 30) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(CW,y); ctx.stroke(); }
+
+  // ── Nav latérale gauche ────────────────────────────────────────────────────
+  ctx.fillStyle = '#080d18';
+  ctx.fillRect(0, 0, 108, CH);
+  ctx.strokeStyle = '#1a2840';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(108, 0); ctx.lineTo(108, CH); ctx.stroke();
+
+  ctx.fillStyle = '#2a6db5';
+  ctx.font = 'bold 8px "Courier New", monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('COUPES', 54, 16);
+  ctx.fillStyle = '#3a5070';
+  ctx.font = '8px "Courier New", monospace';
+  ctx.fillText('162 total', 54, 27);
+  ctx.textAlign = 'left';
+
+  // 8 miniatures (une par image réelle)
+  const N_IMG = ctImg.length;
+  const activeThumb = Math.floor(sliceT * N_IMG) % N_IMG;
+  const thumbH = Math.floor((CH - 36) / N_IMG) - 2;
+  for (let i = 0; i < N_IMG; i++) {
+    const ty = 36 + i * (thumbH + 2);
+    drawThumb(ctImg[i], 4, ty, 100, thumbH, activeThumb === i);
+    ctx.fillStyle = activeThumb === i ? '#4a9eff' : '#2a3a50';
+    ctx.font = '7px "Courier New", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(String(i + 1).padStart(2, '0'), 54, ty + thumbH + 1);
+    ctx.textAlign = 'left';
+  }
+
+  // ── Header bar ─────────────────────────────────────────────────────────────
+  ctx.fillStyle = '#0d1520';
+  ctx.fillRect(108, 0, CW - 108, 52);
+  ctx.strokeStyle = '#1e3558';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(108, 52); ctx.lineTo(CW, 52); ctx.stroke();
+
+  ctx.fillStyle = '#2a6db5';
+  ctx.font = 'bold 12px "Courier New", monospace';
+  ctx.fillText('■ LUNG CT — AI CLASSIFICATION', 120, 21);
+  ctx.fillStyle = '#3a5580';
+  ctx.font = '10px "Courier New", monospace';
+  ctx.fillText('Chest CT-Scan  ·  Fenêtre pulmonaire  W:1500 / L:-600', 120, 37);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#2a6db5';
+  ctx.font = 'bold 10px "Courier New", monospace';
+  ctx.fillText('EfficientNet-B0 · PyTorch', CW - 12, 21);
+  ctx.fillStyle = '#3a5580';
+  ctx.font = '9px "Courier New", monospace';
+  ctx.fillText('ESME Paris · Ingé2 2026', CW - 12, 37);
+  ctx.textAlign = 'left';
+
+  // ── Image CT principale ────────────────────────────────────────────────────
+  // Phase 0 : cycle séquentiel sur toutes les images avec fondu croisé
+  // Phase 1-2 : image fixe (la première, meilleure pour la détection)
+  if (phase === 0) {
+    const N  = ctImg.length;
+    const fp = 1 / N;                           // fraction de sliceT par image
+    const fi = Math.floor(sliceT * N);          // index image courante
+    const ft = (sliceT % fp) / fp;             // progression dans l'image courante (0→1)
+    const FADE = 0.18;                          // zone de fondu (18% du temps de chaque image)
+
+    const curIdx  = fi % N;
+    const nextIdx = (fi + 1) % N;
+
+    // Alpha fondu : les FADE derniers % de ft on fade vers la suivante
+    let aCur = 1, aNext = 0;
+    if (ft > 1 - FADE) {
+      const x = (ft - (1 - FADE)) / FADE;
+      aCur = 1 - x; aNext = x;
+    }
+
+    drawCTImage(ctImg[curIdx],  aCur);
+    if (aNext > 0) drawCTImage(ctImg[nextIdx], aNext);
+  } else {
+    drawCTImage(ctImg[0], 1);
+  }
+
+  // Bord fin autour de la zone CT
+  ctx.strokeStyle = 'rgba(42,109,181,0.30)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(IMG_X, IMG_Y, IMG_W, IMG_H);
+
+  // ── Annotations médicales fixes ────────────────────────────────────────────
+  ctx.fillStyle = '#3a5878';
+  ctx.font = '9px "Courier New", monospace';
+  ctx.fillText(`Coupe: ${Math.round(sliceT * 120) + 42}/162`, IMG_X + 6, IMG_Y + 15);
+  ctx.fillText(`Ep: 1.25mm`, IMG_X + 6, IMG_Y + 26);
+  ctx.textAlign = 'right';
+  ctx.fillText('W/L 1500/-600', IMG_X + IMG_W - 4, IMG_Y + 15);
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#2a4060';
+  ctx.fillText('G', IMG_X + 22, ICY);
+  ctx.fillText('D', IMG_X + IMG_W - 22, ICY);
+  ctx.textAlign = 'left';
+
+  // ── Phase 0 : barre de progression scroll ──────────────────────────────────
+  if (phase === 0) {
+    ctx.fillStyle = 'rgba(6,10,20,0.78)';
+    ctx.fillRect(IMG_X, IMG_Y + IMG_H - 22, IMG_W, 22);
+    ctx.fillStyle = 'rgba(42,109,181,0.15)';
+    ctx.fillRect(IMG_X + 8, IMG_Y + IMG_H - 14, IMG_W - 16, 7);
+    ctx.fillStyle = '#2a6db5';
+    ctx.fillRect(IMG_X + 8, IMG_Y + IMG_H - 14, (IMG_W - 16) * sliceT, 7);
+    ctx.fillStyle = '#4a7abf';
+    ctx.font = '8px "Courier New", monospace';
+    ctx.fillText('DÉFILEMENT PILE CT', IMG_X + 8, IMG_Y + IMG_H - 16);
+    ctx.textAlign = 'right';
+    ctx.fillText(`${Math.round(sliceT * 100)}%`, IMG_X + IMG_W - 6, IMG_Y + IMG_H - 16);
+    ctx.textAlign = 'left';
+  }
+
+  // ── Phase 1 : faisceau d'analyse IA ────────────────────────────────────────
+  if (phase === 1) {
+    const scanY = IMG_Y + IMG_H * subT;
+
+    const sg = ctx.createLinearGradient(0, scanY - 28, 0, scanY + 28);
+    sg.addColorStop(0,   'rgba(42,109,181,0)');
+    sg.addColorStop(0.42,'rgba(42,109,181,0.12)');
+    sg.addColorStop(0.5, 'rgba(74,154,255,0.30)');
+    sg.addColorStop(0.58,'rgba(42,109,181,0.12)');
+    sg.addColorStop(1,   'rgba(42,109,181,0)');
+    ctx.fillStyle = sg;
+    ctx.fillRect(IMG_X, scanY - 28, IMG_W, 56);
+
+    ctx.strokeStyle = 'rgba(74,154,255,0.78)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(IMG_X, scanY); ctx.lineTo(IMG_X + IMG_W, scanY); ctx.stroke();
+
+    // Marqueurs latéraux
+    ctx.fillStyle = '#4a9eff';
+    ctx.beginPath(); ctx.moveTo(IMG_X - 6, scanY); ctx.lineTo(IMG_X + 7, scanY - 5); ctx.lineTo(IMG_X + 7, scanY + 5); ctx.fill();
+
+    // Rectangles de zone analysée (apparaissent progressivement)
+    if (subT > 0.28) {
+      const zv = Math.min(1, (subT - 0.28) / 0.5);
+      ctx.strokeStyle = `rgba(42,109,181,${0.38 * zv})`;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      // Zone poumon gauche (repère anatomique réel)
+      ctx.strokeRect(IMG_X + IMG_W * 0.05, IMG_Y + IMG_H * 0.15, IMG_W * 0.38, IMG_H * 0.68);
+      // Zone poumon droit
+      ctx.strokeRect(IMG_X + IMG_W * 0.56, IMG_Y + IMG_H * 0.15, IMG_W * 0.38, IMG_H * 0.68);
+      ctx.setLineDash([]);
+    }
+
+    // Barre status
+    ctx.fillStyle = 'rgba(6,10,20,0.82)';
+    ctx.fillRect(IMG_X, IMG_Y + IMG_H - 22, IMG_W, 22);
+    const dots = '.'.repeat((Math.floor(subT * 9) % 3) + 1);
+    ctx.fillStyle = '#4a9eff';
+    ctx.font = 'bold 9px "Courier New", monospace';
+    ctx.fillText(`▶ ANALYSE IA EN COURS${dots}`, IMG_X + 8, IMG_Y + IMG_H - 7);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#2a6db5';
+    ctx.fillText('Feature extraction · EfficientNet-B0', IMG_X + IMG_W - 6, IMG_Y + IMG_H - 7);
+    ctx.textAlign = 'left';
+  }
+
+  // ── Phase 2 : résultat de classification ───────────────────────────────────
+  if (phase === 2) {
+    const ap = Math.min(1, subT * 2.8);
+
+    // ── Bounding box de détection ──────────────────────────────────────────
+    // Positionnée dans le poumon droit inférieur (visible sur les vrais scans)
+    const detCx = ICX + IMG_W * 0.215;
+    const detCy = ICY + IMG_H * 0.055;
+    const detW  = IMG_W * 0.22;
+    const detH  = IMG_H * 0.30;
+    const dx = detCx - detW / 2, dy = detCy - detH / 2;
+
+    ctx.globalAlpha = ap;
+
+    // Halo
+    const halo = ctx.createRadialGradient(detCx, detCy, 0, detCx, detCy, detW * 0.8);
+    halo.addColorStop(0, 'rgba(245,158,11,0.13)');
+    halo.addColorStop(1, 'rgba(245,158,11,0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(dx - 22, dy - 22, detW + 44, detH + 44);
+
+    // Tirets de la box
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([7, 4]);
+    ctx.strokeRect(dx, dy, detW, detH);
+    ctx.setLineDash([]);
+
+    // Coins L-shape
+    const cl = 13;
+    ctx.strokeStyle = '#fbbf24';
+    ctx.lineWidth = 2.5;
+    [[dx, dy, 1, 1], [dx + detW, dy, -1, 1], [dx, dy + detH, 1, -1], [dx + detW, dy + detH, -1, -1]]
+      .forEach(([bx, by, sx, sy]) => {
+        ctx.beginPath();
+        ctx.moveTo(bx + sx * cl, by); ctx.lineTo(bx, by); ctx.lineTo(bx, by + sy * cl);
+        ctx.stroke();
+      });
+
+    // Label au-dessus
+    ctx.fillStyle = 'rgba(245,158,11,0.92)';
+    ctx.fillRect(dx, dy - 27, detW, 25);
+    ctx.fillStyle = '#040608';
+    ctx.font = 'bold 10px "Courier New", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('ADÉNOCARCINOME', detCx, dy - 10);
+    ctx.textAlign = 'left';
+
+    ctx.globalAlpha = 1;
+
+    // ── Panneau résultats en bas de l'image ───────────────────────────────
+    const resH = 110;
+    const resY = IMG_Y + IMG_H - resH;
+    ctx.fillStyle = 'rgba(5,8,16,0.92)';
+    ctx.fillRect(IMG_X, resY, IMG_W, resH);
+    ctx.strokeStyle = '#1e3a60';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(IMG_X, resY); ctx.lineTo(IMG_X + IMG_W, resY); ctx.stroke();
+
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = 'bold 9px "Courier New", monospace';
+    ctx.fillText('RÉSULTAT CLASSIFICATION  ·  CONFIANCE MAXIMALE', IMG_X + 8, resY + 14);
+
+    const classes = [
+      { label: 'Adénocarcinome',        pct: 87.6, color: '#f59e0b', bold: true  },
+      { label: 'Tissu normal',          pct:  7.4, color: '#22c55e', bold: false },
+      { label: 'Carcinome épidermoïde', pct:  3.2, color: '#4a9eff', bold: false },
+      { label: 'Grandes cellules',      pct:  1.8, color: '#8b5cf6', bold: false },
+    ];
+    const barMaxW = 148;
+    classes.forEach((cl2, i) => {
+      const bx = IMG_X + 8, by = resY + 25 + i * 19;
+      const fw = barMaxW * (cl2.pct / 100) * Math.min(1, subT * 1.9);
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+      ctx.fillRect(bx + 178, by + 3, barMaxW, 11);
+      ctx.fillStyle = cl2.color;
+      ctx.fillRect(bx + 178, by + 3, fw, 11);
+      ctx.fillStyle = cl2.bold ? cl2.color : '#4a6080';
+      ctx.font = `${cl2.bold ? 'bold ' : ''}9px "Courier New", monospace`;
+      ctx.fillText(cl2.label, bx, by + 13);
+      ctx.fillStyle = cl2.color;
+      ctx.fillText(`${cl2.pct.toFixed(1)}%`, bx + 178 + barMaxW + 6, by + 13);
+    });
+
+    ctx.fillStyle = '#2a6db5';
+    ctx.font = '9px "Courier New", monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText('EfficientNet-B0  ·  20 epochs  ·  Acc 87,6%  ·  F1=0,885', IMG_X + IMG_W - 6, IMG_Y + IMG_H - 5);
+    ctx.textAlign = 'left';
+  }
+
+  // ── Footer ─────────────────────────────────────────────────────────────────
+  ctx.fillStyle = '#080d18';
+  ctx.fillRect(0, CH - 34, CW, 34);
+  ctx.strokeStyle = '#151f30';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, CH - 34); ctx.lineTo(CW, CH - 34); ctx.stroke();
+  ctx.fillStyle = '#2a3d56';
+  ctx.font = '9px "Courier New", monospace';
+  ctx.fillText('DATASET: Chest CT-Scan Kaggle  ·  4 CLASSES  ·  ~1000 IMAGES  ·  VGG16 / ResNet50 / EfficientNet-B0', 14, CH - 12);
+  ctx.textAlign = 'right';
+  ctx.fillStyle = '#2a6db5';
+  ctx.fillText('ESME PARIS 2026', CW - 14, CH - 12);
+  ctx.textAlign = 'left';
+
+  tex.needsUpdate = true;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SCÈNE 3D — panneau principal légèrement incliné
+// ═══════════════════════════════════════════════════════════════════════════════
+const panelMat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.FrontSide });
+const panel    = new THREE.Mesh(new THREE.PlaneGeometry(5.55, 4.17), panelMat);
+panel.rotation.y = -0.08;
+scene.add(panel);
+
+const frameMat = new THREE.LineBasicMaterial({ color: 0x1e4a80, transparent: true, opacity: 0.65 });
+const frameGeo = new THREE.EdgesGeometry(new THREE.BoxGeometry(5.60, 4.22, 0.01));
+const frame    = new THREE.LineSegments(frameGeo, frameMat);
+frame.rotation.y = -0.08;
+scene.add(frame);
+
+// Halo derrière (profondeur)
+const glowMat = new THREE.MeshBasicMaterial({ color: 0x0a1428, transparent: true, opacity: 0.5, side: THREE.BackSide });
+const glow    = new THREE.Mesh(new THREE.PlaneGeometry(6.5, 5.1), glowMat);
+glow.position.z = -0.3;
+glow.rotation.y = -0.08;
+scene.add(glow);
+
+// Particules
+const N_P = 110;
+const pBuf = new Float32Array(N_P * 3);
+for (let i = 0; i < N_P; i++) {
+  pBuf[i*3]   = (Math.random() - 0.5) * 18;
+  pBuf[i*3+1] = (Math.random() - 0.5) * 12;
+  pBuf[i*3+2] = (Math.random() - 0.5) * 5 - 3;
+}
+const pGeo = new THREE.BufferGeometry();
+pGeo.setAttribute('position', new THREE.BufferAttribute(pBuf, 3));
+scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({
+  color: 0x1e4a80, size: 0.04, transparent: true, opacity: 0.35,
+})));
+
+// ─── Animation ─────────────────────────────────────────────────────────────────
+const CYCLE   = 12;
+const PHASE_T = [4, 7, 11, 12];   // fins de phases (s)
+const clock   = new THREE.Clock();
+let lastCF    = -1;
+
+function animate() {
+  requestAnimationFrame(animate);
+  const elapsed = clock.getElapsedTime();
+  const t = elapsed % CYCLE;
+
+  let phase = 0, subT = 0, sliceT = 0;
+  if (t < PHASE_T[0]) {
+    phase = 0; subT = t / PHASE_T[0]; sliceT = subT;
+  } else if (t < PHASE_T[1]) {
+    phase = 1; subT = (t - PHASE_T[0]) / (PHASE_T[1] - PHASE_T[0]); sliceT = 1;
+  } else if (t < PHASE_T[2]) {
+    phase = 2; subT = (t - PHASE_T[1]) / (PHASE_T[2] - PHASE_T[1]); sliceT = 1;
+  } else {
+    phase = 3; subT = 0; sliceT = 1;
+  }
+
+  // Canvas ~18 fps
+  const cf = Math.floor(elapsed * 18);
+  if (cf !== lastCF) { lastCF = cf; drawPanel(sliceT, phase, subT); }
+
+  // Oscillation douce du panneau
+  const breathe = Math.sin(elapsed * 0.34) * 0.05;
+  const wiggle  = Math.sin(elapsed * 0.17) * 0.016;
+  panel.position.y = breathe;
+  frame.position.y = breathe;
+  glow.position.y  = breathe;
+  panel.rotation.y = -0.08 + wiggle;
+  frame.rotation.y = panel.rotation.y;
+  glow.rotation.y  = panel.rotation.y;
+
+  renderer.render(scene, camera);
+}
+
+animate();
+</script>
+</body>
+</html>

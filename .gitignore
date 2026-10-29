@@ -1,0 +1,62 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+frontend/dist/
+frontend/.vite/
+backend-java/target/
+backend-rust/target/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+spring-shell.log
+
+# Rust
+# Cargo.lock est commité (binaire)
+
+# Assets bruts lourds (garder dans assets-raw/ mais exclure du déploiement)
+assets-raw/videos/*.mp4
+assets-raw/3d/*.blend
+assets-raw/3d/*.fbx
+
+# Sources brutes et documents perso (restent en local, jamais publiés)
+Projet/
+cv/
+assets-raw/
+*.zip
+council-*
+REVIEW.md
+
+# Outillage local
+.claude/
+.agents/
+.github/java-upgrade/
+.github/modernize/
+backend-java/.github/
+skills-lock.json
+
+# Expérimentation abandonnée
+frontend-v2/

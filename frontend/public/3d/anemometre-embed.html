@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<title>Anémomètre connecté — CAO 3D</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:transparent;font-family:ui-monospace,"JetBrains Mono",monospace}
+#scene{position:fixed;inset:0}
+canvas{display:block}
+</style>
+</head>
+<body>
+<div id="scene"></div>
+
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.161.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.161.0/examples/jsm/"}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls }   from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+// ─── Renderer ──────────────────────────────────────────────────────────────────
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace  = THREE.SRGBColorSpace;
+renderer.toneMapping       = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
+document.getElementById('scene').appendChild(renderer.domElement);
+
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// ─── Scene ─────────────────────────────────────────────────────────────────────
+const scene = new THREE.Scene();
+scene.background = null;
+
+// ─── Camera ────────────────────────────────────────────────────────────────────
+// Nacelle is along Z: front tip at z=+2, back opening at z=-2, Y is up.
+// Camera from front-right-above gives the best "engineering" read.
+const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.01, 60);
+camera.position.set(4.2, 2.8, 3.6);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping    = true;
+controls.dampingFactor    = 0.07;
+controls.target.set(0, 0.5, 0);
+controls.autoRotate       = true;
+controls.autoRotateSpeed  = 0.65;
+controls.minDistance      = 2;
+controls.maxDistance      = 14;
+controls.update();
+
+// ─── Lighting ──────────────────────────────────────────────────────────────────
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const key = new THREE.DirectionalLight(0xffffff, 2.2);
+key.position.set(4, 7, 5);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.camera.near = 0.5; key.shadow.camera.far = 25;
+key.shadow.camera.left = -5;  key.shadow.camera.right = 5;
+key.shadow.camera.top  = 5;   key.shadow.camera.bottom = -5;
+key.shadow.bias = -0.0004;
+scene.add(key);
+
+const fill = new THREE.DirectionalLight(0xd0dcff, 0.5);
+fill.position.set(-5, 3, -3);
+scene.add(fill);
+
+const rim = new THREE.DirectionalLight(0xffffff, 0.35);
+rim.position.set(-3, 2, 5);
+scene.add(rim);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.18));
+
+// ─── Materials ─────────────────────────────────────────────────────────────────
+function plaMat(hex, roughness = 0.82) {
+  return new THREE.MeshPhysicalMaterial({
+    color: hex, roughness, metalness: 0.0,
+    clearcoat: 0.06, clearcoatRoughness: 0.65,
+    sheen: 0.12, sheenRoughness: 0.9,
+  });
+}
+
+const M = {
+  body:      plaMat(0x181a1c),         // nacelle PLA noir
+  cups:      plaMat(0x5a1e1e),         // godets bordeaux foncé
+  propBlade: plaMat(0x101214),         // hélice noire
+  vane:      plaMat(0x101214),         // girouette noire
+  steel:     new THREE.MeshPhysicalMaterial({ color: 0xc8ccd2, metalness: 0.88, roughness: 0.22 }),
+  lcdBezel:  new THREE.MeshStandardMaterial({ color: 0x080a0c, roughness: 0.9 }),
+  lcdGlow:   new THREE.MeshStandardMaterial({
+    color: 0x001a0c,
+    emissive: new THREE.Color(0x00cc44),
+    emissiveIntensity: 1.4,
+    roughness: 0.08,
+  }),
+  lcdScreen: null, // canvas texture, set below
+  shadow:    new THREE.ShadowMaterial({ opacity: 0.18 }),
+};
+
+// ─── LCD canvas texture ─────────────────────────────────────────────────────────
+// Canvas portrait 256×640 correspond au ratio de la PlaneGeometry (0.34×0.80) :
+// ratio 256/640 = 0.40 ≈ 0.34/0.80 = 0.425 → densité ~750 px/unité dans les deux axes.
+// Le canvas 320×80 précédent avait un mismatch 9× qui provoquait le flou.
+const LCD_W = 256, LCD_H = 640;
+const lcdCanvas = document.createElement('canvas');
+lcdCanvas.width = LCD_W; lcdCanvas.height = LCD_H;
+const lcdCtx = lcdCanvas.getContext('2d');
+const lcdTex = new THREE.CanvasTexture(lcdCanvas);
+lcdTex.minFilter = THREE.LinearFilter;
+lcdTex.magFilter = THREE.LinearFilter;
+M.lcdScreen = new THREE.MeshStandardMaterial({
+  map: lcdTex, roughness: 0.08,
+  emissive: new THREE.Color(0x001a08), emissiveIntensity: 0.5,
+});
+
+function drawLCD(speed, motorOn) {
+  const W = LCD_W, H = LCD_H;
+
+  // Fond LCD vert foncé
+  lcdCtx.fillStyle = '#001508';
+  lcdCtx.fillRect(0, 0, W, H);
+
+  // Grille horizontale (simule lignes de pixels LCD)
+  lcdCtx.strokeStyle = '#002510';
+  lcdCtx.lineWidth = 1;
+  for (let y = 8; y < H; y += 12) {
+    lcdCtx.beginPath(); lcdCtx.moveTo(0, y); lcdCtx.lineTo(W, y); lcdCtx.stroke();
+  }
+
+  const bright = motorOn ? '#00ff66' : '#00ee55';
+  const mid    = motorOn ? '#00bb44' : '#009933';
+  const dim    = motorOn ? '#008833' : '#006622';
+
+  // ── Ligne 1 : valeur vitesse (grand) ───────────────────────────────────────
+  lcdCtx.fillStyle = bright;
+  lcdCtx.font = 'bold 96px "Courier New", monospace';
+  lcdCtx.textAlign = 'center';
+  lcdCtx.textBaseline = 'alphabetic';
+  lcdCtx.fillText(speed.toFixed(1), W / 2, 140);
+
+  // ── Ligne 2 : unité ────────────────────────────────────────────────────────
+  lcdCtx.fillStyle = mid;
+  lcdCtx.font = 'bold 58px "Courier New", monospace';
+  lcdCtx.fillText('km/h', W / 2, 220);
+
+  // ── Séparateur ─────────────────────────────────────────────────────────────
+  lcdCtx.strokeStyle = dim;
+  lcdCtx.lineWidth = 3;
+  lcdCtx.beginPath();
+  lcdCtx.moveTo(20, 260); lcdCtx.lineTo(W - 20, 260);
+  lcdCtx.stroke();
+
+  // ── Ligne 3 : statut moteur ────────────────────────────────────────────────
+  lcdCtx.fillStyle = dim;
+  lcdCtx.font = '40px "Courier New", monospace';
+  lcdCtx.fillText('MOTEUR:', W / 2, 335);
+
+  lcdCtx.fillStyle = motorOn ? '#00ff66' : '#ff6644';
+  lcdCtx.font = 'bold 66px "Courier New", monospace';
+  lcdCtx.fillText(motorOn ? 'ON' : 'OFF', W / 2, 420);
+
+  // ── Ligne 4 : indicateur ───────────────────────────────────────────────────
+  if (motorOn) {
+    lcdCtx.fillStyle = dim;
+    lcdCtx.font = '30px "Courier New", monospace';
+    lcdCtx.fillText('[ FAN ACTIVE ]', W / 2, 490);
+  } else {
+    lcdCtx.fillStyle = '#004422';
+    lcdCtx.font = '28px "Courier New", monospace';
+    lcdCtx.fillText('[ en attente ]', W / 2, 490);
+  }
+
+  // ── Barre de progression vitesse ───────────────────────────────────────────
+  const barW = W - 40;
+  const fill = Math.min(speed / 90, 1) * barW;
+  lcdCtx.fillStyle = '#002a14';
+  lcdCtx.fillRect(20, 530, barW, 22);
+  lcdCtx.fillStyle = bright;
+  lcdCtx.fillRect(20, 530, fill, 22);
+  lcdCtx.strokeStyle = dim;
+  lcdCtx.lineWidth = 2;
+  lcdCtx.strokeRect(20, 530, barW, 22);
+
+  // ── Petite étiquette ───────────────────────────────────────────────────────
+  lcdCtx.fillStyle = '#004422';
+  lcdCtx.font = '22px "Courier New", monospace';
+  lcdCtx.fillText('0     45     90 km/h', W / 2, 590);
+
+  lcdTex.needsUpdate = true;
+}
+drawLCD(0, false);
+
+// ─── Helper ────────────────────────────────────────────────────────────────────
+function add(parent, geo, mat, { x=0,y=0,z=0, rx=0,ry=0,rz=0, sx=1,sy=1,sz=1, cast=true, recv=true } = {}) {
+  const m = new THREE.Mesh(geo, mat);
+  m.position.set(x, y, z);
+  m.rotation.set(rx, ry, rz);
+  m.scale.set(sx, sy, sz);
+  m.castShadow = cast; m.receiveShadow = recv;
+  parent.add(m);
+  return m;
+}
+
+// ─── Root group ────────────────────────────────────────────────────────────────
+const root = new THREE.Group();
+scene.add(root);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// NACELLE BODY
+// LatheGeometry revolves around Y. Profile: Vector2(radius, y).
+// After rotation.x = -PI/2: old Y → new +Z  (derivation below).
+//   Rx(-90°): x'=x, y'=z_old, z'=-y_old
+//   Lathe vertex: (r·cosφ, y_p, r·sinφ) → (r·cosφ, r·sinφ, -y_p)
+//   So the profile axis y_p maps to -Z in world space.
+//   Tip (y_p=0) → z=0, Back (y_p=4) → z=-4.
+//   After position.z = +2: Tip→z=+2 (front), Back→z=-2 (back opening). ✓
+// After scale.y=0.82: body flattened vertically (simulates flat 3D-printed faces).
+// ═══════════════════════════════════════════════════════════════════════════════
+const nacellePoints = [
+  new THREE.Vector2(0.000, 0.00),  // pointe avant
+  new THREE.Vector2(0.090, 0.20),
+  new THREE.Vector2(0.220, 0.46),
+  new THREE.Vector2(0.400, 0.80),
+  new THREE.Vector2(0.580, 1.16),
+  new THREE.Vector2(0.740, 1.55),
+  new THREE.Vector2(0.870, 1.96),
+  new THREE.Vector2(0.968, 2.36),
+  new THREE.Vector2(1.032, 2.76),
+  new THREE.Vector2(1.065, 3.10),  // rayon max (vers l'arrière)
+  new THREE.Vector2(1.078, 3.40),
+  new THREE.Vector2(1.055, 3.66),
+  new THREE.Vector2(1.005, 3.86),
+  new THREE.Vector2(0.940, 4.00),  // bord arrière (ouverture)
+];
+
+const nacelleGeo = new THREE.LatheGeometry(nacellePoints, 72);
+const nacelleMesh = new THREE.Mesh(nacelleGeo, M.body);
+nacelleMesh.rotation.x = -Math.PI / 2;
+nacelleMesh.position.z = 2;
+nacelleMesh.scale.y = 0.82;  // aplatit haut/bas (contrainte impression 3D)
+nacelleMesh.castShadow = true;
+nacelleMesh.receiveShadow = true;
+root.add(nacelleMesh);
+
+// Face arrière fermée.
+// z_back = 2 - 0.82 * 4.00 = -1.28  (scale.y comprime la longueur, pas le rayon)
+// Le disque doit être dans le plan XY avec normal vers -Z pour fermer le boîtier.
+const backCapGeo = new THREE.CircleGeometry(0.960, 72);
+const backCap = new THREE.Mesh(backCapGeo, M.body);
+backCap.position.z = -1.28;
+backCap.rotation.y = Math.PI; // normal vers -Z (face externe visible depuis l'arrière)
+backCap.castShadow = true;
+backCap.receiveShadow = true;
+root.add(backCap);
+
+// ─── LCD screen ────────────────────────────────────────────────────────────────
+// CORRECTION : scale.y=0.82 sur le mesh est en espace local (avant rotation),
+// donc elle comprime Z (longueur) et non Y (hauteur). Le dessus réel de la nacelle
+// est à y≈0.93 à z=+0.20, et non 0.72. Le LCD était DANS le boîtier.
+//
+// Solution : bezel plongeant — le bas du bezel est enfoncé dans la nacelle
+// (comme un vrai composant encastré), la face de l'écran dépasse légèrement.
+// Le dessus de la nacelle à z=+0.20 ≈ y=0.93, LCD group à y=1.02.
+const lcdGroup = new THREE.Group();
+lcdGroup.position.set(0, 1.02, 0.20); // dessus du boîtier, entre propulseur et tige
+root.add(lcdGroup);
+
+// Bezel plongeant : bas encastré dans la nacelle, rebord visible en surface.
+// Canvas 256×640 portrait → PlaneGeometry(0.34, 0.80) même ratio → zéro distorsion.
+add(lcdGroup, new THREE.BoxGeometry(0.42, 0.22, 0.88), M.lcdBezel, { y: -0.06 });
+// Fond lumineux vert émissif
+add(lcdGroup, new THREE.BoxGeometry(0.36, 0.024, 0.82), M.lcdGlow, { y: 0.052 });
+// Écran LCD — PlaneGeometry(width=0.34, height=0.80) avec rx=-PI/2 le rend horizontal.
+// width (X) = 0.34 travers nacelle, height→Z = 0.80 le long de la nacelle.
+// Ratio 0.34/0.80 = 0.425 ≈ canvas 256/640 = 0.40 → pixels carrés, texte net.
+add(lcdGroup, new THREE.PlaneGeometry(0.34, 0.80), M.lcdScreen,
+  { rx: -Math.PI / 2, y: 0.066 });
+
+// ─── PROPELLER (avant — pointe, z=+2) ─────────────────────────────────────────
+const propGroup = new THREE.Group();
+propGroup.position.set(0, 0, 2.04);
+root.add(propGroup);
+
+// Hub
+add(propGroup, new THREE.SphereGeometry(0.065, 12, 8), M.propBlade);
+
+// 3 pales à 120°, légèrement tordues (pitch aérodynamique)
+for (let i = 0; i < 3; i++) {
+  const angle = (i / 3) * Math.PI * 2;
+  const bladeGroup = new THREE.Group();
+  bladeGroup.rotation.z = angle;
+  propGroup.add(bladeGroup);
+
+  // Pale : boîte mince allongée, offset depuis le hub
+  const bGeo = new THREE.BoxGeometry(0.62, 0.09, 0.018);
+  const blade = new THREE.Mesh(bGeo, M.propBlade);
+  blade.position.x = 0.31;   // centré à mi-longueur
+  blade.rotation.y = 0.30;   // pitch
+  blade.rotation.z = 0.06;   // légère torsion (effilement vers le bout)
+  blade.castShadow = true;
+  bladeGroup.add(blade);
+}
+
+// ─── MAST + CUP ANEMOMETER (dessus, vers l'arrière) ───────────────────────────
+// Position calculée : top of nacelle at z=-1.0, after scale.y≈0.867
+const mastGroup = new THREE.Group();
+mastGroup.position.set(0, 0.87, -1.0);
+root.add(mastGroup);
+
+// Tige de mât (part qui dépasse hors du boîtier)
+add(mastGroup, new THREE.CylinderGeometry(0.022, 0.022, 1.20, 12), M.steel,
+  { y: 0.60 });  // milieu à y=0.60, donc de 0 à 1.20
+
+// Tige intérieure (passe dans le corps jusqu'au capteur Hall)
+// On l'ajoute brièvement visible dans la coupe arrière (juste symbolique)
+
+// ── Rotor coupelle (tourne autour de Y) ────────────────────────────────────────
+const cupGroup = new THREE.Group();
+cupGroup.position.set(0, 1.25, 0);
+mastGroup.add(cupGroup);
+
+// Axle central
+add(cupGroup, new THREE.CylinderGeometry(0.022, 0.022, 0.10, 12), M.steel, { y: 0 });
+
+// 3 bras + godets à 120°.
+// Principe Robinson : tous les godets ouvrent dans la MÊME direction tangentielle
+// (sens -Z local du bras), créant l'effet moulinet.
+// rx = PI/2 sur l'hémisphère tourne le dôme de +Y → +Z (vers l'avant de rotation)
+// et l'ouverture de -Y → -Z (ouvre tangentiellement pour capturer le vent). ✓
+for (let i = 0; i < 3; i++) {
+  const phi = (i / 3) * Math.PI * 2;
+  const armLen = 0.38;
+
+  const armGroup = new THREE.Group();
+  armGroup.rotation.y = phi;
+  cupGroup.add(armGroup);
+
+  // Bras radial horizontal
+  add(armGroup, new THREE.CylinderGeometry(0.013, 0.013, armLen, 8), M.steel,
+    { x: armLen / 2, rz: Math.PI / 2 });
+
+  // Godet : hémisphère supérieur (dome +Y, ouverture équatoriale)
+  // Après rx = PI/2 : dôme → +Z, ouverture → -Z (tangentielle ✓)
+  const hGeo = new THREE.SphereGeometry(0.18, 18, 9, 0, Math.PI * 2, 0, Math.PI / 2);
+  const hMesh = new THREE.Mesh(hGeo, M.cups);
+  hMesh.position.set(armLen, 0, 0);
+  hMesh.rotation.x = Math.PI / 2;  // dôme → +Z (sens rotation), ouverture → -Z
+  hMesh.castShadow = true;
+  armGroup.add(hMesh);
+
+  // Disque de fermeture à l'équateur (normal vers -Z = même sens que l'ouverture)
+  const cap = new THREE.Mesh(new THREE.CircleGeometry(0.18, 18), M.cups);
+  cap.position.set(armLen, 0, 0);
+  cap.rotation.y = Math.PI;  // flip normal : +Z → -Z ✓
+  armGroup.add(cap);
+}
+
+// ── Girouette (au-dessus de la coupelle) ───────────────────────────────────────
+// Structure inspirée du modèle SolidWorks :
+//   - base cylindrique (logement roulement à billes) autour du haut du mât
+//   - bras horizontal portant une ailette verticale rectangulaire
+//   - contrepoids côté opposé
+// Le groupe tourne entier autour de Y (vent) avec oscillation douce.
+const girouetteGroup = new THREE.Group();
+girouetteGroup.position.set(0, 1.35, 0); // juste au-dessus du rotor coupelle
+mastGroup.add(girouetteGroup);
+
+// Base cylindrique — logement roulement à billes (gros cylindre court)
+add(girouetteGroup,
+  new THREE.CylinderGeometry(0.075, 0.075, 0.16, 24), M.steel, { y: 0.08 });
+
+// Petit axle vertical au-dessus de la base
+add(girouetteGroup,
+  new THREE.CylinderGeometry(0.014, 0.014, 0.28, 10), M.steel, { y: 0.30 });
+
+// Bras horizontal portant l'ailette (côté positif X)
+add(girouetteGroup,
+  new THREE.CylinderGeometry(0.013, 0.013, 0.56, 8), M.vane,
+  { x: 0.28, y: 0.08, rz: Math.PI / 2 });
+
+// Ailette : grande surface plate verticale (thin along X, tall in Y, wide in Z)
+add(girouetteGroup,
+  new THREE.BoxGeometry(0.025, 0.30, 0.44), M.vane, { x: 0.58, y: 0.08 });
+
+// Contrepoids côté opposé (cylindre court horizontal)
+add(girouetteGroup,
+  new THREE.CylinderGeometry(0.032, 0.032, 0.18, 12), M.vane,
+  { x: -0.18, y: 0.08, rz: Math.PI / 2 });
+
+// ─── Ground shadow ─────────────────────────────────────────────────────────────
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), M.shadow);
+ground.rotation.x = -Math.PI / 2;
+ground.position.y = -1.05;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ANIMATION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Simulation de vent : cycle sinusoïdal entre 0 et 90 km/h
+let simSpeed = 0;      // km/h courant (simulé)
+const MOTOR_THRESH = 11; // seuil d'enclenchement du moteur (km/h)
+let motorOn = false;
+
+// Oscillation de la girouette
+let girouetteAngle = 0;
+let girouetteTarget = 0.4;
+
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = clock.getDelta();
+  const t  = clock.getElapsedTime();
+
+  // ── Simulation vitesse vent ────────────────────────────────────────────────
+  // Montée progressive, plateau, descente — cycle ~12 s
+  const cycle = (t % 12) / 12;  // 0→1 en 12 s
+  if (cycle < 0.40) {
+    simSpeed = THREE.MathUtils.lerp(0, 72, cycle / 0.40);     // montée
+  } else if (cycle < 0.65) {
+    simSpeed = THREE.MathUtils.lerp(72, 55, (cycle - 0.40) / 0.25); // plateau fluctuant
+  } else if (cycle < 0.85) {
+    simSpeed = THREE.MathUtils.lerp(55, 0, (cycle - 0.65) / 0.20);  // descente
+  } else {
+    simSpeed = 0; // pause
+  }
+  // légère variation random sur le plateau
+  simSpeed += Math.sin(t * 3.7) * 2.5 + Math.cos(t * 5.1) * 1.2;
+  simSpeed = Math.max(0, simSpeed);
+
+  motorOn = simSpeed >= MOTOR_THRESH;
+
+  // ── Rotation coupelle (toujours, speed ∝ vitesse vent) ────────────────────
+  const cupRPM = simSpeed * 0.80;  // proportionnel
+  cupGroup.rotation.y += (cupRPM / 60) * Math.PI * 2 * dt;
+
+  // ── Rotation hélice (continue, s'accélère avec le vent) ────────────────────
+  // Toujours en rotation : vitesse de base 80 RPM + proportionnel au vent
+  const propRPM = 80 + THREE.MathUtils.clamp(simSpeed * 5.5, 0, 400);
+  propGroup.rotation.z += (propRPM / 60) * Math.PI * 2 * dt;
+
+  // ── Oscillation girouette ──────────────────────────────────────────────────
+  if (Math.random() < 0.008) girouetteTarget = (Math.random() - 0.5) * 1.2;
+  girouetteAngle += (girouetteTarget - girouetteAngle) * dt * 1.8;
+  girouetteGroup.rotation.y = girouetteAngle;
+
+  // ── LCD update (~8 fps suffit) ─────────────────────────────────────────────
+  if (Math.floor(t * 8) !== Math.floor((t - dt) * 8)) {
+    drawLCD(simSpeed, motorOn);
+  }
+
+  // ── LCD glow pulse ──────────────────────────────────────────────────────────
+  M.lcdGlow.emissiveIntensity = 1.2 + 0.2 * Math.sin(t * 2.5);
+
+  controls.update();
+  renderer.render(scene, camera);
+}
+
+animate();
+</script>
+</body>
+</html>

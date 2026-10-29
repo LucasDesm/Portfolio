@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<title>Détection cancer poumon — Deep Learning · Lucas Desmartin</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+:root {
+  --bg:      #080b10;
+  --bg2:     #0d1117;
+  --surface: rgba(255,255,255,0.04);
+  --srf-hov: rgba(255,255,255,0.07);
+  --border:  rgba(255,255,255,0.08);
+  --cyan:    #00d4ff;
+  --blue:    #4a9eff;
+  --violet:  #7c3aed;
+  --white:   #f0f4f8;
+  --muted:   #6b7a8d;
+  --text:    #c8d4e0;
+  --font:    system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:    'JetBrains Mono','Fira Mono',ui-monospace,monospace;
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+body { background:var(--bg); color:var(--text); font-family:var(--font); overflow-x:hidden; }
+
+/* ── NAV ── */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:200;
+  padding:.85rem 2rem;
+  display:flex; justify-content:space-between; align-items:center;
+  background:rgba(8,11,16,.75);
+  backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border);
+}
+.nav-brand { font-family:var(--mono); font-size:.72rem; color:var(--cyan); letter-spacing:.12em; text-transform:uppercase; }
+.nav-links  { display:flex; gap:2rem; list-style:none; }
+.nav-links a { font-size:.82rem; color:var(--muted); text-decoration:none; transition:color .2s; letter-spacing:.04em; }
+.nav-links a:hover { color:var(--white); }
+@media(max-width:600px){ .nav-links { display:none; } }
+
+/* ── HERO ── */
+#hero {
+  position:relative; height:100vh;
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+}
+#hero-canvas { position:absolute; inset:0; z-index:0; }
+
+.hero-content {
+  position:relative; z-index:1;
+  text-align:center; max-width:860px; padding:0 2rem;
+  /* subtle bottom-fade so text readable over 3D */
+  text-shadow:0 2px 40px rgba(8,11,16,.8);
+}
+.hero-badge {
+  display:inline-flex; align-items:center; gap:.5rem;
+  background:rgba(0,212,255,.07); border:1px solid rgba(0,212,255,.22);
+  border-radius:9999px; padding:.35rem 1.1rem;
+  font-size:.72rem; font-family:var(--mono); color:var(--cyan); letter-spacing:.09em;
+  margin-bottom:2rem;
+}
+.hero-badge::before {
+  content:''; width:6px; height:6px; background:var(--cyan); border-radius:50%;
+  animation:blink 2s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.65)} }
+
+.hero-title {
+  font-size:clamp(1.85rem,4.5vw,3.6rem);
+  font-weight:800; line-height:1.13;
+  color:var(--white); margin-bottom:1.5rem; letter-spacing:-.025em;
+}
+.hero-title .g {
+  background:linear-gradient(90deg,var(--cyan),var(--blue));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.hero-sub {
+  font-size:clamp(.9rem,1.8vw,1.1rem); color:var(--muted);
+  line-height:1.75; max-width:580px; margin:0 auto 2rem;
+}
+.hero-tags { display:flex; justify-content:center; gap:.8rem; flex-wrap:wrap; margin-bottom:2.5rem; }
+.hero-tag {
+  font-family:var(--mono); font-size:.68rem; color:var(--muted);
+  letter-spacing:.06em; padding:.3rem .8rem;
+  border:1px solid var(--border); border-radius:4px;
+}
+.hero-cta {
+  display:inline-flex; align-items:center; gap:.6rem;
+  background:linear-gradient(135deg,var(--cyan),var(--blue));
+  color:#080b10; font-weight:800; font-size:.88rem;
+  padding:.9rem 2.1rem; border-radius:8px; text-decoration:none;
+  transition:opacity .2s,transform .2s; letter-spacing:.02em;
+}
+.hero-cta:hover { opacity:.85; transform:translateY(-2px); }
+.scroll-hint {
+  position:absolute; bottom:2.2rem; left:50%; transform:translateX(-50%);
+  z-index:1; display:flex; flex-direction:column; align-items:center; gap:.4rem;
+  color:var(--muted); font-size:.68rem; letter-spacing:.12em; font-family:var(--mono);
+  animation:sbounce 2s ease-in-out infinite;
+}
+@keyframes sbounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(7px)} }
+
+/* ── LAYOUT ── */
+.section-wrap { padding:6rem 2rem; max-width:1100px; margin:0 auto; }
+.divider { max-width:1100px; margin:0 auto; height:1px; background:var(--border); }
+
+.s-label { font-family:var(--mono); font-size:.7rem; color:var(--cyan); letter-spacing:.16em; text-transform:uppercase; margin-bottom:.7rem; }
+.s-title { font-size:clamp(1.5rem,3vw,2.3rem); font-weight:800; color:var(--white); margin-bottom:.9rem; letter-spacing:-.02em; }
+.s-sub   { font-size:.95rem; color:var(--muted); line-height:1.72; max-width:600px; margin-bottom:3rem; }
+
+.reveal { opacity:0; transform:translateY(26px); transition:opacity .6s ease,transform .6s ease; }
+.reveal.visible { opacity:1; transform:none; }
+.reveal-d1 { transition-delay:.1s; }
+.reveal-d2 { transition-delay:.2s; }
+.reveal-d3 { transition-delay:.3s; }
+
+/* ── CONTEXTE ── */
+.ctx-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:1.4rem; }
+.ctx-card {
+  background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:1.75rem;
+  transition:border-color .3s,background .3s;
+}
+.ctx-card:hover { border-color:rgba(0,212,255,.25); background:var(--srf-hov); }
+.ctx-stat { font-family:var(--mono); font-size:2.2rem; font-weight:800; display:block; margin-bottom:.4rem;
+  background:linear-gradient(90deg,var(--cyan),var(--blue));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+.ctx-card h3 { font-size:.95rem; color:var(--white); margin-bottom:.5rem; font-weight:600; }
+.ctx-card p  { font-size:.83rem; color:var(--muted); line-height:1.62; }
+.ctx-icon { font-size:1.6rem; display:block; margin-bottom:.9rem; }
+
+/* ── PIPELINE ── */
+.pipeline { display:flex; flex-direction:column; position:relative; }
+.pipeline::before {
+  content:''; position:absolute; left:20px; top:12px; bottom:12px; width:2px;
+  background:linear-gradient(to bottom,var(--cyan),var(--violet)); opacity:.25;
+}
+.p-step { display:flex; gap:1.5rem; align-items:flex-start; padding:1.5rem 0; }
+.p-dot {
+  flex-shrink:0; width:42px; height:42px; border-radius:50%;
+  background:var(--bg2); border:2px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:.72rem; color:var(--cyan);
+  transition:border-color .3s,box-shadow .3s; position:relative; z-index:1;
+}
+.p-step:hover .p-dot { border-color:var(--cyan); box-shadow:0 0 18px rgba(0,212,255,.28); }
+.p-step h3 { font-size:.95rem; color:var(--white); margin-bottom:.35rem; font-weight:600; }
+.p-step p  { font-size:.83rem; color:var(--muted); line-height:1.62; }
+.p-tag {
+  display:inline-block; margin-top:.5rem; font-family:var(--mono); font-size:.66rem;
+  color:var(--cyan); background:rgba(0,212,255,.07); border:1px solid rgba(0,212,255,.18);
+  border-radius:4px; padding:.2rem .55rem;
+}
+
+/* ── MODÈLES ── */
+.models-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:1.5rem; }
+.model-card {
+  background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:2rem;
+  position:relative; overflow:hidden; transition:transform .3s,border-color .3s;
+}
+.model-card::after {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:var(--mc-color,var(--border)); opacity:0; transition:opacity .3s;
+}
+.model-card:hover { transform:translateY(-5px); }
+.model-card:hover::after { opacity:1; }
+.model-card.best {
+  border-color:rgba(0,212,255,.32);
+  background:linear-gradient(135deg,rgba(0,212,255,.05),rgba(74,158,255,.03));
+}
+.model-card.best::after { background:linear-gradient(90deg,var(--cyan),var(--blue)); opacity:1; }
+.best-badge {
+  position:absolute; top:1rem; right:1rem;
+  background:linear-gradient(90deg,var(--cyan),var(--blue)); color:#080b10;
+  font-size:.62rem; font-weight:800; font-family:var(--mono);
+  padding:.22rem .65rem; border-radius:9999px; letter-spacing:.08em; text-transform:uppercase;
+}
+.model-name { font-family:var(--mono); font-size:1.45rem; font-weight:700; color:var(--white); margin-bottom:.25rem; }
+.model-type { font-size:.76rem; color:var(--muted); margin-bottom:1.25rem; }
+.model-params { display:flex; flex-direction:column; gap:.55rem; margin-bottom:1.2rem; }
+.mp { display:flex; justify-content:space-between; font-size:.82rem; }
+.mp .l { color:var(--muted); }
+.mp .v { color:var(--white); font-family:var(--mono); }
+.model-desc { font-size:.83rem; color:var(--muted); line-height:1.62; border-top:1px solid var(--border); padding-top:1rem; }
+
+/* ── RÉSULTATS ── */
+.results-top { display:grid; grid-template-columns:1fr 2fr; gap:2rem; margin-bottom:2rem; align-items:center; }
+@media(max-width:640px){ .results-top { grid-template-columns:1fr; } }
+.res-main {
+  background:linear-gradient(135deg,rgba(0,212,255,.08),rgba(74,158,255,.05));
+  border:1px solid rgba(0,212,255,.28); border-radius:16px; padding:2rem; text-align:center;
+}
+.res-val {
+  font-family:var(--mono); font-size:3.8rem; font-weight:800; line-height:1; display:block; margin-bottom:.4rem;
+  background:linear-gradient(90deg,var(--cyan),var(--blue));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.res-lbl { font-size:.72rem; color:var(--muted); font-family:var(--mono); letter-spacing:.1em; text-transform:uppercase; }
+.res-model { font-size:1rem; font-weight:700; color:var(--white); margin-top:.8rem; }
+
+/* bar chart */
+.bars { display:flex; flex-direction:column; gap:1.2rem; }
+.bar-row { display:flex; align-items:center; gap:1rem; }
+.bar-lbl { font-family:var(--mono); font-size:.8rem; color:var(--white); width:130px; flex-shrink:0; }
+.bar-track { flex:1; height:10px; background:rgba(255,255,255,.05); border-radius:9999px; overflow:hidden; }
+.bar-fill { height:100%; border-radius:9999px; width:0; transition:width 1.3s cubic-bezier(.16,1,.3,1); }
+.bf-a { background:linear-gradient(90deg,var(--cyan),var(--blue)); }
+.bf-b { background:#4a9eff; }
+.bf-c { background:#2d5fa0; }
+.bar-pct { font-family:var(--mono); font-size:.78rem; color:var(--muted); width:54px; text-align:right; }
+
+.metrics-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1rem; margin-top:2rem; }
+.metric-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:1.25rem; text-align:center; }
+.metric-val { font-family:var(--mono); font-size:1.65rem; font-weight:700; color:var(--cyan); }
+.metric-lbl { font-size:.73rem; color:var(--muted); margin-top:.3rem; letter-spacing:.05em; }
+
+/* ── TECH ── */
+.tech-grid { display:flex; flex-wrap:wrap; gap:.7rem; }
+.tech-badge {
+  display:flex; align-items:center; gap:.5rem;
+  background:var(--surface); border:1px solid var(--border); border-radius:8px;
+  padding:.55rem 1rem; font-family:var(--mono); font-size:.8rem; color:var(--text);
+  transition:border-color .2s,color .2s,background .2s; cursor:default;
+}
+.tech-badge:hover { border-color:rgba(0,212,255,.32); color:var(--cyan); background:rgba(0,212,255,.05); }
+.tech-dot { width:6px; height:6px; border-radius:50%; background:var(--cyan); opacity:.55; flex-shrink:0; }
+
+/* ── VISION ── */
+.vision-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.25rem; }
+.vision-item { display:flex; gap:1rem; align-items:flex-start; padding:1.25rem; background:var(--surface); border:1px solid var(--border); border-radius:12px; transition:border-color .3s; }
+.vision-item:hover { border-color:rgba(0,212,255,.2); }
+.vision-num {
+  flex-shrink:0; width:34px; height:34px; border-radius:8px;
+  background:rgba(0,212,255,.08); border:1px solid rgba(0,212,255,.18);
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:.7rem; color:var(--cyan);
+}
+.vision-item h4 { font-size:.88rem; color:var(--white); margin-bottom:.35rem; font-weight:600; }
+.vision-item p  { font-size:.8rem; color:var(--muted); line-height:1.58; }
+
+/* ── FOOTER ── */
+footer { border-top:1px solid var(--border); padding:3.5rem 2rem; text-align:center; }
+.ft-label { font-family:var(--mono); font-size:.7rem; color:var(--cyan); letter-spacing:.14em; text-transform:uppercase; margin-bottom:.5rem; }
+.ft-name  { font-size:1.15rem; font-weight:700; color:var(--white); margin-bottom:.3rem; }
+.ft-meta  { font-size:.82rem; color:var(--muted); margin-bottom:1.6rem; }
+.ft-btn {
+  display:inline-flex; align-items:center; gap:.5rem;
+  border:1px solid var(--border); color:var(--text); font-size:.82rem;
+  padding:.6rem 1.4rem; border-radius:8px; text-decoration:none;
+  transition:border-color .2s,color .2s;
+}
+.ft-btn:hover { border-color:var(--cyan); color:var(--cyan); }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-brand">CT-SCAN · IA MÉDICALE</span>
+  <ul class="nav-links">
+    <li><a href="#contexte">Contexte</a></li>
+    <li><a href="#pipeline">Pipeline</a></li>
+    <li><a href="#modeles">Modèles</a></li>
+    <li><a href="#resultats">Résultats</a></li>
+    <li><a href="#vision">Suite</a></li>
+  </ul>
+</nav>
+
+<!-- ── HERO ── -->
+<section id="hero">
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-badge">Projet IA · Imagerie Médicale · ESME 2026</div>
+    <h1 class="hero-title">
+      Détection précoce du<br>
+      <span class="g">cancer du poumon</span><br>
+      par deep learning
+    </h1>
+    <p class="hero-sub">
+      Classification de CT-scans pulmonaires par fine-tuning de CNN pré-entraînés —
+      VGG16, ResNet50 et EfficientNet-B0 mis en compétition sur données médicales réelles.
+    </p>
+    <div class="hero-tags">
+      <span class="hero-tag">IA / DEEP LEARNING</span>
+      <span class="hero-tag">IMAGERIE MÉDICALE</span>
+      <span class="hero-tag">TRANSFER LEARNING</span>
+      <span class="hero-tag">PYTORCH</span>
+    </div>
+    <a href="#resultats" class="hero-cta">
+      Voir les résultats
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+    </a>
+  </div>
+  <div class="scroll-hint">
+    SCROLL
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ── CONTEXTE ── -->
+<div class="section-wrap" id="contexte">
+  <div class="reveal">
+    <p class="s-label">01 — Contexte</p>
+    <h2 class="s-title">Un enjeu de santé publique majeur</h2>
+    <p class="s-sub">Le cancer du poumon est l'une des premières causes de mortalité par cancer dans le monde. Détecter tôt la maladie sur imagerie CT est un défi clinique où l'IA peut apporter une aide concrète.</p>
+  </div>
+  <div class="ctx-grid">
+    <div class="ctx-card reveal reveal-d1">
+      <span class="ctx-stat">1,8M</span>
+      <h3>Décès annuels mondiaux</h3>
+      <p>Le cancer du poumon est la première cause de mortalité par cancer. La détection tardive en aggrave le pronostic.</p>
+    </div>
+    <div class="ctx-card reveal reveal-d2">
+      <span class="ctx-stat">~1 000</span>
+      <h3>Images CT-scans — dataset</h3>
+      <p>Dataset Chest CT-Scan (Kaggle) — 4 classes : adénocarcinome, carcinome à grandes cellules, carcinome épidermoïde, tissu normal.</p>
+    </div>
+    <div class="ctx-card reveal reveal-d3">
+      <span class="ctx-stat">4</span>
+      <h3>Classes diagnostiques</h3>
+      <p>Classification multi-classe fine-grained sur coupes axiales de CT-scan pulmonaire, sans annotation radiologique préalable.</p>
+    </div>
+    <div class="ctx-card reveal reveal-d1">
+      <span class="ctx-icon">🎯</span>
+      <h3>Objectif du projet</h3>
+      <p>Construire un système d'aide au diagnostic par transfer learning sur CNN pré-entraînés, évalué rigoureusement par benchmark multi-modèles.</p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ── PIPELINE ── -->
+<div class="section-wrap" id="pipeline">
+  <div class="reveal">
+    <p class="s-label">02 — Méthodologie</p>
+    <h2 class="s-title">Pipeline de traitement</h2>
+    <p class="s-sub">De la donnée brute CT-scan à l'évaluation comparative — chaque étape conçue pour extraire le maximum de signal sur un dataset médical de taille limitée.</p>
+  </div>
+  <div class="pipeline reveal">
+    <div class="p-step">
+      <div class="p-dot">01</div>
+      <div>
+        <h3>Chargement du dataset</h3>
+        <p>Import du dataset Chest CT-Scan depuis Kaggle. Organisation en 4 classes, split stratifié train / validation / test (70/15/15).</p>
+        <span class="p-tag">Pandas · Pillow</span>
+      </div>
+    </div>
+    <div class="p-step">
+      <div class="p-dot">02</div>
+      <div>
+        <h3>Prétraitement des images</h3>
+        <p>Redimensionnement à 224×224 px, normalisation ImageNet (mean=[0.485,0.456,0.406], std=[0.229,0.224,0.225]), conversion en tenseurs PyTorch.</p>
+        <span class="p-tag">Torchvision · transforms</span>
+      </div>
+    </div>
+    <div class="p-step">
+      <div class="p-dot">03</div>
+      <div>
+        <h3>Data augmentation</h3>
+        <p>Flips horizontaux/verticaux, rotations aléatoires (±15°), jitter de luminosité et contraste — enrichissement du jeu d'entraînement limité sans sur-augmentation.</p>
+        <span class="p-tag">RandomHorizontalFlip · ColorJitter · RandomRotation</span>
+      </div>
+    </div>
+    <div class="p-step">
+      <div class="p-dot">04</div>
+      <div>
+        <h3>Transfer learning</h3>
+        <p>Chargement des poids ImageNet sur VGG16, ResNet50 et EfficientNet-B0. Gel initial des couches de feature extraction pour stabiliser l'entraînement.</p>
+        <span class="p-tag">PyTorch · torchvision.models · pretrained weights</span>
+      </div>
+    </div>
+    <div class="p-step">
+      <div class="p-dot">05</div>
+      <div>
+        <h3>Fine-tuning</h3>
+        <p>Remplacement du classifier par une tête adaptée (4 classes). Entraînement end-to-end sur 20 epochs — optimiseur Adam, CrossEntropyLoss, StepLR scheduler.</p>
+        <span class="p-tag">Adam · CrossEntropyLoss · StepLR</span>
+      </div>
+    </div>
+    <div class="p-step">
+      <div class="p-dot">06</div>
+      <div>
+        <h3>Évaluation &amp; benchmark</h3>
+        <p>Accuracy, F1-score macro, matrice de confusion, courbes d'apprentissage. Comparaison systématique des 3 architectures sur le même split test.</p>
+        <span class="p-tag">Scikit-learn · Matplotlib · Seaborn</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ── MODÈLES ── -->
+<div class="section-wrap" id="modeles">
+  <div class="reveal">
+    <p class="s-label">03 — Architectures CNN</p>
+    <h2 class="s-title">Trois modèles mis en compétition</h2>
+    <p class="s-sub">Benchmark rigoureux de trois architectures CNN pré-entraînées sur ImageNet, fine-tunées sur le même dataset médical dans des conditions identiques.</p>
+  </div>
+  <div class="models-grid">
+    <div class="model-card reveal reveal-d1" style="--mc-color:#2d5fa0">
+      <div class="model-name">VGG16</div>
+      <div class="model-type">Architecture classique · Oxford VGGNet 2014</div>
+      <div class="model-params">
+        <div class="mp"><span class="l">Paramètres</span><span class="v">138 M</span></div>
+        <div class="mp"><span class="l">Profondeur</span><span class="v">16 couches conv</span></div>
+        <div class="mp"><span class="l">Accuracy test</span><span class="v" style="color:#4a7abf">61,0 %</span></div>
+      </div>
+      <p class="model-desc">Architecture profonde empilant des blocs 3×3. Référence historique du benchmark — sa lourdeur (138 M params) le pénalise sur un dataset médical limité où le sur-apprentissage domine.</p>
+    </div>
+    <div class="model-card reveal reveal-d2" style="--mc-color:#4a9eff">
+      <div class="model-name">ResNet50</div>
+      <div class="model-type">Réseau résiduel · Microsoft Research 2015</div>
+      <div class="model-params">
+        <div class="mp"><span class="l">Paramètres</span><span class="v">25,6 M</span></div>
+        <div class="mp"><span class="l">Profondeur</span><span class="v">50 couches (résiduel)</span></div>
+        <div class="mp"><span class="l">Accuracy test</span><span class="v" style="color:var(--blue)">73,0 %</span></div>
+      </div>
+      <p class="model-desc">Skip connections qui court-circuitent les couches et résolvent la disparition du gradient. Meilleur compromis que VGG16 sur données limitées — features généralisables via résidus.</p>
+    </div>
+    <div class="model-card best reveal reveal-d3">
+      <div class="best-badge">★ MEILLEUR</div>
+      <div class="model-name">EfficientNet-B0</div>
+      <div class="model-type">Compound scaling · Google Brain 2019</div>
+      <div class="model-params">
+        <div class="mp"><span class="l">Paramètres</span><span class="v">5,3 M</span></div>
+        <div class="mp"><span class="l">Profondeur</span><span class="v">82 couches (MBConv)</span></div>
+        <div class="mp"><span class="l">Accuracy test</span><span class="v" style="color:var(--cyan)">87,6 %</span></div>
+      </div>
+      <p class="model-desc">Scaling composite optimisé (profondeur + largeur + résolution simultanés). 26× moins de paramètres que VGG16 pour 26 points d'accuracy en plus — le meilleur compromis du benchmark sur données médicales limitées.</p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ── RÉSULTATS ── -->
+<div class="section-wrap" id="resultats">
+  <div class="reveal">
+    <p class="s-label">04 — Performances</p>
+    <h2 class="s-title">Résultats à mi-parcours</h2>
+    <p class="s-sub">EfficientNet-B0 fine-tuné sur 20 epochs obtient les meilleures performances intermédiaires — 87,6 % d'accuracy et F1=0,885 sur le jeu de test.</p>
+  </div>
+  <div class="results-top reveal" id="results-block">
+    <div class="res-main">
+      <span class="res-val">87,6%</span>
+      <div class="res-lbl">ACCURACY TEST</div>
+      <div class="res-model">EfficientNet-B0 — 20 epochs</div>
+    </div>
+    <div class="bars">
+      <div class="bar-row">
+        <span class="bar-lbl">EfficientNet-B0</span>
+        <div class="bar-track"><div class="bar-fill bf-a" data-pct="87.6"></div></div>
+        <span class="bar-pct">87,6 %</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-lbl">ResNet50</span>
+        <div class="bar-track"><div class="bar-fill bf-b" data-pct="73.0"></div></div>
+        <span class="bar-pct">73,0 %</span>
+      </div>
+      <div class="bar-row">
+        <span class="bar-lbl">VGG16</span>
+        <div class="bar-track"><div class="bar-fill bf-c" data-pct="61.0"></div></div>
+        <span class="bar-pct">61,0 %</span>
+      </div>
+    </div>
+  </div>
+  <div class="metrics-row reveal">
+    <div class="metric-card">
+      <div class="metric-val">0,885</div>
+      <div class="metric-lbl">F1-Score macro (EfficientNet-B0)</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val">20</div>
+      <div class="metric-lbl">Epochs d'entraînement</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val">4</div>
+      <div class="metric-lbl">Classes diagnostiques</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val">~1K</div>
+      <div class="metric-lbl">Images CT-scans (dataset)</div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ── TECH STACK ── -->
+<div class="section-wrap" id="tech">
+  <div class="reveal">
+    <p class="s-label">05 — Stack technique</p>
+    <h2 class="s-title">Technologies utilisées</h2>
+    <p class="s-sub">Environnement Python scientifique orienté deep learning, avec évaluation et visualisation rigoureuses.</p>
+  </div>
+  <div class="tech-grid reveal">
+    <span class="tech-badge"><span class="tech-dot"></span>Python 3.11</span>
+    <span class="tech-badge"><span class="tech-dot"></span>PyTorch</span>
+    <span class="tech-badge"><span class="tech-dot"></span>Torchvision</span>
+    <span class="tech-badge"><span class="tech-dot"></span>Scikit-learn</span>
+    <span class="tech-badge"><span class="tech-dot"></span>Pandas</span>
+    <span class="tech-badge"><span class="tech-dot"></span>NumPy</span>
+    <span class="tech-badge"><span class="tech-dot"></span>Matplotlib</span>
+    <span class="tech-badge"><span class="tech-dot"></span>Seaborn</span>
+    <span class="tech-badge"><span class="tech-dot"></span>Jupyter Notebook</span>
+    <span class="tech-badge"><span class="tech-dot"></span>VGG16</span>
+    <span class="tech-badge"><span class="tech-dot"></span>ResNet50</span>
+    <span class="tech-badge"><span class="tech-dot"></span>EfficientNet-B0</span>
+    <span class="tech-badge"><span class="tech-dot"></span>Transfer Learning</span>
+    <span class="tech-badge"><span class="tech-dot"></span>Data Augmentation</span>
+    <span class="tech-badge"><span class="tech-dot"></span>Kaggle Dataset</span>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ── VISION ── -->
+<div class="section-wrap" id="vision">
+  <div class="reveal">
+    <p class="s-label">06 — Perspectives</p>
+    <h2 class="s-title">Suite du projet</h2>
+    <p class="s-sub">Le projet est en cours. Les prochaines étapes élargissent le benchmark, approfondissent les modèles et visent un livrable applicatif concret.</p>
+  </div>
+  <div class="vision-grid">
+    <div class="vision-item reveal reveal-d1">
+      <div class="vision-num">01</div>
+      <div>
+        <h4>Entraînement étendu</h4>
+        <p>Augmentation du nombre d'epochs et fine-tuning plus profond des couches basses pour mieux capturer les textures et structures pulmonaires spécifiques.</p>
+      </div>
+    </div>
+    <div class="vision-item reveal reveal-d2">
+      <div class="vision-num">02</div>
+      <div>
+        <h4>Vision Transformer (ViT)</h4>
+        <p>Intégration d'une architecture attention-based pour confronter le paradigme transformer aux CNN sur imagerie médicale à faible volume de données.</p>
+      </div>
+    </div>
+    <div class="vision-item reveal reveal-d3">
+      <div class="vision-num">03</div>
+      <div>
+        <h4>Modularisation du code</h4>
+        <p>Refactoring en modules réutilisables — DataLoader, Trainer, Evaluator — avec configuration YAML par expérience pour faciliter la reproductibilité.</p>
+      </div>
+    </div>
+    <div class="vision-item reveal reveal-d1">
+      <div class="vision-num">04</div>
+      <div>
+        <h4>Application de détection</h4>
+        <p>Interface utilisateur permettant d'uploader un CT-scan et d'obtenir une prédiction de classe avec score de confiance — livrable final du projet.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="ft-label">Cancer du poumon — Détection IA</div>
+  <div class="ft-name">Lucas Desmartin</div>
+  <div class="ft-meta">Ingénieur ESME · Biotech &amp; Numérique · IA / Imagerie Médicale · 2026</div>
+  <a href="https://github.com/TouyeAchille/lung-cancer-ct-detection-ai" target="_blank" rel="noopener" class="ft-btn">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+    Voir le dépôt GitHub
+  </a>
+</footer>
+
+<!-- ── THREE.JS HERO SCENE ── -->
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.161.0/build/three.module.js"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+
+const canvas = document.getElementById('hero-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene  = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(48, innerWidth / innerHeight, 0.01, 80);
+camera.position.set(0, 0, 7.5);
+
+// Resize handler
+window.addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// ── CT slice canvas texture ────────────────────────────────────────────────────
+// Creates a stylized CT cross-section (axial view): dark background, lung fields,
+// spine, mediastinum — abstracted to give the "medical scanner" feel.
+function makeCTTexture(seed) {
+  const S = 256;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = S;
+  const ctx = cv.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#020508';
+  ctx.fillRect(0, 0, S, S);
+
+  // Body contour (soft ellipse)
+  const body = ctx.createRadialGradient(128, 128, 0, 128, 128, 112);
+  body.addColorStop(0,   'rgba(38,52,70,.85)');
+  body.addColorStop(.65, 'rgba(18,28,42,.7)');
+  body.addColorStop(1,   'rgba(0,0,0,0)');
+  ctx.fillStyle = body;
+  ctx.beginPath(); ctx.ellipse(128, 128, 112, 96, 0, 0, Math.PI*2); ctx.fill();
+
+  // Left lung (dark cavity)
+  const ll = ctx.createRadialGradient(85+seed*4, 118, 2, 85+seed*4, 118, 44);
+  ll.addColorStop(0, 'rgba(4,10,20,.98)');
+  ll.addColorStop(.55,'rgba(6,14,26,.75)');
+  ll.addColorStop(1, 'rgba(18,32,52,0)');
+  ctx.fillStyle = ll;
+  ctx.beginPath(); ctx.ellipse(85+seed*4, 118, 40, 48, -.18, 0, Math.PI*2); ctx.fill();
+
+  // Right lung
+  const rl = ctx.createRadialGradient(168-seed*4, 116, 2, 168-seed*4, 116, 40);
+  rl.addColorStop(0, 'rgba(4,10,20,.98)');
+  rl.addColorStop(.55,'rgba(6,14,26,.75)');
+  rl.addColorStop(1, 'rgba(18,32,52,0)');
+  ctx.fillStyle = rl;
+  ctx.beginPath(); ctx.ellipse(168-seed*4, 116, 36, 45, .18, 0, Math.PI*2); ctx.fill();
+
+  // Spine (bright)
+  const sp = ctx.createRadialGradient(128, 170, 0, 128, 170, 14);
+  sp.addColorStop(0, 'rgba(210,228,255,.95)');
+  sp.addColorStop(.5, 'rgba(140,170,215,.7)');
+  sp.addColorStop(1, 'rgba(60,90,140,0)');
+  ctx.fillStyle = sp;
+  ctx.beginPath(); ctx.ellipse(128, 170, 13, 15, 0, 0, Math.PI*2); ctx.fill();
+
+  // Heart / mediastinum
+  const ht = ctx.createRadialGradient(116, 116, 0, 116, 116, 24);
+  ht.addColorStop(0, 'rgba(80,105,145,.8)');
+  ht.addColorStop(1, 'rgba(30,45,70,0)');
+  ctx.fillStyle = ht;
+  ctx.beginPath(); ctx.ellipse(116, 116, 22, 25, 0, 0, Math.PI*2); ctx.fill();
+
+  // Scan line grid (subtle)
+  ctx.strokeStyle = 'rgba(0,212,255,.025)';
+  ctx.lineWidth = 1;
+  for (let y = 0; y < S; y += 5) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(S, y); ctx.stroke();
+  }
+
+  // Edge glow (cyan rim)
+  const rim = ctx.createRadialGradient(128, 128, 100, 128, 128, 128);
+  rim.addColorStop(0, 'rgba(0,212,255,0)');
+  rim.addColorStop(.8,'rgba(0,212,255,.02)');
+  rim.addColorStop(1, 'rgba(0,212,255,.18)');
+  ctx.fillStyle = rim;
+  ctx.fillRect(0, 0, S, S);
+
+  const tex = new THREE.CanvasTexture(cv);
+  tex.minFilter = THREE.LinearFilter;
+  tex.magFilter = THREE.LinearFilter;
+  return tex;
+}
+
+// ── CT slices stack ────────────────────────────────────────────────────────────
+const sliceGroup = new THREE.Group();
+scene.add(sliceGroup);
+
+const N = 14;
+for (let i = 0; i < N; i++) {
+  const t = i / (N - 1);
+  const seed = (t - .5) * 6;
+  const tex  = makeCTTexture(seed);
+  const mat  = new THREE.MeshBasicMaterial({
+    map: tex, transparent: true,
+    opacity: .12 + .62 * Math.sin(Math.PI * t), // fade in + fade out
+    side: THREE.DoubleSide, depthWrite: false,
+  });
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 3.2), mat);
+  mesh.position.y = (t - .5) * 3.2;
+  mesh.rotation.z = (Math.random() - .5) * .04;
+  sliceGroup.add(mesh);
+}
+
+// ── Glowing rings around the stack ────────────────────────────────────────────
+function addRing(r, opacity, tilt=0) {
+  const m = new THREE.Mesh(
+    new THREE.TorusGeometry(r, .012, 8, 96),
+    new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity })
+  );
+  m.rotation.x = Math.PI / 2 + tilt;
+  sliceGroup.add(m);
+  return m;
+}
+const ring1 = addRing(1.85, .35);
+const ring2 = addRing(2.10, .12, .15);
+const ring3 = addRing(2.35, .06, -.1);
+
+// ── Vertical scan beam ─────────────────────────────────────────────────────────
+const scanMat = new THREE.MeshBasicMaterial({
+  color: 0x00d4ff, transparent: true, opacity: .18, side: THREE.DoubleSide, depthWrite: false,
+});
+const scanPlane = new THREE.Mesh(new THREE.PlaneGeometry(3.4, .06), scanMat);
+sliceGroup.add(scanPlane);
+
+// ── Background particles ───────────────────────────────────────────────────────
+const N_PARTS = 280;
+const pPos = new Float32Array(N_PARTS * 3);
+for (let i = 0; i < N_PARTS; i++) {
+  pPos[i*3]   = (Math.random()-.5)*18;
+  pPos[i*3+1] = (Math.random()-.5)*12;
+  pPos[i*3+2] = (Math.random()-.5)*10 - 3;
+}
+const pGeo = new THREE.BufferGeometry();
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+scene.add(new THREE.Points(pGeo, new THREE.PointsMaterial({
+  color: 0x4a9eff, size: .04, transparent: true, opacity: .45, sizeAttenuation: true,
+})));
+
+// ── Mouse parallax ────────────────────────────────────────────────────────────
+let mx = 0, my = 0;
+let targetX = 0, targetY = 0;
+window.addEventListener('mousemove', e => {
+  mx = (e.clientX / innerWidth  - .5) * 2;
+  my = (e.clientY / innerHeight - .5) * 2;
+});
+
+// ── Animate ───────────────────────────────────────────────────────────────────
+let t0 = performance.now();
+function animate() {
+  requestAnimationFrame(animate);
+  const t = (performance.now() - t0) / 1000;
+
+  // Smooth mouse follow
+  targetX += (mx - targetX) * .04;
+  targetY += (my - targetY) * .04;
+
+  // Slow Y-axis rotation + mouse tilt
+  sliceGroup.rotation.y = t * .15 + targetX * .18;
+  sliceGroup.rotation.x = targetY * .09;
+
+  // Gentle float
+  sliceGroup.position.y = Math.sin(t * .38) * .15;
+
+  // Ring pulse
+  ring1.material.opacity = .3 + .08 * Math.sin(t * 1.6);
+  ring2.material.opacity = .10 + .04 * Math.sin(t * 1.2 + 1);
+
+  // Scan beam sweeping along Y
+  scanPlane.position.y = Math.sin(t * .7) * 1.55;
+  scanMat.opacity = .14 + .06 * Math.sin(t * 2.2);
+
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+
+<!-- ── SCROLL ANIMATIONS + BAR CHART ── -->
+<script>
+const io = new IntersectionObserver(entries => {
+  entries.forEach(el => {
+    if (!el.isIntersecting) return;
+    el.target.classList.add('visible');
+    // Trigger bars when results block enters view
+    if (el.target.id === 'results-block' || el.target.closest('#results-block')) {
+      document.querySelectorAll('.bar-fill').forEach(b => {
+        b.style.width = b.dataset.pct + '%';
+      });
+    }
+  });
+}, { threshold: .14 });
+
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+// Also observe the results block directly for bar chart trigger
+const rb = document.getElementById('results-block');
+if (rb) io.observe(rb);
+</script>
+
+</body>
+</html>
