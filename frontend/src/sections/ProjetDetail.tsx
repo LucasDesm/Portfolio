@@ -17,7 +17,18 @@ const EthylCanvas    = lazy(() => import('@/three/EthylCanvas'))
 const AnemCanvas     = lazy(() => import('@/three/AnemCanvas'))
 const CTScanCanvas   = lazy(() => import('@/three/CTScanCanvas'))
 const GlycemieCanvas = lazy(() => import('@/three/GlycemieCanvas'))
+const AustralCanvas  = lazy(() => import('@/three/AustralCanvas'))
 const CTX_COLOR: Record<string, string> = contextColors
+
+// Projets dont le haut de page est une animation (sinon : figure de couverture)
+const SCENES: Record<string, React.ReactNode> = {
+  'austral-omics':         <AustralCanvas />,
+  'ct-scan-deep-learning': <CTScanCanvas />,
+  'regulateur-glycemie':   <GlycemieCanvas />,
+  'main-robotique-emg':    <HandCanvas />,
+  'ethylometre':           <EthylCanvas />,
+  'anemometre':            <AnemCanvas />,
+}
 
 const TIER_LABEL: Record<number, string> = {
   1: 'Projet phare',
@@ -43,16 +54,7 @@ function SceneFallback({ ctxColor }: { ctxColor: string }) {
 
 function ProjectScene({ slug, ctxColor, cover, coverAlt }: { slug: string; ctxColor: string; cover?: string; coverAlt?: string }) {
   const fallback = <SceneFallback ctxColor={ctxColor} />
-
-  const scenes: Record<string, React.ReactNode> = {
-    'ct-scan-deep-learning': <CTScanCanvas />,
-    'regulateur-glycemie':   <GlycemieCanvas />,
-    'main-robotique-emg':    <HandCanvas />,
-    'ethylometre':           <EthylCanvas />,
-    'anemometre':            <AnemCanvas />,
-  }
-
-  const canvas = scenes[slug]
+  const canvas = SCENES[slug]
   if (!canvas && cover) {
     // Figure réelle : rendue dans le flux, la boîte parente prend sa hauteur
     return (
@@ -131,6 +133,7 @@ export default function ProjetDetail() {
   }
 
   const ctxColor = CTX_COLOR[project.context] ?? colors.textMuted
+  const showCover = !SCENES[project.slug] && !!project.cover
 
   return (
     <PageTransition>
@@ -209,7 +212,7 @@ export default function ProjetDetail() {
           style={{ padding: '56px 48px 0', maxWidth: '1100px', margin: '0 auto' }}
         >
           <div style={{
-            height: !project.has3D && project.cover ? 'auto' : 'clamp(420px, 52vh, 560px)',
+            height: showCover ? 'auto' : 'clamp(420px, 52vh, 560px)',
             borderRadius: '20px',
             overflow: 'hidden',
             background: `linear-gradient(145deg, ${ctxColor}07 0%, ${ctxColor}18 60%, ${ctxColor}0a 100%)`,
@@ -226,7 +229,7 @@ export default function ProjetDetail() {
             }} />
             <ProjectScene slug={project.slug} ctxColor={ctxColor} cover={project.cover} coverAlt={project.figures?.[0]?.alt} />
           </div>
-          {!project.has3D && project.cover && (
+          {showCover && (
             <p style={{ fontFamily: fonts.body, fontSize: '13px', color: colors.textMuted, lineHeight: 1.65, margin: '12px 0 0', maxWidth: '760px', ...justify }}>
               {project.figures?.find(f => f.src === project.cover)?.caption}
             </p>
@@ -327,7 +330,7 @@ export default function ProjetDetail() {
         )}
 
         {/* ── Rôle, récit, résultats, figures ── */}
-        <ProjectEvidence project={project} accent={ctxColor} />
+        <ProjectEvidence project={project} accent={ctxColor} coverShown={showCover} />
 
         {/* ── Parcours lié ── */}
         {linkedStep && (

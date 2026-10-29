@@ -65,10 +65,10 @@ function Table({ table }: { table: ResultTable }) {
   )
 }
 
-export default function ProjectEvidence({ project, accent }: { project: Project; accent: string }) {
+export default function ProjectEvidence({ project, accent, coverShown }: { project: Project; accent: string; coverShown: boolean }) {
   const { role, sections, tables } = project
-  // La figure de couverture est déjà affichée (avec sa légende) en haut de page
-  const figures = project.figures?.filter(f => f.src !== project.cover)
+  // Si la figure de couverture est déjà affichée (avec sa légende) en haut de page, ne pas la répéter
+  const figures = coverShown ? project.figures?.filter(f => f.src !== project.cover) : project.figures
   if (!role && !sections?.length && !tables?.length && !figures?.length) return null
 
   return (

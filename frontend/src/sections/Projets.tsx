@@ -14,8 +14,12 @@ const EthylCanvas     = lazy(() => import('@/three/EthylCanvas'))
 const AnemCanvas      = lazy(() => import('@/three/AnemCanvas'))
 const CTScanCanvas    = lazy(() => import('@/three/CTScanCanvas'))
 const GlycemieCanvas  = lazy(() => import('@/three/GlycemieCanvas'))
+const AustralCanvas   = lazy(() => import('@/three/AustralCanvas'))
 
 const CTX_COLOR: Record<ProjectContext, string> = contextColors
+
+// Projets phares dont la vignette est une animation plutôt que la figure de couverture
+const TIER1_ANIMATED = new Set(['austral-omics', 'ct-scan-deep-learning', 'regulateur-glycemie', 'main-robotique-emg'])
 
 type Filter = 'tous' | ProjectContext
 const FILTERS: { key: Filter; label: string }[] = [
@@ -331,6 +335,13 @@ function EauxScene({ a }: { a: string }) {
 
 function Tier1Visual({ slug, accent }: { slug: string; accent: string }) {
   const p = { a: accent }
+  if (slug === 'austral-omics') {
+    return (
+      <Suspense fallback={null}>
+        <AustralCanvas />
+      </Suspense>
+    )
+  }
   if (slug === 'ct-scan-deep-learning') {
     return (
       <ThreeBoundary fallback={<CTScanScene {...p} />}>
@@ -438,7 +449,7 @@ function Tier1Card({ project, index }: { project: ReturnType<typeof useProjects>
         backgroundSize: '28px 28px',
         maskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)',
       }} />
-      {project.cover ? (
+      {project.cover && !TIER1_ANIMATED.has(project.slug) ? (
         <div style={{ position: 'absolute', inset: '18px', zIndex: 1, background: colors.bgCard, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px' }}>
           <img src={project.cover} alt={project.figures?.[0]?.alt ?? ''} loading="lazy" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
         </div>
