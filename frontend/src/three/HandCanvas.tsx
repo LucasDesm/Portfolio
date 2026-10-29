@@ -410,5 +410,5 @@ export function HandCanvasOnly() {
   )
 }
 
-useGLTF.preload('/models/hand-optimized.glb')
-useGLTF.preload('/models/hand_blender.glb')
+// Pas de préchargement : le module est importé par l'accueil, qui n'affiche que l'iframe
+// de la main. Le modèle est chargé à la demande, sur la page du projet.
