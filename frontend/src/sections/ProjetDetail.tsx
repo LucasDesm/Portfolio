@@ -93,21 +93,6 @@ export default function ProjetDetail() {
   const { scrollYProgress } = useScroll({ target: containerRef })
   const readingProgress = useTransform(scrollYProgress, [0, 1], ['0%', '100%'])
 
-  if (!project) {
-    return (
-      <PageTransition>
-        <div style={{ paddingTop: '64px', minHeight: '100svh', background: colors.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center' }}>
-            <h1 style={{ fontFamily: fonts.heading, fontSize: '48px', fontWeight: 400, color: colors.text, margin: '0 0 16px' }}>Projet introuvable</h1>
-            <Link to="/projets" style={{ fontFamily: fonts.body, color: colors.accent, fontSize: '15px', fontWeight: 600 }}>← Retour aux projets</Link>
-          </div>
-        </div>
-      </PageTransition>
-    )
-  }
-
-  const ctxColor = CTX_COLOR[project.context] ?? colors.textMuted
-
   // Anime.js entrance on project load
   useEffect(() => {
     if (!titleRef.current) return
@@ -127,7 +112,22 @@ export default function ProjetDetail() {
       ease: 'outExpo',
       delay: stagger(80, { start: 350 }),
     })
-  }, [project.slug])
+  }, [slug])
+
+  if (!project) {
+    return (
+      <PageTransition>
+        <div style={{ paddingTop: '64px', minHeight: '100svh', background: colors.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center' }}>
+            <h1 style={{ fontFamily: fonts.heading, fontSize: '48px', fontWeight: 400, color: colors.text, margin: '0 0 16px' }}>Projet introuvable</h1>
+            <Link to="/projets" style={{ fontFamily: fonts.body, color: colors.accent, fontSize: '15px', fontWeight: 600 }}>← Retour aux projets</Link>
+          </div>
+        </div>
+      </PageTransition>
+    )
+  }
+
+  const ctxColor = CTX_COLOR[project.context] ?? colors.textMuted
 
   return (
     <PageTransition>

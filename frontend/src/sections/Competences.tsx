@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect } from 'react'
 import { motion, useInView, useScroll, useSpring, useTransform } from 'motion/react'
 import { animate, stagger } from 'animejs'
 import PageTransition from '@/components/PageTransition'
@@ -83,7 +83,7 @@ function radarPoint(i: number, r: number) {
   return { x: CX + r * Math.cos(angle), y: CY + r * Math.sin(angle) }
 }
 
-function labelAnchor(i: number): { anchor: string; dy: number } {
+function labelAnchor(i: number): { anchor: 'start' | 'middle' | 'end'; dy: number } {
   const angle = -Math.PI / 2 + (2 * Math.PI / N) * i
   const cosA  = Math.cos(angle)
   if (cosA > 0.25)  return { anchor: 'start', dy: 0 }

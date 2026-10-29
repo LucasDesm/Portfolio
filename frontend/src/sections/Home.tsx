@@ -15,7 +15,6 @@ import { useProjects } from '@/hooks/useProjects'
 import type { Project } from '@/lib/data'
 
 // ─── Lazy 3D renders (chargés uniquement quand la carte est active) ────────────
-const HandCanvasLazy     = lazy(() => import('@/three/HandCanvas'))
 const HandOnlyLazy       = lazy(() => import('@/three/HandCanvas').then(m => ({ default: m.HandCanvasOnly })))
 const CTScanCanvasLazy   = lazy(() => import('@/three/CTScanCanvas'))
 const GlycemieCanvasLazy = lazy(() => import('@/three/GlycemieCanvas'))

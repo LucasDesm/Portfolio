@@ -7,7 +7,6 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
 })
 import Header from '@/components/Header'
-import CustomCursor from '@/components/CustomCursor'
 import { colors, ca } from '@/lib/tokens'
 
 const Home          = lazy(() => import('@/sections/Home'))
@@ -84,7 +83,6 @@ export default function App() {
     <BrowserRouter>
       <div style={{ minHeight: '100svh', background: colors.bg, position: 'relative' }}>
         <AmbientBackground />
-        <CustomCursor />
         <div style={{ position: 'relative', zIndex: 1 }}>
           <ScrollToTop />
           <Header />

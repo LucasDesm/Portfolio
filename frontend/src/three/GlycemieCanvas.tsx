@@ -38,10 +38,12 @@ export default function GlycemieCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const el = canvasRef.current
+    if (!el) return
+    const canvas = el
+    const context = canvas.getContext('2d')
+    if (!context) return
+    const ctx = context
 
     const resize = () => {
       canvas.width  = canvas.offsetWidth

@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react'
 import PageTransition from '@/components/PageTransition'
 import { colors, fonts, ca } from '@/lib/tokens'
