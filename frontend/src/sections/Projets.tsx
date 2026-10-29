@@ -5,7 +5,7 @@ import { animate, stagger } from 'animejs'
 import PageTransition from '@/components/PageTransition'
 import Reveal from '@/components/Reveal'
 import ThreeBoundary from '@/components/ThreeBoundary'
-import { colors, fonts, contextColors } from '@/lib/tokens'
+import { colors, fonts, ca, contextColors, justify } from '@/lib/tokens'
 import { type ProjectContext } from '@/lib/data'
 import { useProjects } from '@/hooks/useProjects'
 
@@ -221,7 +221,7 @@ function EthylScene({ a }: { a: string }) {
       {/* LEDs */}
       {[0, 1, 2].map(i => (
         <motion.circle key={i} cx={58 + i * 12} cy={60} r={3.5}
-          fill={i === 0 ? '#22c55e' : i === 1 ? '#f59e0b' : '#ef4444'}
+          fill={i === 0 ? colors.olive : i === 1 ? colors.textLight : colors.rust}
           animate={{ opacity: [0.25, 1, 0.25] }}
           transition={{ duration: 1.6, delay: i * 0.5, repeat: Infinity }}
         />
@@ -487,7 +487,7 @@ function Tier1Card({ project, index }: { project: ReturnType<typeof useProjects>
         {project.subtitle}
       </p>
       <p style={{
-        fontFamily: fonts.body, fontSize: '14px', lineHeight: 1.78, margin: '0 0 24px',
+        fontFamily: fonts.body, fontSize: '14px', lineHeight: 1.78, margin: '0 0 24px', ...justify,
         color: hovered ? 'rgba(255,255,255,0.65)' : colors.textMuted,
         transition: 'color 0.35s',
       }}>
@@ -533,7 +533,7 @@ function Tier1Card({ project, index }: { project: ReturnType<typeof useProjects>
             background: colors.bgCard,
             boxShadow: hovered
               ? `0 24px 64px ${accent}1a, 0 2px 8px ${accent}10`
-              : '0 4px 18px rgba(28,43,58,0.05)',
+              : `0 4px 18px ${ca.text(0.05)}`,
             transition: 'box-shadow 0.4s, border-color 0.4s',
             position: 'relative',
           }}
@@ -570,7 +570,7 @@ function Tier2Card({ project }: { project: ReturnType<typeof useProjects>['data'
               borderRadius: '14px', overflow: 'hidden', cursor: 'pointer',
               boxShadow: hovered
                 ? `0 18px 48px ${accent}22, 0 2px 8px ${accent}10`
-                : '0 2px 12px rgba(28,43,58,0.05)',
+                : `0 2px 12px ${ca.text(0.05)}`,
               transition: 'box-shadow 0.35s, border-color 0.35s',
             }}
           >
@@ -721,7 +721,7 @@ export default function Projets() {
             </div>
             <p ref={subtitleRef} style={{
               fontFamily: fonts.body, fontSize: '17px', color: colors.textMuted,
-              margin: '0 0 36px', lineHeight: 1.7, opacity: 0,
+              margin: '0 0 36px', lineHeight: 1.7, opacity: 0, ...justify,
             }}>
               {projects.length} projets · du prototype embarqué au modèle de deep learning.
             </p>

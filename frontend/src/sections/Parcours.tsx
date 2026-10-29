@@ -2,19 +2,14 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router'
 import { motion, useScroll, useTransform, useInView } from 'motion/react'
 import PageTransition from '@/components/PageTransition'
-import { colors, fonts } from '@/lib/tokens'
+import { colors, fonts, ca, typeColors, domainColors, justify } from '@/lib/tokens'
 import { type ParcoursStep } from '@/lib/data'
 import { useParcours } from '@/hooks/useParcours'
 import { useProjects } from '@/hooks/useProjects'
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
-const TYPE_COLOR: Record<string, string> = {
-  formation: colors.accent,
-  stage:     colors.green,
-  echange:   '#8b5cf6',
-  cible:     '#d97706',
-}
+const TYPE_COLOR: Record<string, string> = typeColors
 const TYPE_LABEL: Record<string, string> = {
   formation: 'Formation',
   stage:     'Stage',
@@ -167,7 +162,7 @@ function Chapter({ step, index, total, onActive }: {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
-            style={{ fontFamily: fonts.body, fontSize: '15.5px', lineHeight: 1.85, color: colors.textMuted, margin: '0 0 28px' }}
+            style={{ fontFamily: fonts.body, fontSize: '15.5px', lineHeight: 1.85, color: colors.textMuted, margin: '0 0 28px', ...justify }}
           >
             {step.description}
           </motion.p>
@@ -214,7 +209,7 @@ function Chapter({ step, index, total, onActive }: {
             viewport={{ once: true }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
             whileHover={{ y: -4, boxShadow: `0 20px 56px ${accent}1a` }}
-            style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '20px', height: '168px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', marginBottom: '10px', boxShadow: '0 4px 18px rgba(28,43,58,0.06)' }}
+            style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '20px', height: '168px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden', marginBottom: '10px', boxShadow: `0 4px 18px ${ca.text(0.06)}` }}
           >
             <motion.div animate={{ scale: [1, 1.18, 1], opacity: [0.4, 0.65, 0.4] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
               style={{ position: 'absolute', inset: 0, background: `radial-gradient(circle at 50% 50%, ${accent}0e, transparent 65%)` }} />
@@ -279,12 +274,12 @@ function Chapter({ step, index, total, onActive }: {
 // ─── Compétences ─────────────────────────────────────────────────────────────
 
 const SKILLS_GROUPS = [
-  { label: 'Machine Learning & IA',        color: colors.accent, skills: ['PyTorch', 'Scikit-learn', 'Transfer Learning', 'CNN', 'Python', 'Pandas'] },
-  { label: 'Bio-informatique',             color: colors.green,  skills: ['Séquençage Nanopore', 'Metabarcoding 16S / COI', 'vsearch', 'SILVA / BOLD', 'R', 'Linux · Slurm'] },
-  { label: 'Embarqué & Instrumentation',   color: colors.green,  skills: ['Arduino', 'C/C++', 'MATLAB', 'Simulink', 'LabVIEW', 'Capteurs', 'Métrologie ISO 17025', 'Électronique'] },
-  { label: 'Développement web & logiciel', color: '#8b5cf6',     skills: ['React', 'TypeScript', 'Vite', 'Spring Boot', 'Rust', 'Three.js', 'REST API', 'PostgreSQL'] },
-  { label: 'Conception & Fabrication',     color: '#d97706',     skills: ['SolidWorks', 'CAO 3D', 'Impression 3D', 'Blender', 'Prototypage'] },
-  { label: 'Biomédical & Réglementaire',   color: '#dc2626',     skills: ['Dispositifs médicaux', 'RGPD', 'BizzMine', 'Qualité', 'Métrologie'] },
+  { label: 'Machine Learning & IA',        color: domainColors.ml,         skills: ['PyTorch', 'Scikit-learn', 'Transfer Learning', 'CNN', 'Python', 'Pandas'] },
+  { label: 'Bio-informatique',             color: domainColors.embarque,   skills: ['Séquençage Nanopore', 'Metabarcoding 16S / COI', 'vsearch', 'SILVA / BOLD', 'R', 'Linux · Slurm'] },
+  { label: 'Embarqué & Instrumentation',   color: domainColors.embarque,   skills: ['Arduino', 'C/C++', 'MATLAB', 'Simulink', 'LabVIEW', 'Capteurs', 'Métrologie ISO 17025', 'Électronique'] },
+  { label: 'Développement web & logiciel', color: domainColors.web,        skills: ['React', 'TypeScript', 'Vite', 'Spring Boot', 'Rust', 'Three.js', 'REST API', 'PostgreSQL'] },
+  { label: 'Conception & Fabrication',     color: domainColors.cao,        skills: ['SolidWorks', 'CAO 3D', 'Impression 3D', 'Blender', 'Prototypage'] },
+  { label: 'Biomédical & Réglementaire',   color: domainColors.biomedical, skills: ['Dispositifs médicaux', 'RGPD', 'BizzMine', 'Qualité', 'Métrologie'] },
 ]
 
 function Competences() {
@@ -389,7 +384,7 @@ function Intro() {
       {/* Barre de lecture dégradée */}
       <motion.div style={{
         position: 'fixed', top: 0, left: 0, right: 0, height: 3, zIndex: 100,
-        background: `linear-gradient(to right, ${colors.accent}, ${colors.green}, #8b5cf6, #d97706)`,
+        background: `linear-gradient(to right, ${typeColors.formation}, ${typeColors.stage}, ${typeColors.echange}, ${typeColors.cible})`,
         scaleX: lineScale, transformOrigin: 'left',
       }} />
 
@@ -400,7 +395,7 @@ function Intro() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 + i * 0.07, duration: 0.45 }}
-            style={{ fontFamily: fonts.body, fontSize: '12px', fontWeight: 600, color: colors.accent, background: colors.accentLight, padding: '4px 12px', borderRadius: '20px', border: `1px solid rgba(42,109,181,0.18)` }}
+            style={{ fontFamily: fonts.body, fontSize: '12px', fontWeight: 600, color: colors.accent, background: colors.accentLight, padding: '4px 12px', borderRadius: '20px', border: `1px solid ${ca.accent(0.2)}` }}
           >
             {s}
           </motion.span>
@@ -433,9 +428,9 @@ function Intro() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.65, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        style={{ fontFamily: fonts.body, fontSize: '17px', lineHeight: 1.8, color: colors.textMuted, maxWidth: '520px', margin: '0 0 56px' }}
+        style={{ fontFamily: fonts.body, fontSize: '17px', lineHeight: 1.8, color: colors.textMuted, maxWidth: '520px', margin: '0 0 56px', ...justify }}
       >
-        De la mesure physique à l'intelligence artificielle médicale — trois formations complémentaires, trois stages, un semestre en Corée du Sud.
+        De la mesure physique à l'intelligence artificielle médicale : trois formations complémentaires, trois stages, un semestre en Corée du Sud.
       </motion.p>
 
       {/* Frise des étapes */}

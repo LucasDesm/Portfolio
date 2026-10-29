@@ -50,7 +50,7 @@ export function ChainDiagram({ steps, ctxColor, feedback, label }: {
                   {step.label}
                 </div>
                 {step.sublabel && (
-                  <div style={{ fontFamily: fonts.mono, fontSize: '10px', color: ctxColor, marginTop: '5px', opacity: 0.75 }}>
+                  <div style={{ fontFamily: fonts.mono, fontSize: '10px', color: ctxColor, marginTop: '5px' }}>
                     {step.sublabel}
                   </div>
                 )}
@@ -74,7 +74,7 @@ export function ChainDiagram({ steps, ctxColor, feedback, label }: {
           <span style={{
             padding: '3px 14px', borderRadius: '20px',
             background: `${ctxColor}0e`, border: `1px solid ${ctxColor}22`,
-            fontFamily: fonts.mono, fontSize: '10px', color: ctxColor, opacity: 0.7,
+            fontFamily: fonts.mono, fontSize: '10px', color: ctxColor,
             whiteSpace: 'nowrap', flexShrink: 0,
           }}>
             {label ?? 'boucle fermée'}

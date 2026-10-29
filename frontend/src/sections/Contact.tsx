@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, useScroll, useTransform } from 'motion/react'
 import PageTransition from '@/components/PageTransition'
-import { colors, fonts, ca } from '@/lib/tokens'
+import { colors, fonts, ca, justify } from '@/lib/tokens'
 
 const DIRECT_EMAIL = 'lucasdesmartin@yahoo.fr'
 
@@ -36,7 +36,7 @@ function DirectContact() {
       <h2 style={{ fontFamily: fonts.heading, fontSize: '22px', fontWeight: 400, color: colors.text, margin: 0, letterSpacing: '-0.015em' }}>
         Écrivez-moi directement
       </h2>
-      <p style={{ fontFamily: fonts.body, fontSize: '14px', color: colors.textMuted, lineHeight: 1.7, margin: 0 }}>
+      <p style={{ fontFamily: fonts.body, fontSize: '14px', color: colors.textMuted, lineHeight: 1.7, margin: 0, ...justify }}>
         Une offre de PFE, une question sur un projet : je réponds sous 48 h.
       </p>
       <div style={{ fontFamily: fonts.mono, fontSize: '15px', color: colors.text, padding: '14px 16px', borderRadius: '10px', background: colors.bgSubtle, border: `1px solid ${colors.borderLight}`, wordBreak: 'break-all' }}>
@@ -44,8 +44,8 @@ function DirectContact() {
       </div>
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         <a
-          href={`mailto:${DIRECT_EMAIL}?subject=${encodeURIComponent('PFE — prise de contact')}`}
-          style={{ flex: '1 1 180px', textAlign: 'center', textDecoration: 'none', background: colors.accent, color: colors.bg, padding: '14px 22px', borderRadius: '12px', fontFamily: fonts.body, fontSize: '15px', fontWeight: 600 }}
+          href={`mailto:${DIRECT_EMAIL}?subject=${encodeURIComponent('PFE : prise de contact')}`}
+          style={{ flex: '1 1 180px', textAlign: 'center', textDecoration: 'none', background: colors.accent, color: colors.bg, padding: '14px 22px', borderRadius: '14px', fontFamily: fonts.body, fontSize: '15px', fontWeight: 600, boxShadow: `0 6px 24px ${ca.accent(0.22)}` }}
         >
           Ouvrir ma messagerie
         </a>
@@ -53,7 +53,7 @@ function DirectContact() {
           type="button"
           onClick={copyEmail}
           aria-live="polite"
-          style={{ flex: '1 1 140px', background: 'transparent', color: colors.text, border: `1.5px solid ${colors.border}`, padding: '14px 22px', borderRadius: '12px', fontFamily: fonts.body, fontSize: '15px', fontWeight: 600, cursor: 'pointer' }}
+          style={{ flex: '1 1 140px', background: 'transparent', color: colors.text, border: `1.5px solid ${colors.border}`, padding: '14px 22px', borderRadius: '14px', fontFamily: fonts.body, fontSize: '15px', fontWeight: 600, cursor: 'pointer' }}
         >
           {copied ? 'Adresse copiée ✓' : "Copier l'adresse"}
         </button>
@@ -101,21 +101,23 @@ function InfoPanel() {
       style={{ position: 'sticky', top: '100px', alignSelf: 'start' }}
     >
       {/* Badge disponible */}
-      <motion.div
-        animate={{ opacity: [1, 0.6, 1] }}
-        transition={{ duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+      <div
         style={{
           display: 'inline-flex', alignItems: 'center', gap: '8px',
-          padding: '6px 14px', borderRadius: '20px',
-          background: colors.greenLight, border: `1px solid ${ca.green(0.25)}`,
+          padding: '7px 16px', borderRadius: '20px',
+          background: colors.accentLight, border: `1px solid ${ca.accent(0.2)}`,
           marginBottom: '28px',
         }}
       >
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: colors.green, display: 'block' }} />
-        <span style={{ fontFamily: fonts.body, fontSize: '12px', fontWeight: 700, color: colors.green }}>
-          Disponible — PFE à partir du 7 avril 2027
+        <motion.span
+          animate={{ opacity: [1, 0.2, 1], scale: [1, 0.8, 1] }}
+          transition={{ duration: 2.5, repeat: Infinity }}
+          style={{ width: 6, height: 6, borderRadius: '50%', background: colors.accent, display: 'block' }}
+        />
+        <span style={{ fontFamily: fonts.body, fontSize: '12px', fontWeight: 600, color: colors.accent, letterSpacing: '0.04em' }}>
+          Disponible · PFE à partir du 7 avril 2027
         </span>
-      </motion.div>
+      </div>
 
       {/* Titre */}
       <div style={{ overflow: 'hidden', marginBottom: '4px' }}>
@@ -132,7 +134,7 @@ function InfoPanel() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.55, duration: 0.55 }}
-        style={{ fontFamily: fonts.body, fontSize: '15px', color: colors.textMuted, lineHeight: 1.8, margin: '0 0 40px' }}
+        style={{ fontFamily: fonts.body, fontSize: '15px', color: colors.textMuted, lineHeight: 1.8, margin: '0 0 40px', ...justify }}
       >
         PFE 6 mois · R&D biomédicale · à partir du 7 avril 2027.<br />
         IA appliquée aux données de santé : imagerie médicale, dispositifs médicaux, données biologiques.
@@ -151,7 +153,7 @@ function InfoPanel() {
         <div style={{ height: 1, background: colors.borderLight }} />
         <ContactLink icon="⌥" label="GitHub" href="https://github.com/LucasDesm" sublabel="github.com/LucasDesm" />
         <div style={{ height: 1, background: colors.borderLight }} />
-        <ContactLink icon="↓" label="Télécharger le CV" href="/lucas-desmartin-cv.pdf" sublabel="CV — PFE (PDF)" />
+        <ContactLink icon="↓" label="Télécharger le CV" href="/lucas-desmartin-cv.pdf" sublabel="CV PFE · PDF" />
       </motion.div>
 
       {/* Info disponibilité */}
@@ -159,13 +161,13 @@ function InfoPanel() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.0, duration: 0.5 }}
-        style={{ marginTop: '32px', padding: '16px 18px', borderRadius: '12px', background: colors.bgSubtle, border: `1px solid ${colors.border}` }}
+        style={{ marginTop: '32px', padding: '16px 18px', borderRadius: '14px', background: colors.bgCard, border: `1px solid ${colors.border}` }}
       >
         <div style={{ fontFamily: fonts.body, fontSize: '11px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
           Localisation
         </div>
         <div style={{ fontFamily: fonts.body, fontSize: '13px', color: colors.text, lineHeight: 1.6 }}>
-          Paris — ESME Sudria<br />
+          Paris · ESME Sudria<br />
           <span style={{ color: colors.textMuted, fontSize: '12px' }}>Mobilité France et international</span>
         </div>
       </motion.div>
@@ -184,7 +186,7 @@ export default function Contact() {
       {/* Barre de lecture */}
       <motion.div style={{
         position: 'fixed', top: 0, left: 0, right: 0, height: 3, zIndex: 100,
-        background: `linear-gradient(to right, ${colors.accent}, ${colors.green})`,
+        background: colors.accent,
         scaleX: lineScale, transformOrigin: 'left',
       }} />
 

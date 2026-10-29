@@ -2,11 +2,11 @@ import { Link } from 'react-router'
 import { motion } from 'motion/react'
 import PageTransition from '@/components/PageTransition'
 import Reveal from '@/components/Reveal'
-import { colors, fonts } from '@/lib/tokens'
+import { colors, fonts, ca, contextColors, justify } from '@/lib/tokens'
 import { type Stage } from '@/lib/data'
 import { useStages } from '@/hooks/useStages'
 
-const STAGE_ACCENT = '#2d8c5f'
+const STAGE_ACCENT = contextColors.Stage
 
 // ─── Stage Card ───────────────────────────────────────────────────────────────
 
@@ -73,15 +73,15 @@ function StageCard({ stage, index }: { stage: Stage; index: number }) {
       {/* Highlights */}
       {stage.highlights && (
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          {stage.highlights.map(h => (
+          {stage.highlights.map((h, i) => (
             <div key={h.label} style={{
               textAlign: 'center',
               padding: '10px 16px',
               borderRadius: '10px',
-              background: `${h.color ?? STAGE_ACCENT}12`,
-              border: `1px solid ${h.color ?? STAGE_ACCENT}22`,
+              background: colors.bgCard,
+              border: `1px solid ${STAGE_ACCENT}30`,
             }}>
-              <div style={{ fontFamily: fonts.mono, fontSize: '18px', fontWeight: 700, color: h.color ?? STAGE_ACCENT }}>{h.value}</div>
+              <div style={{ fontFamily: fonts.mono, fontSize: '18px', fontWeight: 700, color: i === 0 ? STAGE_ACCENT : colors.text }}>{h.value}</div>
               <div style={{ fontFamily: fonts.body, fontSize: '10px', color: colors.textLight, marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h.label}</div>
             </div>
           ))}
@@ -104,7 +104,7 @@ function StageCard({ stage, index }: { stage: Stage; index: number }) {
       {/* Location badge */}
       <div style={{
         position: 'absolute', bottom: 16, right: 16,
-        fontFamily: fonts.mono, fontSize: '10px', color: STAGE_ACCENT, opacity: 0.5,
+        fontFamily: fonts.mono, fontSize: '10px', color: colors.textLight,
         letterSpacing: '0.06em',
       }}>
         {stage.location}
@@ -123,7 +123,7 @@ function StageCard({ stage, index }: { stage: Stage; index: number }) {
       }}>
         {stage.role}
       </h3>
-      <p style={{ fontFamily: fonts.body, fontSize: '14px', color: colors.textMuted, margin: '0 0 22px', lineHeight: 1.75 }}>
+      <p style={{ fontFamily: fonts.body, fontSize: '14px', color: colors.textMuted, margin: '0 0 22px', lineHeight: 1.75, ...justify }}>
         {stage.description}
       </p>
 
@@ -131,7 +131,7 @@ function StageCard({ stage, index }: { stage: Stage; index: number }) {
       {stage.missions.length > 0 && (
         <ul style={{ margin: '0 0 22px', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {stage.missions.map((m, i) => (
-            <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontFamily: fonts.body, fontSize: '13px', color: colors.textMuted, lineHeight: 1.6 }}>
+            <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontFamily: fonts.body, fontSize: '13px', color: colors.textMuted, lineHeight: 1.6, ...justify }}>
               <span style={{ color: STAGE_ACCENT, fontWeight: 700, marginTop: '1px', flexShrink: 0 }}>›</span>
               {m}
             </li>
@@ -164,14 +164,14 @@ function StageCard({ stage, index }: { stage: Stage; index: number }) {
 
   const card = (
     <motion.div
-      whileHover={!stage.upcoming ? { boxShadow: '0 20px 60px rgba(28,43,58,0.12)' } : {}}
+      whileHover={!stage.upcoming ? { boxShadow: `0 20px 60px ${ca.text(0.12)}` } : {}}
       style={{
         display: 'grid',
         gridTemplateColumns: isReversed ? '1fr 1.1fr' : '1.1fr 1fr',
         borderRadius: '18px', overflow: 'hidden',
         border: stage.upcoming ? `1.5px dashed ${colors.border}` : `1px solid ${colors.border}`,
         background: colors.bgCard,
-        boxShadow: '0 4px 18px rgba(28,43,58,0.05)',
+        boxShadow: `0 4px 18px ${ca.text(0.05)}`,
         transition: 'box-shadow 0.3s',
         opacity: stage.upcoming ? 0.65 : 1,
         cursor: stage.upcoming ? 'default' : 'pointer',
@@ -224,7 +224,7 @@ export default function Stages() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.55 }}
-              style={{ fontFamily: fonts.body, fontSize: '17px', color: colors.textMuted, margin: 0, lineHeight: 1.7 }}
+              style={{ fontFamily: fonts.body, fontSize: '17px', color: colors.textMuted, margin: 0, lineHeight: 1.7, ...justify }}
             >
               {done.length} stages · du laboratoire d'analyses à la bio-informatique, en passant par la robotique chirurgicale.
             </motion.p>

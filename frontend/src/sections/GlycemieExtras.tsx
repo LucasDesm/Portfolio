@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { colors, fonts } from '@/lib/tokens'
+import { colors, fonts, justify } from '@/lib/tokens'
 import { ChainDiagram } from '@/components/ChainDiagram'
 
 // ─── Hardware extension chain ─────────────────────────────────────────────────
@@ -26,13 +26,13 @@ function ChartShell({ children }: { children: React.ReactNode }) {
       style={{ display: 'block', overflow: 'visible' }}
     >
       {/* Normal glycemia zone */}
-      <rect x={0} y={Z1} width={VW} height={Z2 - Z1} fill="#4ade80" fillOpacity={0.08} />
-      <line x1={0} y1={Z1} x2={VW} y2={Z1} stroke="#4ade80" strokeWidth={1} strokeDasharray="5 4" strokeOpacity={0.4} />
-      <line x1={0} y1={Z2} x2={VW} y2={Z2} stroke="#4ade80" strokeWidth={1} strokeDasharray="5 4" strokeOpacity={0.4} />
+      <rect x={0} y={Z1} width={VW} height={Z2 - Z1} fill={colors.olive} fillOpacity={0.08} />
+      <line x1={0} y1={Z1} x2={VW} y2={Z1} stroke={colors.olive} strokeWidth={1} strokeDasharray="5 4" strokeOpacity={0.4} />
+      <line x1={0} y1={Z2} x2={VW} y2={Z2} stroke={colors.olive} strokeWidth={1} strokeDasharray="5 4" strokeOpacity={0.4} />
       {/* Labels */}
-      <text x={4} y={Z1 - 4} fontSize="8" fill="#f87171" opacity={0.65} fontFamily="monospace">HYPER</text>
-      <text x={4} y={VH - 3} fontSize="8" fill="#60a5fa" opacity={0.65} fontFamily="monospace">HYPO</text>
-      <text x={VW - 4} y={VH - 3} fontSize="8" fill="#9ca3af" opacity={0.5} fontFamily="monospace" textAnchor="end">temps →</text>
+      <text x={4} y={Z1 - 4} fontSize="8" fill={colors.rust} fontFamily={fonts.mono}>HYPER</text>
+      <text x={4} y={VH - 3} fontSize="8" fill={colors.accent} fontFamily={fonts.mono}>HYPO</text>
+      <text x={VW - 4} y={VH - 3} fontSize="8" fill={colors.textLight} fontFamily={fonts.mono} textAnchor="end">temps →</text>
       {children}
     </svg>
   )
@@ -46,7 +46,7 @@ function NoControlChart() {
       <motion.path
         d={d}
         fill="none"
-        stroke="#f87171"
+        stroke={colors.rust}
         strokeWidth={2.5}
         strokeLinecap="round"
         initial={{ pathLength: 0, opacity: 0 }}
@@ -130,14 +130,14 @@ export default function GlycemieExtras({ ctxColor }: { ctxColor: string }) {
             transition={{ duration: 0.6 }}
             style={{ padding: '24px', borderRadius: '18px', background: colors.bgCard, border: `1px solid ${colors.border}`, position: 'relative', overflow: 'hidden' }}
           >
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(to right, #f87171, transparent)', borderRadius: '18px 18px 0 0' }} />
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(to right, ${colors.rust}, transparent)`, borderRadius: '18px 18px 0 0' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-              <span style={{ fontFamily: fonts.body, fontSize: '11px', fontWeight: 700, color: '#f87171', background: '#f871711a', border: '1px solid #f8717130', padding: '3px 10px', borderRadius: '20px' }}>
+              <span style={{ fontFamily: fonts.body, fontSize: '11px', fontWeight: 700, color: colors.rust, background: `${colors.rust}14`, border: `1px solid ${colors.rust}30`, padding: '3px 10px', borderRadius: '20px' }}>
                 Sans correcteur
               </span>
             </div>
             <NoControlChart />
-            <p style={{ fontFamily: fonts.body, fontSize: '12px', color: colors.textMuted, margin: '12px 0 0', lineHeight: 1.6 }}>
+            <p style={{ fontFamily: fonts.body, fontSize: '12px', color: colors.textMuted, margin: '12px 0 0', lineHeight: 1.6, ...justify }}>
               Schéma de principe : sans régulation, la glycémie sort de la zone cible après les perturbations (repas, activité).
             </p>
           </motion.div>
@@ -148,7 +148,7 @@ export default function GlycemieExtras({ ctxColor }: { ctxColor: string }) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            style={{ padding: '24px', borderRadius: '18px', background: colors.bgCard, border: `1px solid ${ctxColor}22`, position: 'relative', overflow: 'hidden' }}
+            style={{ padding: '24px', borderRadius: '18px', background: colors.bgCard, border: `1px solid ${colors.border}`, position: 'relative', overflow: 'hidden' }}
           >
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(to right, ${ctxColor}, transparent)`, borderRadius: '18px 18px 0 0' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
@@ -157,7 +157,7 @@ export default function GlycemieExtras({ ctxColor }: { ctxColor: string }) {
               </span>
             </div>
             <PIDChart accent={ctxColor} />
-            <p style={{ fontFamily: fonts.body, fontSize: '12px', color: colors.textMuted, margin: '12px 0 0', lineHeight: 1.6 }}>
+            <p style={{ fontFamily: fonts.body, fontSize: '12px', color: colors.textMuted, margin: '12px 0 0', lineHeight: 1.6, ...justify }}>
               Schéma de principe : le correcteur ramène la glycémie dans la zone cible. Courbes illustratives, pas des résultats de simulation.
             </p>
           </motion.div>
@@ -173,7 +173,7 @@ export default function GlycemieExtras({ ctxColor }: { ctxColor: string }) {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          style={{ fontFamily: fonts.body, fontSize: '14px', color: colors.textMuted, margin: '0 0 28px', lineHeight: 1.7 }}
+          style={{ fontFamily: fonts.body, fontSize: '14px', color: colors.textMuted, margin: '0 0 28px', lineHeight: 1.7, ...justify }}
         >
           Seuil de fréquence cardiaque réglable, capteur GSR pour écarter les fortes émotions, alerte par buzzer et transmission Bluetooth vers un smartphone. Objectif : ajuster la régulation pendant l'effort ; l'intégration dans la boucle reste une perspective.
         </motion.p>

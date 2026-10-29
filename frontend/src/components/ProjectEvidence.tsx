@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { colors, fonts } from '@/lib/tokens'
+import { colors, fonts, justify } from '@/lib/tokens'
 import type { Project, ResultTable } from '@/lib/data'
 
 // Rôle, récit, résultats chiffrés et figures réelles d'un projet.
@@ -28,7 +28,7 @@ function Table({ table }: { table: ResultTable }) {
       <h3 style={{ fontFamily: fonts.body, fontSize: '15px', fontWeight: 600, color: colors.text, margin: '0 0 12px', lineHeight: 1.5 }}>
         {table.title}
       </h3>
-      <div style={{ overflowX: 'auto', border: `1px solid ${colors.borderLight}`, borderRadius: '12px', background: colors.bgCard }}>
+      <div style={{ overflowX: 'auto', border: `1px solid ${colors.border}`, borderRadius: '14px', background: colors.bgCard }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: fonts.body, fontSize: 'clamp(13px, 1.6vw, 14px)' }}>
           <thead>
             <tr>
@@ -47,8 +47,8 @@ function Table({ table }: { table: ResultTable }) {
                     {cell}
                   </th>
                 ) : (
-                  <td key={ci} style={{ textAlign: 'right', color: colors.text, padding: 'clamp(9px, 2vw, 11px) clamp(10px, 2.5vw, 16px)', borderTop: ri ? `1px solid ${colors.borderLight}` : 'none', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
-                    {cell}
+                  <td key={ci} style={{ textAlign: 'right', color: cell ? colors.text : colors.textLight, padding: 'clamp(9px, 2vw, 11px) clamp(10px, 2.5vw, 16px)', borderTop: ri ? `1px solid ${colors.borderLight}` : 'none', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                    {cell || <span aria-label="sans valeur">·</span>}
                   </td>
                 ))}
               </tr>
@@ -57,7 +57,7 @@ function Table({ table }: { table: ResultTable }) {
         </table>
       </div>
       {table.caption && (
-        <figcaption style={{ fontFamily: fonts.body, fontSize: '13px', color: colors.textMuted, lineHeight: 1.65, marginTop: '10px' }}>
+        <figcaption style={{ fontFamily: fonts.body, fontSize: '13px', color: colors.textMuted, lineHeight: 1.65, marginTop: '10px', ...justify }}>
           {table.caption}
         </figcaption>
       )}
@@ -76,7 +76,7 @@ export default function ProjectEvidence({ project, accent }: { project: Project;
       {role && (
         <section style={SECTION_STYLE}>
           <Heading accent={accent}>Mon rôle</Heading>
-          <p style={{ fontFamily: fonts.body, fontSize: '16px', lineHeight: 1.85, color: colors.textMuted, margin: 0, maxWidth: '760px' }}>
+          <p style={{ fontFamily: fonts.body, fontSize: '16px', lineHeight: 1.85, color: colors.textMuted, margin: 0, maxWidth: '760px', ...justify }}>
             {role}
           </p>
         </section>
@@ -96,7 +96,7 @@ export default function ProjectEvidence({ project, accent }: { project: Project;
                 <h3 style={{ fontFamily: fonts.heading, fontSize: '21px', fontWeight: 500, color: colors.text, margin: '0 0 8px', letterSpacing: '-0.01em' }}>
                   {s.title}
                 </h3>
-                <p style={{ fontFamily: fonts.body, fontSize: '15.5px', lineHeight: 1.85, color: colors.textMuted, margin: 0 }}>
+                <p style={{ fontFamily: fonts.body, fontSize: '15.5px', lineHeight: 1.85, color: colors.textMuted, margin: 0, ...justify }}>
                   {s.body}
                 </p>
               </motion.article>
@@ -118,10 +118,10 @@ export default function ProjectEvidence({ project, accent }: { project: Project;
           <div style={{ display: 'flex', flexDirection: 'column', gap: '40px' }}>
             {figures.map(f => (
               <figure key={f.src} style={{ margin: 0 }}>
-                <div style={{ background: colors.bgCard, border: `1px solid ${colors.borderLight}`, borderRadius: '14px', padding: 'clamp(10px, 2vw, 20px)' }}>
+                <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '14px', padding: 'clamp(10px, 2vw, 20px)' }}>
                   <img src={f.src} alt={f.alt} loading="lazy" style={{ display: 'block', width: '100%', height: 'auto' }} />
                 </div>
-                <figcaption style={{ fontFamily: fonts.body, fontSize: '13px', color: colors.textMuted, lineHeight: 1.65, marginTop: '10px', maxWidth: '760px' }}>
+                <figcaption style={{ fontFamily: fonts.body, fontSize: '13px', color: colors.textMuted, lineHeight: 1.65, marginTop: '10px', maxWidth: '760px', ...justify }}>
                   {f.caption}
                 </figcaption>
               </figure>

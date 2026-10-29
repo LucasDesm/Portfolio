@@ -9,7 +9,7 @@ import { animate, stagger } from 'animejs'
 import PageTransition from '@/components/PageTransition'
 import AnimeCharReveal from '@/components/AnimeCharReveal'
 import { useAnimeCounter } from '@/hooks/useAnimeCounter'
-import { colors, ca, fonts } from '@/lib/tokens'
+import { colors, ca, fonts, justify } from '@/lib/tokens'
 import { useParcours } from '@/hooks/useParcours'
 import { useProjects } from '@/hooks/useProjects'
 import type { Project } from '@/lib/data'
@@ -512,13 +512,13 @@ function QuiJeSuis() {
           viewport={{ once: true }}
           transition={{ duration: 0.56, ease: [0.22, 1, 0.36, 1] }}
         >
-          <p style={{ fontFamily: fonts.heading, fontSize: 'clamp(22px, 2.6vw, 30px)', fontWeight: 400, lineHeight: 1.6, color: colors.text, margin: '0 0 22px', letterSpacing: '-0.01em' }}>
+          <p style={{ fontFamily: fonts.heading, fontSize: 'clamp(22px, 2.6vw, 30px)', fontWeight: 400, lineHeight: 1.6, color: colors.text, margin: '0 0 22px', letterSpacing: '-0.01em', ...justify }}>
             Je m'appelle Lucas Desmartin, ingénieur biomédical en formation à l'ESME Paris, spécialisé en biotechnologies et numérique.
           </p>
-          <p style={{ fontFamily: fonts.body, fontSize: '17px', lineHeight: 1.85, color: colors.textMuted, margin: '0 0 16px' }}>
-            Mon parcours part de la mesure physique — capteurs, instrumentation, métrologie — pour rejoindre l'intelligence artificielle appliquée au vivant. Robotique chirurgicale chez Quantum Surgical, deep learning sur CT-scans pulmonaires, et à l'INSERM, une chaîne d'analyse d'ADN séquencé par Nanopore, validée contre une vérité connue et complétée par un modèle de deep learning.
+          <p style={{ fontFamily: fonts.body, fontSize: '17px', lineHeight: 1.85, color: colors.textMuted, margin: '0 0 16px', ...justify }}>
+            Mon parcours part de la mesure physique (capteurs, instrumentation, métrologie) pour rejoindre l'intelligence artificielle appliquée au vivant. Robotique chirurgicale chez Quantum Surgical, deep learning sur CT-scans pulmonaires, et à l'INSERM, une chaîne d'analyse d'ADN séquencé par Nanopore, validée contre une vérité connue et complétée par un modèle de deep learning.
           </p>
-          <p style={{ fontFamily: fonts.body, fontSize: '17px', lineHeight: 1.85, color: colors.textMuted, margin: 0 }}>
+          <p style={{ fontFamily: fonts.body, fontSize: '17px', lineHeight: 1.85, color: colors.textMuted, margin: 0, ...justify }}>
             Je cherche un <strong style={{ color: colors.accent, fontWeight: 600 }}>PFE de 6 mois à partir d'avril 2027</strong> en R&D biomédicale, côté IA appliquée aux données de santé.
           </p>
         </motion.div>
@@ -1221,7 +1221,7 @@ function Contact() {
           <h2 style={{ fontFamily: fonts.heading, fontSize: 'clamp(40px, 5vw, 64px)', fontWeight: 400, color: colors.text, margin: '0 0 16px', letterSpacing: '-0.03em', lineHeight: 1.08 }}>
             Travaillons<br /><em style={{ fontWeight: 300, fontStyle: 'italic', color: colors.textMuted }}>ensemble.</em>
           </h2>
-          <p style={{ fontFamily: fonts.body, fontSize: '16px', color: colors.textMuted, lineHeight: 1.75, margin: '0 0 48px' }}>
+          <p style={{ fontFamily: fonts.body, fontSize: '16px', color: colors.textMuted, lineHeight: 1.75, margin: '0 0 48px', ...justify }}>
             PFE de 6 mois · à partir du 7 avril 2027 · R&D biomédicale.<br />
             IA appliquée aux données de santé : imagerie médicale, dispositifs médicaux, données biologiques.
           </p>

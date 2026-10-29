@@ -6,7 +6,7 @@ import PageTransition from '@/components/PageTransition'
 import ThreeBoundary from '@/components/ThreeBoundary'
 import { ChainDiagram } from '@/components/ChainDiagram'
 import ProjectEvidence from '@/components/ProjectEvidence'
-import { colors, fonts, contextColors } from '@/lib/tokens'
+import { colors, fonts, ca, contextColors, justify } from '@/lib/tokens'
 import { useProjects } from '@/hooks/useProjects'
 import { useParcours } from '@/hooks/useParcours'
 
@@ -227,7 +227,7 @@ export default function ProjetDetail() {
             <ProjectScene slug={project.slug} ctxColor={ctxColor} cover={project.cover} coverAlt={project.figures?.[0]?.alt} />
           </div>
           {!project.has3D && project.cover && (
-            <p style={{ fontFamily: fonts.body, fontSize: '13px', color: colors.textMuted, lineHeight: 1.65, margin: '12px 0 0', maxWidth: '760px' }}>
+            <p style={{ fontFamily: fonts.body, fontSize: '13px', color: colors.textMuted, lineHeight: 1.65, margin: '12px 0 0', maxWidth: '760px', ...justify }}>
               {project.figures?.find(f => f.src === project.cover)?.caption}
             </p>
           )}
@@ -244,8 +244,8 @@ export default function ProjetDetail() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: i * 0.08 }}
                   style={{ padding: '26px 22px', borderRadius: '16px', background: colors.bgCard, border: `1px solid ${colors.border}`, textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(to right, ${h.color ?? ctxColor}, transparent)`, borderRadius: '16px 16px 0 0' }} />
-                  <div style={{ fontFamily: fonts.heading, fontSize: 'clamp(26px, 3vw, 40px)', fontWeight: 400, color: h.color ?? ctxColor, lineHeight: 1, marginBottom: '6px', letterSpacing: '-0.02em' }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(to right, ${ctxColor}, transparent)`, borderRadius: '16px 16px 0 0' }} />
+                  <div style={{ fontFamily: fonts.heading, fontSize: 'clamp(26px, 3vw, 40px)', fontWeight: 400, color: i === 0 ? ctxColor : colors.text, lineHeight: 1, marginBottom: '6px', letterSpacing: '-0.02em' }}>
                     {h.value}
                   </div>
                   <div style={{ fontFamily: fonts.body, fontSize: '13px', color: colors.textMuted }}>
@@ -296,7 +296,7 @@ export default function ProjetDetail() {
                 </h2>
                 <motion.div initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }} transition={{ duration: 0.6, delay: 0.1 }}
                   style={{ height: 1, background: `linear-gradient(to right, ${ctxColor}50, transparent)`, transformOrigin: 'left', marginBottom: '24px', maxWidth: '200px' }} />
-                <p style={{ fontFamily: fonts.body, fontSize: '15.5px', lineHeight: 1.9, color: colors.textMuted, margin: 0, textAlign: 'justify' }}>
+                <p style={{ fontFamily: fonts.body, fontSize: '15.5px', lineHeight: 1.9, color: colors.textMuted, margin: 0, ...justify }}>
                   {project.longDescription}
                 </p>
               </motion.div>
@@ -371,7 +371,7 @@ export default function ProjetDetail() {
               <AnimatePresence>
                 {prevProject && (
                   <Link to={`/projets/${prevProject.slug}`} style={{ textDecoration: 'none', display: 'block' }}>
-                    <motion.div whileHover={{ x: -6, boxShadow: '0 12px 36px rgba(28,43,58,0.1)' }}
+                    <motion.div whileHover={{ x: -6, boxShadow: `0 12px 36px ${ca.text(0.1)}` }}
                       style={{ padding: '20px 24px', borderRadius: '16px', border: `1px solid ${colors.border}`, background: colors.bgCard, cursor: 'pointer', height: '100%', boxSizing: 'border-box' }}>
                       <div style={{ fontFamily: fonts.body, fontSize: '11px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>← Précédent</div>
                       <div style={{ fontFamily: fonts.heading, fontSize: '17px', fontWeight: 400, color: colors.text }}>{prevProject.title}</div>
@@ -394,7 +394,7 @@ export default function ProjetDetail() {
               <AnimatePresence>
                 {nextProject && (
                   <Link to={`/projets/${nextProject.slug}`} style={{ textDecoration: 'none', display: 'block' }}>
-                    <motion.div whileHover={{ x: 6, boxShadow: '0 12px 36px rgba(28,43,58,0.1)' }}
+                    <motion.div whileHover={{ x: 6, boxShadow: `0 12px 36px ${ca.text(0.1)}` }}
                       style={{ padding: '20px 24px', borderRadius: '16px', border: `1px solid ${colors.border}`, background: colors.bgCard, cursor: 'pointer', height: '100%', boxSizing: 'border-box' }}>
                       <div style={{ fontFamily: fonts.body, fontSize: '11px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '8px' }}>Suivant →</div>
                       <div style={{ fontFamily: fonts.heading, fontSize: '17px', fontWeight: 400, color: colors.text }}>{nextProject.title}</div>

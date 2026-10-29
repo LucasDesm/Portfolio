@@ -2,22 +2,22 @@ import { useRef, useEffect } from 'react'
 import { motion, useInView, useScroll, useSpring, useTransform } from 'motion/react'
 import { animate, stagger } from 'animejs'
 import PageTransition from '@/components/PageTransition'
-import { colors, fonts, ca } from '@/lib/tokens'
+import { colors, fonts, ca, domainColors, justify } from '@/lib/tokens'
 
 // ─── Données ──────────────────────────────────────────────────────────────────
 
 const RADAR_AXES = [
-  { label: 'ML & IA',         shortLabel: 'ML / IA',       score: 0.82, color: colors.accent,  sublabel: 'PyTorch · CNN · Transfer learning' },
-  { label: 'Embarqué',        shortLabel: 'Embarqué',      score: 0.88, color: colors.green,   sublabel: 'Arduino · MATLAB · Métrologie' },
-  { label: 'Biomédical',      shortLabel: 'Biomédical',    score: 0.80, color: '#dc2626',       sublabel: 'DM · Qualité · Métrologie' },
-  { label: 'Conception CAO',  shortLabel: 'CAO',           score: 0.65, color: '#d97706',       sublabel: 'SolidWorks · Blender · Proto.' },
-  { label: 'Web & Logiciel',  shortLabel: 'Web',           score: 0.72, color: '#8b5cf6',       sublabel: 'React · Spring Boot · Rust' },
+  { label: 'ML & IA',         shortLabel: 'ML / IA',       score: 0.82, color: domainColors.ml,         sublabel: 'PyTorch · CNN · Transfer learning' },
+  { label: 'Embarqué',        shortLabel: 'Embarqué',      score: 0.88, color: domainColors.embarque,   sublabel: 'Arduino · MATLAB · Métrologie' },
+  { label: 'Biomédical',      shortLabel: 'Biomédical',    score: 0.80, color: domainColors.biomedical, sublabel: 'DM · Qualité · Métrologie' },
+  { label: 'Conception CAO',  shortLabel: 'CAO',           score: 0.65, color: domainColors.cao,        sublabel: 'SolidWorks · Blender · Proto.' },
+  { label: 'Web & Logiciel',  shortLabel: 'Web',           score: 0.72, color: domainColors.web,        sublabel: 'React · Spring Boot · Rust' },
 ]
 
 const SKILLS_GROUPS = [
   {
     label: 'Machine Learning & IA',
-    color: colors.accent,
+    color: domainColors.ml,
     score: 82,
     skills: [
       { name: 'PyTorch', level: 85 },
@@ -28,7 +28,7 @@ const SKILLS_GROUPS = [
   },
   {
     label: 'Embarqué & Instrumentation',
-    color: colors.green,
+    color: domainColors.embarque,
     score: 88,
     skills: [
       { name: 'Arduino / C++', level: 90 }, { name: 'MATLAB', level: 85 },
@@ -39,7 +39,7 @@ const SKILLS_GROUPS = [
   },
   {
     label: 'Web & Développement',
-    color: '#8b5cf6',
+    color: domainColors.web,
     score: 72,
     skills: [
       { name: 'React / TypeScript', level: 75 }, { name: 'Spring Boot', level: 70 },
@@ -50,7 +50,7 @@ const SKILLS_GROUPS = [
   },
   {
     label: 'Conception & Fabrication',
-    color: '#d97706',
+    color: domainColors.cao,
     score: 65,
     skills: [
       { name: 'SolidWorks', level: 72 }, { name: 'CAO 3D', level: 70 },
@@ -60,7 +60,7 @@ const SKILLS_GROUPS = [
   },
   {
     label: 'Biomédical & Réglementaire',
-    color: '#dc2626',
+    color: domainColors.biomedical,
     score: 80,
     skills: [
       { name: 'Dispositifs médicaux', level: 82 },
@@ -144,7 +144,7 @@ function RadarChart() {
         return (
           <text key={level}
             x={p.x + 6} y={p.y}
-            fontSize={9} fill={ca.border(0.7)} fontFamily={fonts.mono}
+            fontSize={9} fill={colors.textMuted} fontFamily={fonts.mono}
             dominantBaseline="middle"
           >
             {Math.round(level * 100)}%
@@ -205,7 +205,7 @@ function RadarChart() {
               dominantBaseline="middle"
               fontSize={9}
               fontFamily={fonts.body}
-              fill={ca.text(0.38)}
+              fill={colors.textMuted}
               initial={{ opacity: 0 }}
               animate={inView ? { opacity: 1 } : {}}
               transition={{ duration: 0.4, delay: 0.6 + i * 0.07 }}
@@ -336,7 +336,7 @@ function Hero() {
       {/* Barre de lecture */}
       <motion.div style={{
         position: 'fixed', top: 0, left: 0, right: 0, height: 3, zIndex: 100,
-        background: `linear-gradient(to right, ${colors.accent}, ${colors.green}, #8b5cf6, #d97706)`,
+        background: `linear-gradient(to right, ${domainColors.ml}, ${domainColors.embarque}, ${domainColors.biomedical}, ${domainColors.web})`,
         scaleX: lineScale, transformOrigin: 'left',
       }} />
 
@@ -346,7 +346,7 @@ function Hero() {
           <motion.span key={s}
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 + i * 0.07, duration: 0.45 }}
-            style={{ fontFamily: fonts.body, fontSize: '12px', fontWeight: 600, color: colors.accent, background: colors.accentLight, padding: '4px 12px', borderRadius: '20px', border: `1px solid ${ca.accent(0.18)}` }}
+            style={{ fontFamily: fonts.body, fontSize: '12px', fontWeight: 600, color: colors.accent, background: colors.accentLight, padding: '4px 12px', borderRadius: '20px', border: `1px solid ${ca.accent(0.2)}` }}
           >
             {s}
           </motion.span>
@@ -379,9 +379,9 @@ function Hero() {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.65, duration: 0.6 }}
-        style={{ fontFamily: fonts.body, fontSize: '17px', lineHeight: 1.8, color: colors.textMuted, maxWidth: '500px', margin: '0 0 56px' }}
+        style={{ fontFamily: fonts.body, fontSize: '17px', lineHeight: 1.8, color: colors.textMuted, maxWidth: '500px', margin: '0 0 56px', ...justify }}
       >
-        De la mesure physique à l'intelligence artificielle médicale — cinq domaines
+        De la mesure physique à l'intelligence artificielle médicale : cinq domaines
         construits à travers chaque formation et chaque stage.
       </motion.p>
 
@@ -422,8 +422,8 @@ function RadarSection() {
         <h2 style={{ fontFamily: fonts.heading, fontSize: 'clamp(28px, 3.5vw, 42px)', fontWeight: 400, color: colors.text, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
           Vue d'ensemble
         </h2>
-        <p style={{ fontFamily: fonts.body, fontSize: '14px', color: colors.textMuted, margin: 0 }}>
-          Niveau relatif par domaine — autoévalué honnêtement.
+        <p style={{ fontFamily: fonts.body, fontSize: '14px', color: colors.textMuted, margin: 0, ...justify }}>
+          Niveau relatif par domaine, autoévalué honnêtement.
         </p>
       </motion.div>
 
@@ -517,7 +517,7 @@ function DetailSection() {
         <h2 style={{ fontFamily: fonts.heading, fontSize: 'clamp(28px, 3.5vw, 42px)', fontWeight: 400, color: colors.text, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
           Détail par domaine
         </h2>
-        <p style={{ fontFamily: fonts.body, fontSize: '14px', color: colors.textMuted, margin: 0 }}>
+        <p style={{ fontFamily: fonts.body, fontSize: '14px', color: colors.textMuted, margin: 0, ...justify }}>
           Outils et technologies utilisés en projet ou en stage.
         </p>
       </motion.div>
