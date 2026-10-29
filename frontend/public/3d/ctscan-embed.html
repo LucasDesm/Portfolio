@@ -50,14 +50,14 @@ scene.add(rim);
 // Les images sont dans /3d/ct/  (servies par Vite depuis public/)
 // ═══════════════════════════════════════════════════════════════════════════════
 const CT_FILES = [
-  '000109 (5).png',
-  '000114.png',
-  '000115 (2).png',
-  '000120 (5).png',
-  '000126 (4).png',
-  '000131 (2).png',
-  '12 (2).png',
-  '6 (2) - Copy.png',
+  'ct-01.webp',
+  'ct-02.webp',
+  'ct-03.webp',
+  'ct-04.webp',
+  'ct-05.webp',
+  'ct-06.webp',
+  'ct-07.webp',
+  'ct-08.webp',
 ];
 
 // img[0] = niveau cardiaque (phase detect), img[1] = niveau pulmonaire (phase scroll)
@@ -209,7 +209,7 @@ function drawPanel(sliceT, phase, subT) {
   ctx.textAlign = 'right';
   ctx.fillStyle = '#2a6db5';
   ctx.font = 'bold 10px "Courier New", monospace';
-  ctx.fillText('EfficientNet-B0 · PyTorch', CW - 12, 21);
+  ctx.fillText('ResNet50 + DenseNet121 · PyTorch', CW - 12, 21);
   ctx.fillStyle = '#3a5580';
   ctx.font = '9px "Courier New", monospace';
   ctx.fillText('ESME Paris · Ingé2 2026', CW - 12, 37);
@@ -318,7 +318,7 @@ function drawPanel(sliceT, phase, subT) {
     ctx.fillText(`▶ ANALYSE IA EN COURS${dots}`, IMG_X + 8, IMG_Y + IMG_H - 7);
     ctx.textAlign = 'right';
     ctx.fillStyle = '#2a6db5';
-    ctx.fillText('Feature extraction · EfficientNet-B0', IMG_X + IMG_W - 6, IMG_Y + IMG_H - 7);
+    ctx.fillText('Feature extraction · DenseNet121', IMG_X + IMG_W - 6, IMG_Y + IMG_H - 7);
     ctx.textAlign = 'left';
   }
 
@@ -421,7 +421,7 @@ function drawPanel(sliceT, phase, subT) {
   ctx.beginPath(); ctx.moveTo(0, CH - 34); ctx.lineTo(CW, CH - 34); ctx.stroke();
   ctx.fillStyle = '#2a3d56';
   ctx.font = '9px "Courier New", monospace';
-  ctx.fillText('DATASET: Chest CT-Scan Kaggle  ·  4 CLASSES  ·  ~1000 IMAGES  ·  VGG16 / ResNet50 / EfficientNet-B0', 14, CH - 12);
+  ctx.fillText('DATASET: Chest CT-Scan Kaggle  ·  4 CLASSES  ·  ~1000 IMAGES  ·  ENSEMBLE ResNet50 + DenseNet121', 14, CH - 12);
   ctx.textAlign = 'right';
   ctx.fillStyle = '#2a6db5';
   ctx.fillText('ESME PARIS 2026', CW - 14, CH - 12);
