@@ -5,7 +5,8 @@ import { animate, stagger } from 'animejs'
 import PageTransition from '@/components/PageTransition'
 import ThreeBoundary from '@/components/ThreeBoundary'
 import { ChainDiagram } from '@/components/ChainDiagram'
-import { colors, fonts } from '@/lib/tokens'
+import ProjectEvidence from '@/components/ProjectEvidence'
+import { colors, fonts, contextColors } from '@/lib/tokens'
 import { useProjects } from '@/hooks/useProjects'
 import { useParcours } from '@/hooks/useParcours'
 
@@ -16,12 +17,7 @@ const EthylCanvas    = lazy(() => import('@/three/EthylCanvas'))
 const AnemCanvas     = lazy(() => import('@/three/AnemCanvas'))
 const CTScanCanvas   = lazy(() => import('@/three/CTScanCanvas'))
 const GlycemieCanvas = lazy(() => import('@/three/GlycemieCanvas'))
-const CTX_COLOR: Record<string, string> = {
-  ESME: colors.accent,
-  Stage: colors.green,
-  BUT: '#8b5cf6',
-  Perso: '#d97706',
-}
+const CTX_COLOR: Record<string, string> = contextColors
 
 const TIER_LABEL: Record<number, string> = {
   1: 'Projet phare',
@@ -45,7 +41,7 @@ function SceneFallback({ ctxColor }: { ctxColor: string }) {
   )
 }
 
-function ProjectScene({ slug, ctxColor }: { slug: string; ctxColor: string }) {
+function ProjectScene({ slug, ctxColor, cover, coverAlt }: { slug: string; ctxColor: string; cover?: string; coverAlt?: string }) {
   const fallback = <SceneFallback ctxColor={ctxColor} />
 
   const scenes: Record<string, React.ReactNode> = {
@@ -57,6 +53,14 @@ function ProjectScene({ slug, ctxColor }: { slug: string; ctxColor: string }) {
   }
 
   const canvas = scenes[slug]
+  if (!canvas && cover) {
+    // Figure réelle : rendue dans le flux, la boîte parente prend sa hauteur
+    return (
+      <div style={{ position: 'relative', zIndex: 2, background: colors.bgCard, padding: 'clamp(12px, 3vw, 32px)' }}>
+        <img src={cover} alt={coverAlt ?? ''} style={{ display: 'block', width: '100%', height: 'auto' }} />
+      </div>
+    )
+  }
   if (!canvas) return fallback
 
   return (
@@ -164,7 +168,7 @@ export default function ProjetDetail() {
             <div style={{ overflow: 'hidden', marginBottom: '18px' }}>
               <h1 ref={titleRef} style={{
                 fontFamily: fonts.heading, fontSize: 'clamp(44px, 5.5vw, 78px)', fontWeight: 400,
-                lineHeight: 1.02, letterSpacing: '-0.03em', margin: 0, color: colors.text,
+                lineHeight: 1.02, letterSpacing: '-0.03em', margin: 0, color: colors.text, hyphens: 'auto', overflowWrap: 'break-word',
                 opacity: 0, transform: 'translateY(100%)',
               }}>
                 {project.title}
@@ -205,7 +209,7 @@ export default function ProjetDetail() {
           style={{ padding: '56px 48px 0', maxWidth: '1100px', margin: '0 auto' }}
         >
           <div style={{
-            height: 'clamp(420px, 52vh, 560px)',
+            height: !project.has3D && project.cover ? 'auto' : 'clamp(420px, 52vh, 560px)',
             borderRadius: '20px',
             overflow: 'hidden',
             background: `linear-gradient(145deg, ${ctxColor}07 0%, ${ctxColor}18 60%, ${ctxColor}0a 100%)`,
@@ -220,8 +224,13 @@ export default function ProjetDetail() {
               backgroundSize: '32px 32px',
               maskImage: 'radial-gradient(ellipse 70% 70% at 50% 50%, black 30%, transparent 100%)',
             }} />
-            <ProjectScene slug={project.slug} ctxColor={ctxColor} />
+            <ProjectScene slug={project.slug} ctxColor={ctxColor} cover={project.cover} coverAlt={project.figures?.[0]?.alt} />
           </div>
+          {!project.has3D && project.cover && (
+            <p style={{ fontFamily: fonts.body, fontSize: '13px', color: colors.textMuted, lineHeight: 1.65, margin: '12px 0 0', maxWidth: '760px' }}>
+              {project.figures?.find(f => f.src === project.cover)?.caption}
+            </p>
+          )}
         </motion.section>
 
         {/* ── Highlights ── */}
@@ -316,6 +325,9 @@ export default function ProjetDetail() {
             </div>
           </section>
         )}
+
+        {/* ── Rôle, récit, résultats, figures ── */}
+        <ProjectEvidence project={project} accent={ctxColor} />
 
         {/* ── Parcours lié ── */}
         {linkedStep && (

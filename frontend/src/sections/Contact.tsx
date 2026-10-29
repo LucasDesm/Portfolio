@@ -135,7 +135,7 @@ function InfoPanel() {
         style={{ fontFamily: fonts.body, fontSize: '15px', color: colors.textMuted, lineHeight: 1.8, margin: '0 0 40px' }}
       >
         PFE 6 mois · R&D biomédicale · à partir du 7 avril 2027.<br />
-        Medtech, imagerie, dispositifs médicaux, data santé.
+        IA appliquée aux données de santé : imagerie médicale, dispositifs médicaux, données biologiques.
       </motion.p>
 
       {/* Liens */}

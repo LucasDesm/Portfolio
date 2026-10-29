@@ -170,6 +170,20 @@ export default function StageDetail() {
             </motion.div>
           )}
 
+          {/* ── Liens ── */}
+          {stage.links && stage.links.length > 0 && (
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '80px' }}>
+              {stage.links.map(l => (
+                <Link key={l.href} to={l.href} style={{
+                  textDecoration: 'none', fontFamily: fonts.body, fontSize: '15px', fontWeight: 600,
+                  color: colors.bg, background: STAGE_ACCENT, padding: '14px 24px', borderRadius: '12px',
+                }}>
+                  {l.label} →
+                </Link>
+              ))}
+            </div>
+          )}
+
         </div>
       </div>
     </PageTransition>

@@ -37,6 +37,14 @@ export const colors = {
   borderLight: '#D5E1EA',
 } as const
 
+// Couleur par contexte de projet — une seule source pour toutes les pages
+export const contextColors = {
+  Stage: colors.green,
+  ESME:  colors.accent,
+  BUT:   P.mid,
+  Perso: '#954130',
+} as const
+
 // ─── Alpha helpers ────────────────────────────────────────────────────────────
 
 export const ca = {

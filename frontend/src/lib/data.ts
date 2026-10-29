@@ -91,8 +91,9 @@ export const PARCOURS: ParcoursStep[] = [
     title: 'Stage — INSERM U1211 (MRGM)',
     institution: 'INSERM · Université de Bordeaux',
     location: 'Bordeaux',
-    description: 'Stage de 12 semaines en bio-informatique pour le programme Austral-Omics : chaîne d\'analyse de metabarcoding sur lectures Nanopore, validée sur des communautés de composition connue, avec un apport de deep learning et une application web pour l\'équipe.',
+    description: 'Stage de 12 semaines en bio-informatique pour le programme Austral-Omics : chaîne d\'analyse de l\'ADN environnemental séquencé par Nanopore, validée sur des communautés certifiées avant l\'expédition, complétée par un modèle de Deep Learning et une application web pour l\'équipe.',
     tags: ['Bio-informatique', 'Metabarcoding', 'Nanopore', '16S / COI', 'Deep Learning', 'Application web'],
+    projects: ['austral-omics'],
     done: true,
   },
   {
@@ -102,8 +103,8 @@ export const PARCOURS: ParcoursStep[] = [
     title: 'PFE — Stage de fin d\'études, 6 mois',
     institution: 'À définir',
     location: 'France / International',
-    description: 'Recherche d\'un stage de fin d\'études de 6 mois à partir du 7 avril 2027, en R&D biomédicale : medtech, imagerie médicale, dispositifs médicaux, data santé.',
-    tags: ['R&D', 'Biomédical', 'Medtech', 'Imagerie', 'Data santé'],
+    description: 'Recherche d\'un stage de fin d\'études de 6 mois à partir du 7 avril 2027, en R&D biomédicale et en IA appliquée aux données de santé : imagerie médicale, dispositifs médicaux, données biologiques.',
+    tags: ['R&D', 'IA santé', 'Imagerie médicale', 'Dispositifs médicaux', 'Bio-informatique'],
     done: false,
   },
 ]
@@ -154,8 +155,11 @@ export const STAGES: Stage[] = [
     tags: ['Bio-informatique', 'Metabarcoding', 'Nanopore', '16S', 'COI', 'Deep Learning', 'Application web'],
     highlights: [
       { value: '12', label: 'semaines', color: '#2d8c5f' },
-      { value: 'Nanopore', label: 'séquençage portable', color: '#3f5f86' },
-      { value: '16S · COI', label: 'marqueurs', color: '#3f5f86' },
+      { value: '92–99 %', label: 'lectures nommées au genre', color: '#3f5f86' },
+      { value: '61,8 %', label: 'familles retrouvées hors banque', color: '#3f5f86' },
+    ],
+    links: [
+      { label: 'Voir le projet technique', href: '/projets/austral-omics' },
     ],
   },
   {
@@ -202,11 +206,29 @@ export const STAGES: Stage[] = [
 ]
 
 export type ProjectTier = 1 | 2 | 3
-export type ProjectContext = 'BUT' | 'ESME' | 'Perso'
+export type ProjectContext = 'Stage' | 'ESME' | 'BUT' | 'Perso'
 
 export interface ChainStep {
   label: string
   sublabel?: string
+}
+
+export interface ProjectSection {
+  title: string
+  body: string
+}
+
+export interface ResultTable {
+  title: string
+  columns: string[]
+  rows: string[][]
+  caption?: string
+}
+
+export interface ProjectFigure {
+  src: string
+  alt: string
+  caption: string
 }
 
 export interface Project {
@@ -225,9 +247,129 @@ export interface Project {
   chain?: ChainStep[]
   chainFeedback?: boolean
   chainLabel?: string
+  /** Visuel statique (figure réelle) quand le projet n'a pas de rendu 3D */
+  cover?: string
+  role?: string
+  sections?: ProjectSection[]
+  tables?: ResultTable[]
+  figures?: ProjectFigure[]
 }
 
 export const PROJECTS: Project[] = [
+  {
+    slug: 'austral-omics',
+    tier: 1,
+    context: 'Stage',
+    title: 'Austral-Omics',
+    subtitle: 'ADN environnemental, Nanopore & Deep Learning · INSERM',
+    description: 'Chaîne d\'analyse des lectures Nanopore jusqu\'à la composition d\'un échantillon, validée sur des communautés certifiées avant même l\'expédition antarctique. 16S : 92 à 99 % des lectures nommées au genre, précision proche de 100 %. COI : la chaîne hybride avec Deep Learning retrouve 61,8 % des familles hors banque (1,57 % d\'erreur), contre 7,0 % pour la méthode classique seule.',
+    longDescription: 'Stage de 12 semaines (22 juin – 11 septembre 2026) à l\'unité INSERM U1211 Maladies Rares : Génétique et Métabolisme, à Bordeaux, encadré par Christophe Hubert. Le programme Austral-Omics prévoit une campagne d\'analyse multiomique du plancton et des procaryotes de l\'océan Austral, orientée vers la bioprospection en santé humaine. Les échantillons seront séquencés à bord du navire Persévérance avec un séquenceur portable Nanopore, puis analysés à distance sur le cluster Curta (mésocentre MCIA) via une liaison Starlink. Comme ils n\'existaient pas encore, il fallait construire la chaîne d\'analyse et mesurer sa fiabilité en amont, sur des communautés de composition certifiée et sur des données publiques (42 Go de lectures brutes).',
+    tags: ['Bio-informatique', 'Nanopore', 'Python', 'PyTorch', 'Deep Learning', 'vsearch', 'R', 'Linux · Slurm', 'FastAPI'],
+    has3D: false,
+    cover: '/projets/austral/detection-nouveaute.webp',
+    highlights: [
+      { value: '92–99 %', label: 'lectures nommées au genre (16S)', color: '#3f5f86' },
+      { value: '61,8 %', label: 'familles retrouvées hors banque (COI)', color: '#2d8c5f' },
+      { value: '0,954', label: 'AUROC du détecteur de nouveauté', color: '#3f5f86' },
+    ],
+    chain: [
+      { label: 'Lectures Nanopore', sublabel: 'FASTQ' },
+      { label: 'Contrôle qualité', sublabel: 'NanoPlot · Chopper · Porechop' },
+      { label: 'Regroupement', sublabel: 'OTU · vsearch' },
+      { label: 'Assignation', sublabel: 'SINTAX · SILVA 138.2' },
+      { label: 'Composition', sublabel: 'table d\'abondance' },
+      { label: 'Validation', sublabel: 'vérité certifiée' },
+    ],
+    chainLabel: 'Chaîne d\'analyse 16S',
+    role: 'Travail en autonomie, avec un point hebdomadaire avec mon tuteur. Les objectifs n\'étaient pas fixés : la chaîne 16S était la mission de départ. La validation contre une vérité connue, le Deep Learning et l\'extension au marqueur COI sont venus de ma propre initiative ; l\'application web s\'est ajoutée en cours de stage.',
+    sections: [
+      {
+        title: 'La question',
+        body: 'Qu\'y a-t-il dans cet échantillon, et à quel point peut-on croire la réponse ? Un workflow mal réglé ne renvoie pas d\'erreur, il renvoie un résultat. Chaque chiffre produit par la chaîne devait donc être accompagné d\'une mesure de son écart à la réalité, et de la liste des situations où cet écart n\'est pas mesurable.',
+      },
+      {
+        title: 'La chaîne 16S (bactéries)',
+        body: 'Cinq étapes, chacune dans son propre script : contrôle qualité (NanoPlot, Chopper sur la fenêtre 1 200–1 800 pb, Porechop), regroupement des lectures en OTU à 90 % d\'identité avec retrait des chimères (vsearch), assignation taxonomique SINTAX contre SILVA 138.2 (452 055 séquences) avec un seuil de confiance de 0,8, table de composition, puis validation. La chaîne retient le rang confiant le plus profond plutôt que de forcer un nom. Le séquenceur Nanopore est d\'abord un capteur : il mesure le courant qui traverse un pore quand le brin d\'ADN y passe.',
+      },
+      {
+        title: 'Valider sur quatre niveaux',
+        body: 'Composition comparée aux certificats des standards ZymoBIOMICS (ρ de Spearman pour le classement, Bray-Curtis pour les proportions) ; séquences reconstruites comparées au gène 16S de chaque souche (17 organismes sur 17, identité médiane 98,6 %, aucune lecture attribuée à un organisme étranger) ; comportement sur un jeu public sans vérité connue ; nommage lecture par lecture sur 11 462 lectures réelles, avec une précision de 99,8 à 100 % de la famille à la classe.',
+      },
+      {
+        title: 'Ce qui n\'a pas marché du premier coup',
+        body: 'Seules 44 % des lectures étaient d\'abord nommées au genre. Après avoir écarté une à une les hypothèses (OTU bruités, chimères, qualité), la cause était l\'orientation des brins : 58,7 % des OTU étaient écrits en complément inverse. Recherche sur les deux brins : 44,0 → 98,9 %. Le polissage medaka, d\'usage courant, dégradait la résolution à l\'espèce (38,3 → 25,3 % sur MSPlus) : retiré. Une première validation comparait la chaîne à un autre logiciel et donnait ρ = 0,974 ; face au certificat du fabricant, elle retombait à 0,927. Se comparer à un autre logiciel, ce n\'est pas se comparer à une vérité.',
+      },
+      {
+        title: 'Deep Learning : faire mieux, et sur quelles séquences ?',
+        body: 'On estime que 60 à 70 % des espèces de l\'océan Austral sont inconnues, et un classifieur ne peut nommer que ce qu\'il a vu. J\'ai donc entraîné sur GPU (cluster Curta) un encodeur — CNN 1D à convolutions dilatées, environ 1,7 million de paramètres, apprentissage contrastif supervisé hiérarchique — qui place chaque séquence dans un espace où la distance reflète la parenté. Évalué en cachant 415 genres de SILVA, il nomme moins bien la famille que la méthode classique, mais situe l\'ordre et la classe et détecte mieux la nouveauté. D\'où une chaîne hybride : la méthode classique nomme, le modèle situe et signale ce qui ne ressemble à rien de connu. Le seuil de nouveauté, d\'abord trop sensible au bruit Nanopore (53 % d\'OTU « nouveaux »), a été recalibré sur un plancher de bruit mesuré (5,7 %).',
+      },
+      {
+        title: 'Le COI (animaux)',
+        body: 'La banque BOLD (5 millions de séquences) a été auditée avant usage. Un premier entraînement supervisé au BIN a échoué (34,0 %) : une requête dont le genre est retiré ne peut rien recevoir d\'une unité plus fine que le genre. Supervisé à la famille, à capacité égale, le modèle atteint 55,8 %. Sur données réelles, les lectures contenaient plusieurs copies du barcode en tandem : j\'ai écrit un découpeur dédié (633 559 monomères), recalibré le seuil de regroupement et adapté la chaîne au mini-barcode Leray de 313 pb.',
+      },
+      {
+        title: 'L\'application AUSTRAL',
+        body: 'Une interface web (FastAPI, inférence PyTorch sur processeur) rend la chaîne utilisable par l\'équipe : on dépose des lectures, on lance l\'analyse, puis on lit le résultat rang par rang, chaque ligne accompagnée de sa fiabilité.',
+      },
+      {
+        title: 'Limites',
+        body: 'Les proportions restent biaisées par la PCR et par le nombre de copies du gène 16S (Bray-Curtis de 0,291 sur GutMock), et le 16S plafonne au genre. Surtout, la chaîne n\'a pas encore été confrontée à de vrais échantillons antarctiques, alors que plus d\'un genre austral sur trois n\'a aucune séquence COI de référence. Ce test décisif ne pourra se faire que pendant l\'expédition.',
+      },
+    ],
+    tables: [
+      {
+        title: 'Validation sur communautés certifiées (16S)',
+        columns: ['Mesure', 'GutMock (D6331)', 'MSPlus (D6300)'],
+        rows: [
+          ['Lectures nommées au genre', '98,9 %', '92,0 %'],
+          ['Avant correction de l\'orientation des brins', '44,0 %', '42,5 %'],
+          ['Précision des genres nommés', '100 %', '99,9 %'],
+          ['Genres attendus retrouvés', '13 / 14', '8 / 8'],
+          ['ρ de Spearman (classement, 1 = identique)', '0,904', '0,690'],
+          ['Bray-Curtis (proportions, 0 = identiques)', '0,291', '0,125'],
+        ],
+        caption: 'Composition rendue par la chaîne, comparée au certificat publié par le fabricant.',
+      },
+      {
+        title: 'Deep Learning face à la méthode classique (16S, 415 genres cachés, 10 000 requêtes)',
+        columns: ['Tâche', 'Deep Learning', 'Méthode classique'],
+        rows: [
+          ['Nommer la famille', '81,2 %', '85,6 %'],
+          ['Situer à l\'ordre', '95,8 %', '—'],
+          ['Situer à la classe', '98,4 %', '—'],
+          ['Détecter la nouveauté (AUROC)', '0,825', '0,754'],
+        ],
+        caption: 'Chaque méthode est gardée là où elle est la meilleure. Détecteur de nouveauté final : AUROC 0,954 en titration par mutations, 1,000 sur une famille entière retirée de la banque (Alteromonadaceae).',
+      },
+      {
+        title: 'Retrouver la famille d\'une séquence dont le genre est absent de la banque (COI)',
+        columns: ['Méthode', 'Familles retrouvées', 'Erreur'],
+        rows: [
+          ['Méthode classique seule', '7,0 %', '0,8 %'],
+          ['Encodeur supervisé à la famille', '55,8 %', '—'],
+          ['Chaîne hybride (seuil fixé par validation croisée)', '61,8 %', '1,57 %'],
+        ],
+      },
+    ],
+    figures: [
+      {
+        src: '/projets/austral/detection-nouveaute.webp',
+        alt: 'Trois graphiques : score de nouveauté selon la divergence, taux de séquences signalées nouvelles, courbe ROC avec une AUROC de 0,954',
+        caption: 'Validation du détecteur de nouveauté sur données à vérité connue : le score croît avec la divergence (A), le détecteur bascule entre 2 et 5 % de divergence (B), AUROC de 0,954 (C).',
+      },
+      {
+        src: '/projets/austral/composition-gutmock.webp',
+        alt: 'Diagramme en barres comparant, genre par genre, la composition certifiée et la composition observée du standard GutMock',
+        caption: 'Standard GutMock : composition certifiée (gris) et observée (bleu). Le classement est respecté ; les écarts de proportion viennent des biais de la PCR et du nombre de copies du gène 16S, pas de la chaîne.',
+      },
+      {
+        src: '/projets/austral/application-austral.webp',
+        alt: 'Capture de l\'application AUSTRAL : tableau des taxons détectés avec rang annoncé, part et fiabilité',
+        caption: 'Application AUSTRAL : placement taxonomique d\'un échantillon, avec le rang annoncé et la fiabilité de chaque ligne.',
+      },
+    ],
+    linkedParcoursId: 'stage-inserm',
+  },
   {
     slug: 'ct-scan-deep-learning',
     tier: 1,
@@ -239,9 +381,24 @@ export const PROJECTS: Project[] = [
     tags: ['PyTorch', 'Transfer Learning', 'DenseNet121', 'ResNet50', 'Ensemble learning', 'Python'],
     has3D: true,
     highlights: [
-      { value: '93.7%', label: 'accuracy test (ensemble)', color: '#3f5f86' },
-      { value: '0.939', label: 'F1 macro', color: '#2d8c5f' },
+      { value: '93,7 %', label: 'accuracy test (ensemble)', color: '#3f5f86' },
+      { value: '0,939', label: 'F1 macro', color: '#2d8c5f' },
       { value: '4', label: 'classes', color: '#3f5f86' },
+    ],
+    tables: [
+      {
+        title: 'Comparaison des modèles sur le jeu de test',
+        columns: ['Modèle', 'Epochs', 'Accuracy test', 'F1 macro'],
+        rows: [
+          ['Ensemble ResNet50 + DenseNet121 (soft voting)', '—', '93,7 %', '0,939'],
+          ['DenseNet121', '20', '91,7 %', '0,924'],
+          ['ResNet50', '20', '91,4 %', '0,917'],
+          ['EfficientNet-B1', '20', '86,0 %', '—'],
+          ['EfficientNet-B0', '20', '85,4 %', '—'],
+          ['VGG16', '10', '61,0 %', '—'],
+        ],
+        caption: 'Résultats du poster final (avril 2026). Le soft voting moyenne les probabilités softmax des deux meilleurs modèles, sans réentraînement.',
+      },
     ],
     links: [
       { label: 'GitHub', href: 'https://github.com/TouyeAchille/lung-cancer-ct-detection-ai' },

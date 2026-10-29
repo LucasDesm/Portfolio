@@ -5,7 +5,7 @@ import { animate, stagger } from 'animejs'
 import PageTransition from '@/components/PageTransition'
 import Reveal from '@/components/Reveal'
 import ThreeBoundary from '@/components/ThreeBoundary'
-import { colors, fonts } from '@/lib/tokens'
+import { colors, fonts, contextColors } from '@/lib/tokens'
 import { type ProjectContext } from '@/lib/data'
 import { useProjects } from '@/hooks/useProjects'
 
@@ -15,15 +15,12 @@ const AnemCanvas      = lazy(() => import('@/three/AnemCanvas'))
 const CTScanCanvas    = lazy(() => import('@/three/CTScanCanvas'))
 const GlycemieCanvas  = lazy(() => import('@/three/GlycemieCanvas'))
 
-const CTX_COLOR: Record<ProjectContext, string> = {
-  ESME: colors.accent,
-  BUT: colors.green,
-  Perso: '#d97706',
-}
+const CTX_COLOR: Record<ProjectContext, string> = contextColors
 
 type Filter = 'tous' | ProjectContext
 const FILTERS: { key: Filter; label: string }[] = [
   { key: 'tous', label: 'Tous' },
+  { key: 'Stage', label: 'Stage' },
   { key: 'ESME', label: 'ESME' },
   { key: 'BUT', label: 'BUT' },
   { key: 'Perso', label: 'Perso' },
@@ -441,7 +438,13 @@ function Tier1Card({ project, index }: { project: ReturnType<typeof useProjects>
         backgroundSize: '28px 28px',
         maskImage: 'radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%)',
       }} />
-      <Tier1Visual slug={project.slug} accent={accent} />
+      {project.cover ? (
+        <div style={{ position: 'absolute', inset: '18px', zIndex: 1, background: colors.bgCard, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '12px' }}>
+          <img src={project.cover} alt={project.figures?.[0]?.alt ?? ''} loading="lazy" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+        </div>
+      ) : (
+        <Tier1Visual slug={project.slug} accent={accent} />
+      )}
       <CtxBadge label={project.context} accent={accent} />
       <div style={{
         position: 'absolute', bottom: 14, right: 16, zIndex: 2,

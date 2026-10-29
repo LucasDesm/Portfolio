@@ -29,6 +29,7 @@ const STEP_LOGOS: Record<string, string> = {
   'stage-excell':  '/logos/logo_excell.png',
   'esme':          '/logos/Esme-sudria-logo.png',
   'coree':         '/logos/knu.png',
+  'stage-inserm':  '/logos/inserm.png',
 }
 
 const STEP_HIGHLIGHTS: Record<string, { value: string; label: string }[]> = {
@@ -38,7 +39,7 @@ const STEP_HIGHLIGHTS: Record<string, { value: string; label: string }[]> = {
   'stage-quantum': [{ value: '16 sem.',    label: 'durée' },            { value: 'ISO 17025',  label: 'norme' }],
   'esme':          [{ value: '3 ans',      label: '2024 – 2027' },      { value: 'Biotech',    label: 'spécialisation' }],
   'coree':         [{ value: 'S3 ESME',    label: 'semestre' },         { value: 'Daegu',      label: 'Corée du Sud' }],
-  'stage-inserm':  [{ value: '12 sem.',    label: 'durée' },            { value: 'INSERM',     label: 'Bordeaux' }],
+  'stage-inserm':  [{ value: '12 sem.',    label: 'durée' },            { value: '61,8 %',     label: 'familles hors banque' }],
   'pfe':           [{ value: '7 avril 2027', label: 'début' },         { value: '6 mois',     label: 'durée visée' }],
 }
 
@@ -278,11 +279,12 @@ function Chapter({ step, index, total, onActive }: {
 // ─── Compétences ─────────────────────────────────────────────────────────────
 
 const SKILLS_GROUPS = [
-  { label: 'Machine Learning & IA',        color: colors.accent, skills: ['PyTorch', 'TensorFlow', 'Scikit-learn', 'Transfer Learning', 'CNN', 'ViT', 'Python', 'Pandas'] },
+  { label: 'Machine Learning & IA',        color: colors.accent, skills: ['PyTorch', 'Scikit-learn', 'Transfer Learning', 'CNN', 'ViT', 'Python', 'Pandas'] },
+  { label: 'Bio-informatique',             color: colors.green,  skills: ['Séquençage Nanopore', 'Metabarcoding 16S / COI', 'vsearch', 'SILVA / BOLD', 'R', 'Linux · Slurm'] },
   { label: 'Embarqué & Instrumentation',   color: colors.green,  skills: ['Arduino', 'C/C++', 'MATLAB', 'Simulink', 'LabVIEW', 'Capteurs', 'Métrologie ISO 17025', 'Électronique'] },
   { label: 'Développement web & logiciel', color: '#8b5cf6',     skills: ['React', 'TypeScript', 'Vite', 'Spring Boot', 'Rust', 'Three.js', 'REST API', 'PostgreSQL'] },
   { label: 'Conception & Fabrication',     color: '#d97706',     skills: ['SolidWorks', 'CAO 3D', 'Impression 3D', 'Blender', 'Prototypage'] },
-  { label: 'Biomédical & Réglementaire',   color: '#dc2626',     skills: ['Dispositifs médicaux', 'RGPD', 'ISO 13485', 'Validation FDA', 'BizzMine', 'Qualité'] },
+  { label: 'Biomédical & Réglementaire',   color: '#dc2626',     skills: ['Dispositifs médicaux', 'RGPD', 'BizzMine', 'Qualité', 'Métrologie'] },
 ]
 
 function Competences() {

@@ -7,9 +7,9 @@ import { colors, fonts, ca } from '@/lib/tokens'
 // ─── Données ──────────────────────────────────────────────────────────────────
 
 const RADAR_AXES = [
-  { label: 'ML & IA',         shortLabel: 'ML / IA',       score: 0.82, color: colors.accent,  sublabel: 'PyTorch · TensorFlow · ViT' },
+  { label: 'ML & IA',         shortLabel: 'ML / IA',       score: 0.82, color: colors.accent,  sublabel: 'PyTorch · CNN · Transfer learning' },
   { label: 'Embarqué',        shortLabel: 'Embarqué',      score: 0.88, color: colors.green,   sublabel: 'Arduino · MATLAB · Métrologie' },
-  { label: 'Biomédical',      shortLabel: 'Biomédical',    score: 0.80, color: '#dc2626',       sublabel: 'DM · ISO 13485 · Qualité' },
+  { label: 'Biomédical',      shortLabel: 'Biomédical',    score: 0.80, color: '#dc2626',       sublabel: 'DM · Qualité · Métrologie' },
   { label: 'Conception CAO',  shortLabel: 'CAO',           score: 0.65, color: '#d97706',       sublabel: 'SolidWorks · Blender · Proto.' },
   { label: 'Web & Logiciel',  shortLabel: 'Web',           score: 0.72, color: '#8b5cf6',       sublabel: 'React · Spring Boot · Rust' },
 ]
@@ -20,10 +20,10 @@ const SKILLS_GROUPS = [
     color: colors.accent,
     score: 82,
     skills: [
-      { name: 'PyTorch', level: 85 }, { name: 'TensorFlow', level: 75 },
+      { name: 'PyTorch', level: 85 },
       { name: 'Scikit-learn', level: 88 }, { name: 'Python', level: 90 },
       { name: 'CNN / ViT', level: 80 }, { name: 'Transfer Learning', level: 78 },
-      { name: 'Pandas / NumPy', level: 88 }, { name: 'OpenCV', level: 70 },
+      { name: 'Pandas / NumPy', level: 88 },
     ],
   },
   {
@@ -34,7 +34,7 @@ const SKILLS_GROUPS = [
       { name: 'Arduino / C++', level: 90 }, { name: 'MATLAB', level: 85 },
       { name: 'LabVIEW', level: 75 }, { name: 'Simulink', level: 72 },
       { name: 'Métrologie ISO 17025', level: 82 }, { name: 'Capteurs', level: 88 },
-      { name: 'Électronique', level: 78 }, { name: 'SignalTraitement', level: 80 },
+      { name: 'Électronique', level: 78 }, { name: 'Traitement du signal', level: 80 },
     ],
   },
   {
@@ -63,8 +63,8 @@ const SKILLS_GROUPS = [
     color: '#dc2626',
     score: 80,
     skills: [
-      { name: 'Dispositifs médicaux', level: 82 }, { name: 'ISO 13485', level: 75 },
-      { name: 'Validation FDA', level: 68 }, { name: 'RGPD', level: 72 },
+      { name: 'Dispositifs médicaux', level: 82 },
+      { name: 'RGPD', level: 72 },
       { name: 'BizzMine / QMS', level: 65 }, { name: 'Qualité / Audit', level: 78 },
     ],
   },
@@ -326,7 +326,7 @@ function Hero() {
 
   const stats = [
     { value: '5', label: 'domaines' },
-    { value: '30+', label: 'outils maîtrisés' },
+    { value: '30+', label: 'outils utilisés en projet' },
     { value: '6 ans', label: "d'apprentissage" },
     { value: '2027', label: 'objectif PFE' },
   ]
@@ -342,7 +342,7 @@ function Hero() {
 
       {/* Badges */}
       <motion.div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '40px' }}>
-        {['5 domaines', '30+ outils', 'ML · Embarqué · Biomédical', 'PFE 2027'].map((s, i) => (
+        {['5 domaines', '30+ outils utilisés', 'ML · Embarqué · Biomédical', 'PFE 2027'].map((s, i) => (
           <motion.span key={s}
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 + i * 0.07, duration: 0.45 }}

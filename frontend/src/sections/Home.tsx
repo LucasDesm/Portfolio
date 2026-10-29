@@ -77,7 +77,7 @@ function ScrambleTitle({ text }: { text: string }) {
 const MARQUEE_ITEMS = [
   'Instrumentation', '·', 'Machine Learning', '·', 'Deep Learning', '·',
   'Robotique chirurgicale', '·', 'Dispositifs médicaux', '·', 'IoT médical', '·',
-  'Métrologie', '·', 'Data santé', '·', 'Biotech', '·', 'ESME Paris', '·',
+  'Métrologie', '·', 'Bio-informatique', '·', 'Data santé', '·', 'ESME Paris', '·',
 ]
 
 function Marquee({ reversed = false }: { reversed?: boolean }) {
@@ -382,7 +382,7 @@ function Hero() {
               transition={{ duration: 0.56, ease: [0.22, 1, 0.36, 1], delay: 0.68 }}
               style={{ fontFamily: fonts.body, fontSize: 'clamp(16px, 1.8vw, 19px)', lineHeight: 1.75, color: colors.textMuted, margin: '0 auto', maxWidth: '520px' }}
             >
-              Instrumentation · Machine Learning · Dispositifs médicaux.<br />
+              Instrumentation · Deep Learning · Données de santé.<br />
               Je construis des systèmes qui mesurent le vivant et le comprennent.
             </motion.p>
           </div>
@@ -460,7 +460,7 @@ function MarqueeStrip() {
 
 const MARQUEE_TECH = [
   'Python', '·', 'PyTorch', '·', 'React', '·', 'TypeScript', '·', 'Arduino', '·', 'SolidWorks', '·',
-  'MATLAB', '·', 'Simulink', '·', 'Java', '·', 'Rust', '·', 'Solidity', '·', 'Three.js', '·',
+  'MATLAB', '·', 'Simulink', '·', 'Java', '·', 'Rust', '·', 'Nanopore', '·', 'Linux · Slurm', '·',
 ]
 
 function MarqueeStripReversed() {
@@ -516,10 +516,10 @@ function QuiJeSuis() {
             Je m'appelle Lucas Desmartin, ingénieur biomédical en formation à l'ESME Paris, spécialisé en biotechnologies et numérique.
           </p>
           <p style={{ fontFamily: fonts.body, fontSize: '17px', lineHeight: 1.85, color: colors.textMuted, margin: '0 0 16px' }}>
-            Mon parcours part de la mesure physique — capteurs, instrumentation, métrologie — pour rejoindre le machine learning et les systèmes médicaux embarqués. Robotique chirurgicale chez Quantum Surgical, régulation glycémique par correcteur PID, deep learning pour la détection du cancer du poumon.
+            Mon parcours part de la mesure physique — capteurs, instrumentation, métrologie — pour rejoindre l'intelligence artificielle appliquée au vivant. Robotique chirurgicale chez Quantum Surgical, deep learning sur CT-scans pulmonaires, et à l'INSERM, une chaîne d'analyse d'ADN séquencé par Nanopore, validée contre une vérité connue et complétée par un modèle de deep learning.
           </p>
           <p style={{ fontFamily: fonts.body, fontSize: '17px', lineHeight: 1.85, color: colors.textMuted, margin: 0 }}>
-            Je cherche un <strong style={{ color: colors.accent, fontWeight: 600 }}>PFE de 6 mois à partir d'avril 2027</strong> en R&D biomédicale.
+            Je cherche un <strong style={{ color: colors.accent, fontWeight: 600 }}>PFE de 6 mois à partir d'avril 2027</strong> en R&D biomédicale, côté IA appliquée aux données de santé.
           </p>
         </motion.div>
 
@@ -570,13 +570,13 @@ function DataStrip() {
   // anime.js v4 — spring elastic : léger overshoot avant de se stabiliser
   const c0 = useAnimeCounter(93.7, { decimals: 1, duration: 1760 })
   const c1 = useAnimeCounter(16,   { duration: 1280 })
-  const c2 = useAnimeCounter(222,  { duration: 1920 })
+  const c2 = useAnimeCounter(61.8, { decimals: 1, duration: 1920 })
   const c3 = useAnimeCounter(3,    { duration: 960 })
 
   const metrics = [
-    { counter: c0, format: () => c0.val.toFixed(1) + ' %', label: 'accuracy',         sub: 'CT-scan · 4 classes',        prominent: true  },
+    { counter: c0, format: () => c0.val.toFixed(1).replace('.', ',') + ' %', label: 'accuracy',         sub: 'CT-scan · 4 classes',        prominent: true  },
     { counter: c1, format: () => c1.val + ' sem.',          label: 'Quantum Surgical', sub: 'robotique chirurgicale', prominent: false },
-    { counter: c2, format: () => String(c2.val),            label: 'scénarios',        sub: 'régulation glycémie T1', prominent: false },
+    { counter: c2, format: () => c2.val.toFixed(1).replace('.', ',') + ' %', label: 'familles retrouvées', sub: 'ADN hors banque · INSERM', prominent: false },
     { counter: c3, format: () => String(c3.val),            label: 'stages',           sub: 'Excell · Quantum · INSERM',       prominent: false },
   ]
 
@@ -644,6 +644,7 @@ const CAROUSEL_LOGOS: Record<string, string> = {
   'stage-quantum': '/logos/quantum-surgical.png',
   'esme':          '/logos/Esme-sudria-logo.png',
   'coree':         '/logos/knu.png',
+  'stage-inserm':  '/logos/inserm.png',
 }
 
 function CarouselCard({
@@ -1222,7 +1223,7 @@ function Contact() {
           </h2>
           <p style={{ fontFamily: fonts.body, fontSize: '16px', color: colors.textMuted, lineHeight: 1.75, margin: '0 0 48px' }}>
             PFE de 6 mois · à partir du 7 avril 2027 · R&D biomédicale.<br />
-            Medtech, imagerie médicale, dispositifs médicaux, data santé.
+            IA appliquée aux données de santé : imagerie médicale, dispositifs médicaux, données biologiques.
           </p>
         </motion.div>
 
