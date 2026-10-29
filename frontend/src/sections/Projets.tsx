@@ -86,7 +86,7 @@ function CTScanScene({ a }: { a: string }) {
       <motion.line x1={130} y1={50} x2={130} y2={68} stroke={a} strokeWidth={1.5}
         animate={{ opacity: [0.15, 0.55, 0.15] }} transition={{ duration: 2.8, repeat: Infinity }} />
       {/* Accuracy readout */}
-      <text x={196} y={152} fontSize="9" fill={a} opacity={0.55} fontFamily="monospace">87.6% acc</text>
+      <text x={196} y={152} fontSize="9" fill={a} opacity={0.55} fontFamily="monospace">93.7% acc</text>
     </svg>
   )
 }
@@ -466,7 +466,7 @@ function Tier1Card({ project, index }: { project: ReturnType<typeof useProjects>
         color: hovered ? 'rgba(255,255,255,0.55)' : colors.textLight,
         transition: 'color 0.35s',
       }}>
-        {project.context} · Tier 1
+        {project.context}
       </div>
       <h3 style={{
         fontFamily: fonts.heading, fontSize: 'clamp(22px, 2.4vw, 30px)', fontWeight: 400,

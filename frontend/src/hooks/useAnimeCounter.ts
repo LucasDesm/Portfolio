@@ -43,8 +43,8 @@ export function useAnimeCounter(target: number, options: Options = {}) {
     animate(proxy.current, {
       value: target,
       duration,
-      // easeOutElastic : dépasse légèrement la cible puis se stabilise
-      ease: 'outElastic(1, 0.38)',
+      // décélération franche, sans dépassement de la valeur cible
+      ease: 'outExpo',
       onUpdate: () => {
         const raw = proxy.current.value
         const rounded =

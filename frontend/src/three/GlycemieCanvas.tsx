@@ -107,7 +107,7 @@ export default function GlycemieCanvas() {
       ctx.fillText('PID · ZIEGLER-NICHOLS', W / 2, HDR / 2)
 
       ctx.textAlign = 'right'
-      ctx.fillText('UVA/PADOVA · FDA VALIDATED', W - 12, HDR / 2)
+      ctx.fillText('UVA/PADOVA · SIMULATION ILLUSTRATIVE', W - 12, HDR / 2)
       ctx.textAlign = 'left'
 
       // ── Séparateur panneau gauche ──────────────────────────────────────────

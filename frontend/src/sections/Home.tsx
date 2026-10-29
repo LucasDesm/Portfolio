@@ -345,7 +345,7 @@ function Hero() {
               transition={{ duration: 2.5, repeat: Infinity }}
               style={{ width: 6, height: 6, borderRadius: '50%', background: colors.accent, display: 'inline-block' }}
             />
-            Disponible · PFE Ingénieur · Début 2027
+            PFE 6 mois · à partir du 7 avril 2027
           </motion.div>
 
           {/* Titre — char-by-char spring reveal via anime.js */}
@@ -495,9 +495,9 @@ function MarqueeStripReversed() {
 
 const SCHOOL_LOGOS = [
   { name: 'IUT Bordeaux',     short: 'IUT',  sub: 'BUT Mesures Physiques', color: colors.accent,            logo: '/logos/mesures-physiques.png' },
-  { name: 'DU Santé & Tech',  short: 'DU',   sub: 'Technologie & Santé',   color: colors.green,             logo: '/logos/iut-bordeaux.png' },
+  { name: 'DU Santé & Tech',  short: 'DU',   sub: 'Techniques au Service de la Santé',   color: colors.green,             logo: '/logos/iut-bordeaux.png' },
   { name: 'Quantum Surgical', short: 'QS',   sub: 'Stage · Robotique',     color: 'oklch(60% 0.22 300)',    logo: '/logos/quantum-surgical.png' },
-  { name: 'ESME',             short: 'ESME', sub: 'Biotech & Numérique',   color: 'oklch(65% 0.17 65)',     logo: '/logos/esme.png' },
+  { name: 'ESME',             short: 'ESME', sub: 'Biotech & Numérique',   color: 'oklch(65% 0.17 65)',     logo: '/logos/Esme-sudria-logo.png' },
   { name: 'KNU Corée',        short: 'KNU',  sub: 'Daegu · S3 ESME',       color: 'oklch(55% 0.23 25)',     logo: '/logos/knu.png' },
 ]
 
@@ -519,7 +519,7 @@ function QuiJeSuis() {
             Mon parcours part de la mesure physique — capteurs, instrumentation, métrologie — pour rejoindre le machine learning et les systèmes médicaux embarqués. Robotique chirurgicale chez Quantum Surgical, régulation glycémique par correcteur PID, deep learning pour la détection du cancer du poumon.
           </p>
           <p style={{ fontFamily: fonts.body, fontSize: '17px', lineHeight: 1.85, color: colors.textMuted, margin: 0 }}>
-            Je cherche un <strong style={{ color: colors.accent, fontWeight: 600 }}>PFE de 6 mois début 2027</strong> en R&D biomédicale.
+            Je cherche un <strong style={{ color: colors.accent, fontWeight: 600 }}>PFE de 6 mois à partir d'avril 2027</strong> en R&D biomédicale.
           </p>
         </motion.div>
 
@@ -568,16 +568,16 @@ function QuiJeSuis() {
 
 function DataStrip() {
   // anime.js v4 — spring elastic : léger overshoot avant de se stabiliser
-  const c0 = useAnimeCounter(87.6, { decimals: 1, duration: 1760 })
+  const c0 = useAnimeCounter(93.7, { decimals: 1, duration: 1760 })
   const c1 = useAnimeCounter(16,   { duration: 1280 })
   const c2 = useAnimeCounter(222,  { duration: 1920 })
   const c3 = useAnimeCounter(3,    { duration: 960 })
 
   const metrics = [
-    { counter: c0, format: () => c0.val.toFixed(1) + ' %', label: 'accuracy',         sub: 'CT-scan cancer',         prominent: true  },
+    { counter: c0, format: () => c0.val.toFixed(1) + ' %', label: 'accuracy',         sub: 'CT-scan · 4 classes',        prominent: true  },
     { counter: c1, format: () => c1.val + ' sem.',          label: 'Quantum Surgical', sub: 'robotique chirurgicale', prominent: false },
-    { counter: c2, format: () => String(c2.val),            label: 'simulations',      sub: 'régulation glycémie T1', prominent: false },
-    { counter: c3, format: () => String(c3.val),            label: 'formations',       sub: 'BUT · DU · ESME',        prominent: false },
+    { counter: c2, format: () => String(c2.val),            label: 'scénarios',        sub: 'régulation glycémie T1', prominent: false },
+    { counter: c3, format: () => String(c3.val),            label: 'stages',           sub: 'Excell · Quantum · INSERM',       prominent: false },
   ]
 
   return (
@@ -1221,7 +1221,7 @@ function Contact() {
             Travaillons<br /><em style={{ fontWeight: 300, fontStyle: 'italic', color: colors.textMuted }}>ensemble.</em>
           </h2>
           <p style={{ fontFamily: fonts.body, fontSize: '16px', color: colors.textMuted, lineHeight: 1.75, margin: '0 0 48px' }}>
-            PFE de 6 mois · début 2027 · R&D biomédicale.<br />
+            PFE de 6 mois · à partir du 7 avril 2027 · R&D biomédicale.<br />
             Medtech, imagerie médicale, dispositifs médicaux, data santé.
           </p>
         </motion.div>
@@ -1234,9 +1234,9 @@ function Contact() {
           style={{ display: 'flex', gap: '12px', justifyContent: 'flex-start', flexWrap: 'wrap', marginBottom: '56px' }}
         >
           {[
-            { label: 'Email', href: 'mailto:lucas.desmartin@esme.fr' },
-            { label: 'LinkedIn', href: '#' },
-            { label: 'GitHub', href: '#' },
+            { label: 'Email', href: 'mailto:lucasdesmartin@yahoo.fr' },
+            { label: 'LinkedIn', href: 'https://www.linkedin.com/in/lucas-desmartin-953177250/' },
+            { label: 'GitHub', href: 'https://github.com/LucasDesm' },
           ].map((link) => (
             <motion.a key={link.label} href={link.href}
               whileHover={{ scale: 1.05, background: colors.bgCard, boxShadow: `0 8px 24px ${ca.text(0.1)}` }}
@@ -1248,46 +1248,6 @@ function Contact() {
           ))}
         </motion.div>
 
-        <motion.form
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.48, delay: 0.2 }}
-          onSubmit={e => e.preventDefault()}
-          style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
-        >
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-            {[
-              { name: 'name', label: 'Nom', type: 'text', placeholder: 'Votre nom' },
-              { name: 'email', label: 'Email', type: 'email', placeholder: 'votre@email.com' },
-            ].map(f => (
-              <div key={f.name} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontFamily: fonts.body, fontSize: '11px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{f.label}</label>
-                <input type={f.type} placeholder={f.placeholder}
-                  style={{ padding: '13px 16px', borderRadius: '10px', border: `1.5px solid ${colors.border}`, background: colors.bgCard, color: colors.text, fontFamily: fonts.body, fontSize: '14px', outline: 'none', transition: 'border-color 0.15s' }}
-                  onFocus={e => (e.target.style.borderColor = colors.accent)}
-                  onBlur={e => (e.target.style.borderColor = colors.border)}
-                />
-              </div>
-            ))}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontFamily: fonts.body, fontSize: '11px', fontWeight: 700, color: colors.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Message</label>
-            <textarea placeholder="Votre message..." rows={4}
-              style={{ padding: '13px 16px', borderRadius: '10px', border: `1.5px solid ${colors.border}`, background: colors.bgCard, color: colors.text, fontFamily: fonts.body, fontSize: '14px', outline: 'none', resize: 'vertical', transition: 'border-color 0.15s' }}
-              onFocus={e => (e.target.style.borderColor = colors.accent)}
-              onBlur={e => (e.target.style.borderColor = colors.border)}
-            />
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.02, boxShadow: `0 10px 32px ${ca.accent(0.28)}` }}
-            whileTap={{ scale: 0.98 }}
-            type="submit"
-            style={{ background: colors.accent, color: colors.bg, border: 'none', padding: '15px', borderRadius: '12px', fontSize: '15px', fontFamily: fonts.body, fontWeight: 600, cursor: 'pointer', boxShadow: `0 4px 18px ${ca.accent(0.22)}` }}
-          >
-            Envoyer →
-          </motion.button>
-        </motion.form>
       </div>
     </section>
   )

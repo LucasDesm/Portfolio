@@ -26,19 +26,20 @@ const STEP_LOGOS: Record<string, string> = {
   'but':           '/logos/mesures-physiques.png',
   'du-sante':      '/logos/iut-bordeaux.png',
   'stage-quantum': '/logos/quantum-surgical.png',
-  'esme':          '/logos/esme.png',
+  'stage-excell':  '/logos/logo_excell.png',
+  'esme':          '/logos/Esme-sudria-logo.png',
   'coree':         '/logos/knu.png',
 }
 
 const STEP_HIGHLIGHTS: Record<string, { value: string; label: string }[]> = {
   'but':           [{ value: '3 ans',      label: 'formation' },        { value: '4',          label: 'projets majeurs' }],
-  'du-sante':      [{ value: '2022',       label: 'en parallèle BUT' }],
+  'du-sante':      [{ value: '2021–2023',  label: 'en parallèle du BUT' }],
   'stage-excell':  [{ value: '12 sem.',    label: 'durée' },            { value: 'Floirac',    label: 'Bordeaux' }],
   'stage-quantum': [{ value: '16 sem.',    label: 'durée' },            { value: 'ISO 17025',  label: 'norme' }],
   'esme':          [{ value: '3 ans',      label: '2024 – 2027' },      { value: 'Biotech',    label: 'spécialisation' }],
   'coree':         [{ value: 'S3 ESME',    label: 'semestre' },         { value: 'Daegu',      label: 'Corée du Sud' }],
-  'stage-inge':    [{ value: '3–4 mois',   label: 'durée prévue' },      { value: 'Juin 2026',  label: 'début' }],
-  'pfe':           [{ value: 'Début 2027', label: 'objectif' },         { value: '6 mois',     label: 'durée visée' }],
+  'stage-inserm':  [{ value: '12 sem.',    label: 'durée' },            { value: 'INSERM',     label: 'Bordeaux' }],
+  'pfe':           [{ value: '7 avril 2027', label: 'début' },         { value: '6 mois',     label: 'durée visée' }],
 }
 
 // ─── Projet mini-card ─────────────────────────────────────────────────────────
@@ -392,7 +393,7 @@ function Intro() {
 
       {/* Badges */}
       <motion.div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '40px' }}>
-        {['3 formations', '2 stages', '1 séjour international', '6 ans'].map((s, i) => (
+        {['3 formations', '3 stages', '1 séjour international', '6 ans'].map((s, i) => (
           <motion.span key={s}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -432,7 +433,7 @@ function Intro() {
         transition={{ delay: 0.65, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         style={{ fontFamily: fonts.body, fontSize: '17px', lineHeight: 1.8, color: colors.textMuted, maxWidth: '520px', margin: '0 0 56px' }}
       >
-        De la mesure physique à l'intelligence artificielle médicale — trois formations complémentaires, deux stages, un semestre en Corée du Sud.
+        De la mesure physique à l'intelligence artificielle médicale — trois formations complémentaires, trois stages, un semestre en Corée du Sud.
       </motion.p>
 
       {/* Frise des étapes */}

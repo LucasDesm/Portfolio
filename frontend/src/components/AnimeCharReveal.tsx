@@ -45,28 +45,33 @@ export default function AnimeCharReveal({
     el.innerHTML = ''
     const innerChars: HTMLElement[] = []
 
-    for (const ch of text) {
-      if (ch === ' ') {
-        const spacer = document.createElement('span')
-        spacer.style.cssText = 'display:inline-block;width:0.28em'
-        el.appendChild(spacer)
-        continue
+    // Les lettres d'un même mot restent dans un bloc insécable : le retour à la ligne
+    // ne peut se faire qu'entre deux mots (sinon « Du capte / ur » sur mobile).
+    // Le texte reste lisible tel quel par Google et les lecteurs d'écran via aria-label.
+    el.setAttribute('aria-label', text)
+    text.split(' ').forEach((word, wi) => {
+      if (wi > 0) el.appendChild(document.createTextNode(' '))
+      const wordEl = document.createElement('span')
+      wordEl.setAttribute('aria-hidden', 'true')
+      wordEl.style.cssText = 'display:inline-block;white-space:nowrap'
+
+      for (const ch of word) {
+        // Masque : overflow hidden, empêche de voir la lettre hors de sa boîte
+        const mask = document.createElement('span')
+        mask.style.cssText =
+          'display:inline-block;overflow:hidden;vertical-align:bottom;line-height:1.15;padding-top:0.38em;margin-top:-0.38em'
+
+        // Lettre animable
+        const char = document.createElement('span')
+        char.style.cssText = 'display:inline-block;will-change:transform'
+        char.textContent = ch
+
+        mask.appendChild(char)
+        wordEl.appendChild(mask)
+        innerChars.push(char)
       }
-
-      // Masque : overflow hidden, empêche de voir la lettre hors de sa boîte
-      const mask = document.createElement('span')
-      mask.style.cssText =
-        'display:inline-block;overflow:hidden;vertical-align:bottom;line-height:1.15;padding-top:0.38em;margin-top:-0.38em'
-
-      // Lettre animable
-      const char = document.createElement('span')
-      char.style.cssText = 'display:inline-block;will-change:transform'
-      char.textContent = ch
-
-      mask.appendChild(char)
-      el.appendChild(mask)
-      innerChars.push(char)
-    }
+      el.appendChild(wordEl)
+    })
 
     if (!innerChars.length) return
 

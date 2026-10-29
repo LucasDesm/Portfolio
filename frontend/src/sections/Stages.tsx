@@ -226,7 +226,7 @@ export default function Stages() {
               transition={{ duration: 0.7, delay: 0.55 }}
               style={{ fontFamily: fonts.body, fontSize: '17px', color: colors.textMuted, margin: 0, lineHeight: 1.7 }}
             >
-              {done.length} expériences en entreprise · du laboratoire d'analyses à la robotique chirurgicale.
+              {done.length} stages · du laboratoire d'analyses à la bio-informatique, en passant par la robotique chirurgicale.
             </motion.p>
           </section>
 

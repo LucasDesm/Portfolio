@@ -10,7 +10,6 @@ import { useProjects } from '@/hooks/useProjects'
 import { useParcours } from '@/hooks/useParcours'
 
 const GlycemieExtras = lazy(() => import('@/sections/GlycemieExtras'))
-const HandExtras     = lazy(() => import('@/sections/HandExtras'))
 
 const HandCanvas     = lazy(() => import('@/three/HandCanvas'))
 const EthylCanvas    = lazy(() => import('@/three/EthylCanvas'))
@@ -274,11 +273,6 @@ export default function ProjetDetail() {
         {project.slug === 'regulateur-glycemie' && (
           <Suspense fallback={null}>
             <GlycemieExtras ctxColor={ctxColor} />
-          </Suspense>
-        )}
-        {project.slug === 'main-robotique-emg' && (
-          <Suspense fallback={null}>
-            <HandExtras ctxColor={ctxColor} />
           </Suspense>
         )}
 

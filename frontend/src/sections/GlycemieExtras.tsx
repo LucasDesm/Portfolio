@@ -5,34 +5,11 @@ import { ChainDiagram } from '@/components/ChainDiagram'
 // ─── Hardware extension chain ─────────────────────────────────────────────────
 
 const HARDWARE_STEPS = [
-  { label: 'Capteur GSR', sublabel: 'conductance peau' },
+  { label: 'Cardio + GSR', sublabel: 'effort · émotion' },
   { label: 'Arduino MKR', sublabel: 'WiFi 1010' },
-  { label: 'BLE', sublabel: 'Bluetooth LE' },
-  { label: 'Ajustement PID', sublabel: 'activité physique' },
+  { label: 'Bluetooth', sublabel: 'vers smartphone' },
+  { label: 'Alerte activité', sublabel: 'buzzer' },
 ]
-
-// ─── Simulation grid ──────────────────────────────────────────────────────────
-
-function seededRandom(s: number) {
-  const x = Math.sin(s + 1) * 10000
-  return x - Math.floor(x)
-}
-
-const ROWS = 11, COLS = 20
-type CellStatus = 'green' | 'yellow' | 'red'
-
-const GRID: CellStatus[] = Array.from({ length: ROWS * COLS }, (_, i) => {
-  const r = seededRandom(i * 137.508)
-  if (r < 0.74) return 'green'
-  if (r < 0.91) return 'yellow'
-  return 'red'
-})
-
-const CELL_COLOR: Record<CellStatus, string> = {
-  green:  '#4ade80',
-  yellow: '#fbbf24',
-  red:    '#f87171',
-}
 
 // ─── PID comparison charts ────────────────────────────────────────────────────
 
@@ -142,7 +119,7 @@ export default function GlycemieExtras({ ctxColor }: { ctxColor: string }) {
 
       {/* ── Avant / Après PID ── */}
       <section style={{ padding: '80px 48px 0', maxWidth: '1100px', margin: '0 auto' }}>
-        <SectionHead title="Avant / Après correcteur" accent={ctxColor} />
+        <SectionHead title="Principe de la régulation (illustration)" accent={ctxColor} />
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
 
           {/* Sans correcteur */}
@@ -161,7 +138,7 @@ export default function GlycemieExtras({ ctxColor }: { ctxColor: string }) {
             </div>
             <NoControlChart />
             <p style={{ fontFamily: fonts.body, fontSize: '12px', color: colors.textMuted, margin: '12px 0 0', lineHeight: 1.6 }}>
-              La glycémie oscille sans régulation — alternance hyperglycémie / hypoglycémie.
+              Schéma de principe : sans régulation, la glycémie sort de la zone cible après les perturbations (repas, activité).
             </p>
           </motion.div>
 
@@ -176,12 +153,12 @@ export default function GlycemieExtras({ ctxColor }: { ctxColor: string }) {
             <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(to right, ${ctxColor}, transparent)`, borderRadius: '18px 18px 0 0' }} />
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
               <span style={{ fontFamily: fonts.body, fontSize: '11px', fontWeight: 700, color: ctxColor, background: `${ctxColor}14`, border: `1px solid ${ctxColor}30`, padding: '3px 10px', borderRadius: '20px' }}>
-                Avec PID · Ziegler-Nichols
+                Avec correcteur
               </span>
             </div>
             <PIDChart accent={ctxColor} />
             <p style={{ fontFamily: fonts.body, fontSize: '12px', color: colors.textMuted, margin: '12px 0 0', lineHeight: 1.6 }}>
-              Le correcteur PID ramène et maintient la glycémie dans la zone cible.
+              Schéma de principe : le correcteur ramène la glycémie dans la zone cible. Courbes illustratives, pas des résultats de simulation.
             </p>
           </motion.div>
 
@@ -190,7 +167,7 @@ export default function GlycemieExtras({ ctxColor }: { ctxColor: string }) {
 
       {/* ── Extension matérielle Arduino ── */}
       <section style={{ padding: '80px 48px 0', maxWidth: '1100px', margin: '0 auto' }}>
-        <SectionHead title="Extension matérielle" accent={ctxColor} />
+        <SectionHead title="Prototype : détecteur d'activité physique" accent={ctxColor} />
         <motion.p
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
@@ -198,69 +175,9 @@ export default function GlycemieExtras({ ctxColor }: { ctxColor: string }) {
           transition={{ duration: 0.5 }}
           style={{ fontFamily: fonts.body, fontSize: '14px', color: colors.textMuted, margin: '0 0 28px', lineHeight: 1.7 }}
         >
-          Détection d'activité physique en temps réel pour adapter dynamiquement les paramètres du correcteur.
+          Seuil de fréquence cardiaque réglable, capteur GSR pour écarter les fortes émotions, alerte par buzzer et transmission Bluetooth vers un smartphone. Objectif : ajuster la régulation pendant l'effort ; l'intégration dans la boucle reste une perspective.
         </motion.p>
         <ChainDiagram steps={HARDWARE_STEPS} ctxColor={ctxColor} />
-      </section>
-
-      {/* ── Grille de simulation ── */}
-      <section style={{ padding: '80px 48px 0', maxWidth: '1100px', margin: '0 auto' }}>
-        <SectionHead title="Résultats de simulation" accent={ctxColor} />
-
-        {/* Légende */}
-        <div style={{ display: 'flex', gap: '20px', marginBottom: '20px', flexWrap: 'wrap' }}>
-          {(['green', 'yellow', 'red'] as CellStatus[]).map(s => (
-            <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-              <div style={{ width: 10, height: 10, borderRadius: '3px', background: CELL_COLOR[s] }} />
-              <span style={{ fontFamily: fonts.body, fontSize: '12px', color: colors.textMuted }}>
-                {s === 'green' ? 'Glycémie contrôlée' : s === 'yellow' ? 'Limite' : 'Hors zone'}
-              </span>
-            </div>
-          ))}
-          <span style={{ fontFamily: fonts.mono, fontSize: '11px', color: colors.textLight, marginLeft: 'auto' }}>
-            {GRID.filter(c => c === 'green').length} / {ROWS * COLS} succès
-          </span>
-        </div>
-
-        {/* En-tête colonnes */}
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-          <div style={{ width: '28px', flexShrink: 0 }} />
-          <div style={{ fontFamily: fonts.mono, fontSize: '10px', color: colors.textLight }}>
-            20 scénarios →
-          </div>
-        </div>
-
-        {/* Grid */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-start', margin: '0 auto', width: 'fit-content' }}>
-          {Array.from({ length: ROWS }, (_, row) => (
-            <div key={row} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <span style={{ fontFamily: fonts.mono, fontSize: '9px', color: colors.textLight, width: '24px', textAlign: 'right', flexShrink: 0 }}>
-                P{row + 1}
-              </span>
-              <div style={{ display: 'flex', gap: '5px' }}>
-                {Array.from({ length: COLS }, (_, col) => {
-                  const status = GRID[row * COLS + col]
-                  return (
-                    <motion.div
-                      key={col}
-                      initial={{ opacity: 0, scale: 0.3 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.25, delay: (row * COLS + col) * 0.003, ease: [0.22, 1, 0.36, 1] }}
-                      style={{
-                        width: 14, height: 14,
-                        borderRadius: '4px',
-                        background: CELL_COLOR[status],
-                        opacity: status === 'green' ? 0.75 : status === 'yellow' ? 0.9 : 1,
-                      }}
-                    />
-                  )
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-
       </section>
 
     </>

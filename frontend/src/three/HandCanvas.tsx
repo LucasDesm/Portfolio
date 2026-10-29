@@ -95,10 +95,10 @@ function HandModelAnimated() {
 // ─── EMG constants ────────────────────────────────────────────────────────────
 
 const CHANNELS = [
-  { label: 'CH1 · Flex. digit. superf.', short: 'FDS', color: '#3b82f6' },
-  { label: 'CH2 · Ext. digitorum',       short: 'ED',  color: '#10b981' },
-  { label: 'CH3 · Flex. pollicis long.', short: 'FPL', color: '#06b6d4' },
-  { label: 'CH4 · Abd. pollicis brev.',  short: 'APB', color: '#f59e0b' },
+  { label: 'CH1 · Flex. digit. superf.', short: 'CH1', color: '#3b82f6' },
+  { label: 'CH2 · Ext. digitorum',       short: 'CH2',  color: '#10b981' },
+  { label: 'CH3 · Flex. pollicis long.', short: 'CH3', color: '#06b6d4' },
+  { label: 'CH4 · Abd. pollicis brev.',  short: 'CH4', color: '#f59e0b' },
 ]
 
 // [FDS, ED, FPL, APB] activations + finger activations [P, I, M, An, Au]
@@ -190,7 +190,7 @@ function EMGMonitor() {
       ctx.fillText('Commande myoélectrique', 14, HDR / 2)
       ctx.font = `${hFS}px "Courier New",monospace`
       ctx.fillStyle = '#3d5570'; ctx.textAlign = 'right'
-      ctx.fillText('surface EMG · 4 canaux · 1 kHz', W - 12, HDR / 2)
+      ctx.fillText('simulation illustrative · EMG', W - 12, HDR / 2)
 
       // ── Séparateur panneau gauche ─────────────────────────────────────────────
       ctx.strokeStyle = '#162233'; ctx.lineWidth = 1
@@ -341,7 +341,7 @@ function EMGMonitor() {
       ctx.font = `${fFS}px "Courier New",monospace`
       ctx.fillStyle = '#3d5570'; ctx.textBaseline = 'middle'
       ctx.textAlign = 'left'
-      ctx.fillText('IUT de Bordeaux · DU Technologie & Santé', 12, H - FTR / 2)
+      ctx.fillText('IUT de Bordeaux · BUT Mesures Physiques', 12, H - FTR / 2)
       ctx.textAlign = 'right'
       const simSec = Math.floor(t)
       ctx.fillText(
