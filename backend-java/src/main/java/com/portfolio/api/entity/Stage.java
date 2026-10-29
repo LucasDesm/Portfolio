@@ -1,5 +1,6 @@
 package com.portfolio.api.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -56,4 +57,8 @@ public class Stage {
     private List<ResourceLink> links = new ArrayList<>();
 
     private boolean upcoming;
+
+    /** Ordre d'affichage, identique à celui de data.ts côté frontend */
+    @JsonIgnore
+    private int position;
 }

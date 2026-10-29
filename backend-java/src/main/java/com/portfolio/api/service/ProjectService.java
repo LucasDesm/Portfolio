@@ -16,7 +16,7 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
 
     public List<Project> findAll() {
-        return projectRepository.findAllByOrderByIdAsc();
+        return projectRepository.findAllByOrderByPositionAsc();
     }
 
     public Project findBySlug(String slug) {

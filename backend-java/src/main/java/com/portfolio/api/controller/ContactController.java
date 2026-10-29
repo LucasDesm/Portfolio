@@ -1,6 +1,7 @@
 package com.portfolio.api.controller;
 
-import com.portfolio.api.entity.ContactMessage;
+import com.portfolio.api.dto.ContactRequest;
+import com.portfolio.api.dto.ContactResponse;
 import com.portfolio.api.service.ContactService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,7 @@ public class ContactController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ContactMessage send(@Valid @RequestBody ContactMessage message) {
-        return contactService.save(message);
+    public ContactResponse send(@Valid @RequestBody ContactRequest request) {
+        return contactService.save(request);
     }
 }

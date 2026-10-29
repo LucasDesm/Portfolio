@@ -1,7 +1,10 @@
 import type { Project, ParcoursStep, Stage } from './data'
 
-const API = import.meta.env.VITE_API_URL ?? 'http://localhost:8081'
-const SIGNAL_API = import.meta.env.VITE_SIGNAL_API_URL ?? 'http://localhost:8082'
+// URL vide = aucun backend déployé : le site sert uniquement le contenu local (data.ts)
+const API = import.meta.env.VITE_API_URL ?? ''
+export const API_ENABLED = API !== ''
+const SIGNAL_API = import.meta.env.VITE_SIGNAL_API_URL ?? ''
+export const SIGNAL_API_ENABLED = SIGNAL_API !== ''
 
 async function get<T>(base: string, path: string): Promise<T> {
   const res = await fetch(`${base}${path}`)

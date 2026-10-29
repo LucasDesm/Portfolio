@@ -8,5 +8,5 @@ import java.util.Optional;
 
 public interface StageRepository extends JpaRepository<Stage, Long> {
     Optional<Stage> findBySlug(String slug);
-    List<Stage> findAllByOrderByIdAsc();
+    List<Stage> findAllByOrderByPositionAsc();
 }

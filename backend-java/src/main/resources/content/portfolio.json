@@ -1,0 +1,836 @@
+{
+  "projects": [
+    {
+      "slug": "austral-omics",
+      "tier": 1,
+      "context": "Stage",
+      "title": "Austral-Omics",
+      "subtitle": "ADN environnemental, Nanopore & Deep Learning · INSERM",
+      "description": "Chaîne d'analyse des lectures Nanopore jusqu'à la composition d'un échantillon, validée sur des communautés certifiées avant même l'expédition antarctique. 16S : 92 à 99 % des lectures nommées au genre, précision proche de 100 %. COI : la chaîne hybride avec Deep Learning retrouve 61,8 % des familles hors banque (1,57 % d'erreur), contre 7,0 % pour la méthode classique seule.",
+      "longDescription": "Stage de 12 semaines (22 juin – 11 septembre 2026) à l'unité INSERM U1211 Maladies Rares : Génétique et Métabolisme, à Bordeaux, encadré par Christophe Hubert. Le programme Austral-Omics prévoit une campagne d'analyse multiomique du plancton et des procaryotes de l'océan Austral, orientée vers la bioprospection en santé humaine. Les échantillons seront séquencés à bord du navire Persévérance avec un séquenceur portable Nanopore, puis analysés à distance sur le cluster Curta (mésocentre MCIA) via une liaison Starlink. Comme ils n'existaient pas encore, il fallait construire la chaîne d'analyse et mesurer sa fiabilité en amont, sur des communautés de composition certifiée et sur des données publiques (42 Go de lectures brutes).",
+      "tags": [
+        "Bio-informatique",
+        "Nanopore",
+        "Python",
+        "PyTorch",
+        "Deep Learning",
+        "vsearch",
+        "R",
+        "Linux · Slurm",
+        "FastAPI"
+      ],
+      "has3D": false,
+      "cover": "/projets/austral/detection-nouveaute.webp",
+      "highlights": [
+        {
+          "value": "92–99 %",
+          "label": "lectures nommées au genre (16S)",
+          "color": "#3f5f86"
+        },
+        {
+          "value": "61,8 %",
+          "label": "familles retrouvées hors banque (COI)",
+          "color": "#2d8c5f"
+        },
+        {
+          "value": "0,954",
+          "label": "AUROC du détecteur de nouveauté",
+          "color": "#3f5f86"
+        }
+      ],
+      "chain": [
+        {
+          "label": "Lectures Nanopore",
+          "sublabel": "FASTQ"
+        },
+        {
+          "label": "Contrôle qualité",
+          "sublabel": "NanoPlot · Chopper · Porechop"
+        },
+        {
+          "label": "Regroupement",
+          "sublabel": "OTU · vsearch"
+        },
+        {
+          "label": "Assignation",
+          "sublabel": "SINTAX · SILVA 138.2"
+        },
+        {
+          "label": "Composition",
+          "sublabel": "table d'abondance"
+        },
+        {
+          "label": "Validation",
+          "sublabel": "vérité certifiée"
+        }
+      ],
+      "chainLabel": "Chaîne d'analyse 16S",
+      "role": "Travail en autonomie, avec un point hebdomadaire avec mon tuteur. Les objectifs n'étaient pas fixés : la chaîne 16S était la mission de départ. La validation contre une vérité connue, le Deep Learning et l'extension au marqueur COI sont venus de ma propre initiative ; l'application web s'est ajoutée en cours de stage.",
+      "sections": [
+        {
+          "title": "La question",
+          "body": "Qu'y a-t-il dans cet échantillon, et à quel point peut-on croire la réponse ? Un workflow mal réglé ne renvoie pas d'erreur, il renvoie un résultat. Chaque chiffre produit par la chaîne devait donc être accompagné d'une mesure de son écart à la réalité, et de la liste des situations où cet écart n'est pas mesurable."
+        },
+        {
+          "title": "La chaîne 16S (bactéries)",
+          "body": "Cinq étapes, chacune dans son propre script : contrôle qualité (NanoPlot, Chopper sur la fenêtre 1 200–1 800 pb, Porechop), regroupement des lectures en OTU à 90 % d'identité avec retrait des chimères (vsearch), assignation taxonomique SINTAX contre SILVA 138.2 (452 055 séquences) avec un seuil de confiance de 0,8, table de composition, puis validation. La chaîne retient le rang confiant le plus profond plutôt que de forcer un nom. Le séquenceur Nanopore est d'abord un capteur : il mesure le courant qui traverse un pore quand le brin d'ADN y passe."
+        },
+        {
+          "title": "Valider sur quatre niveaux",
+          "body": "Composition comparée aux certificats des standards ZymoBIOMICS (ρ de Spearman pour le classement, Bray-Curtis pour les proportions) ; séquences reconstruites comparées au gène 16S de chaque souche (17 organismes sur 17, identité médiane 98,6 %, aucune lecture attribuée à un organisme étranger) ; comportement sur un jeu public sans vérité connue ; nommage lecture par lecture sur 11 462 lectures réelles, avec une précision de 99,8 à 100 % de la famille à la classe."
+        },
+        {
+          "title": "Ce qui n'a pas marché du premier coup",
+          "body": "Seules 44 % des lectures étaient d'abord nommées au genre. Après avoir écarté une à une les hypothèses (OTU bruités, chimères, qualité), la cause était l'orientation des brins : 58,7 % des OTU étaient écrits en complément inverse. Recherche sur les deux brins : 44,0 → 98,9 %. Le polissage medaka, d'usage courant, dégradait la résolution à l'espèce (38,3 → 25,3 % sur MSPlus) : retiré. Une première validation comparait la chaîne à un autre logiciel et donnait ρ = 0,974 ; face au certificat du fabricant, elle retombait à 0,927. Se comparer à un autre logiciel, ce n'est pas se comparer à une vérité."
+        },
+        {
+          "title": "Deep Learning : faire mieux, et sur quelles séquences ?",
+          "body": "On estime que 60 à 70 % des espèces de l'océan Austral sont inconnues, et un classifieur ne peut nommer que ce qu'il a vu. J'ai donc entraîné sur GPU (cluster Curta) un encodeur — CNN 1D à convolutions dilatées, environ 1,7 million de paramètres, apprentissage contrastif supervisé hiérarchique — qui place chaque séquence dans un espace où la distance reflète la parenté. Évalué en cachant 415 genres de SILVA, il nomme moins bien la famille que la méthode classique, mais situe l'ordre et la classe et détecte mieux la nouveauté. D'où une chaîne hybride : la méthode classique nomme, le modèle situe et signale ce qui ne ressemble à rien de connu. Le seuil de nouveauté, d'abord trop sensible au bruit Nanopore (53 % d'OTU « nouveaux »), a été recalibré sur un plancher de bruit mesuré (5,7 %)."
+        },
+        {
+          "title": "Le COI (animaux)",
+          "body": "La banque BOLD (5 millions de séquences) a été auditée avant usage. Un premier entraînement supervisé au BIN a échoué (34,0 %) : une requête dont le genre est retiré ne peut rien recevoir d'une unité plus fine que le genre. Supervisé à la famille, à capacité égale, le modèle atteint 55,8 %. Sur données réelles, les lectures contenaient plusieurs copies du barcode en tandem : j'ai écrit un découpeur dédié (633 559 monomères), recalibré le seuil de regroupement et adapté la chaîne au mini-barcode Leray de 313 pb."
+        },
+        {
+          "title": "L'application AUSTRAL",
+          "body": "Une interface web (FastAPI, inférence PyTorch sur processeur) rend la chaîne utilisable par l'équipe : on dépose des lectures, on lance l'analyse, puis on lit le résultat rang par rang, chaque ligne accompagnée de sa fiabilité."
+        },
+        {
+          "title": "Limites",
+          "body": "Les proportions restent biaisées par la PCR et par le nombre de copies du gène 16S (Bray-Curtis de 0,291 sur GutMock), et le 16S plafonne au genre. Surtout, la chaîne n'a pas encore été confrontée à de vrais échantillons antarctiques, alors que plus d'un genre austral sur trois n'a aucune séquence COI de référence. Ce test décisif ne pourra se faire que pendant l'expédition."
+        }
+      ],
+      "tables": [
+        {
+          "title": "Validation sur communautés certifiées (16S)",
+          "columns": [
+            "Mesure",
+            "GutMock (D6331)",
+            "MSPlus (D6300)"
+          ],
+          "rows": [
+            [
+              "Lectures nommées au genre",
+              "98,9 %",
+              "92,0 %"
+            ],
+            [
+              "Avant correction de l'orientation des brins",
+              "44,0 %",
+              "42,5 %"
+            ],
+            [
+              "Précision des genres nommés",
+              "100 %",
+              "99,9 %"
+            ],
+            [
+              "Genres attendus retrouvés",
+              "13 / 14",
+              "8 / 8"
+            ],
+            [
+              "ρ de Spearman (classement, 1 = identique)",
+              "0,904",
+              "0,690"
+            ],
+            [
+              "Bray-Curtis (proportions, 0 = identiques)",
+              "0,291",
+              "0,125"
+            ]
+          ],
+          "caption": "Composition rendue par la chaîne, comparée au certificat publié par le fabricant."
+        },
+        {
+          "title": "Deep Learning face à la méthode classique (16S, 415 genres cachés, 10 000 requêtes)",
+          "columns": [
+            "Tâche",
+            "Deep Learning",
+            "Méthode classique"
+          ],
+          "rows": [
+            [
+              "Nommer la famille",
+              "81,2 %",
+              "85,6 %"
+            ],
+            [
+              "Situer à l'ordre",
+              "95,8 %",
+              "—"
+            ],
+            [
+              "Situer à la classe",
+              "98,4 %",
+              "—"
+            ],
+            [
+              "Détecter la nouveauté (AUROC)",
+              "0,825",
+              "0,754"
+            ]
+          ],
+          "caption": "Chaque méthode est gardée là où elle est la meilleure. Détecteur de nouveauté final : AUROC 0,954 en titration par mutations, 1,000 sur une famille entière retirée de la banque (Alteromonadaceae)."
+        },
+        {
+          "title": "Retrouver la famille d'une séquence dont le genre est absent de la banque (COI)",
+          "columns": [
+            "Méthode",
+            "Familles retrouvées",
+            "Erreur"
+          ],
+          "rows": [
+            [
+              "Méthode classique seule",
+              "7,0 %",
+              "0,8 %"
+            ],
+            [
+              "Encodeur supervisé à la famille",
+              "55,8 %",
+              "—"
+            ],
+            [
+              "Chaîne hybride (seuil fixé par validation croisée)",
+              "61,8 %",
+              "1,57 %"
+            ]
+          ]
+        }
+      ],
+      "figures": [
+        {
+          "src": "/projets/austral/detection-nouveaute.webp",
+          "alt": "Trois graphiques : score de nouveauté selon la divergence, taux de séquences signalées nouvelles, courbe ROC avec une AUROC de 0,954",
+          "caption": "Validation du détecteur de nouveauté sur données à vérité connue : le score croît avec la divergence (A), le détecteur bascule entre 2 et 5 % de divergence (B), AUROC de 0,954 (C)."
+        },
+        {
+          "src": "/projets/austral/composition-gutmock.webp",
+          "alt": "Diagramme en barres comparant, genre par genre, la composition certifiée et la composition observée du standard GutMock",
+          "caption": "Standard GutMock : composition certifiée (gris) et observée (bleu). Le classement est respecté ; les écarts de proportion viennent des biais de la PCR et du nombre de copies du gène 16S, pas de la chaîne."
+        },
+        {
+          "src": "/projets/austral/application-austral.webp",
+          "alt": "Capture de l'application AUSTRAL : tableau des taxons détectés avec rang annoncé, part et fiabilité",
+          "caption": "Application AUSTRAL : placement taxonomique d'un échantillon, avec le rang annoncé et la fiabilité de chaque ligne."
+        }
+      ],
+      "linkedParcoursId": "stage-inserm"
+    },
+    {
+      "slug": "ct-scan-deep-learning",
+      "tier": 1,
+      "context": "ESME",
+      "title": "CT-Scan & Deep Learning",
+      "subtitle": "Classification de nodules pulmonaires · 4 classes",
+      "description": "Classification de CT-scans thoraciques en 4 classes (3 sous-types de cancer + tissu sain) par transfer learning. Ensemble ResNet50 + DenseNet121 : 93,7 % d'accuracy test, F1 macro 0,939.",
+      "longDescription": "Projet d'application Ingé2 ESME (avril 2026), en trinôme avec Camille Tassin et Julia Kiefer, encadré par Achille Mbogol Touye. Données : Chest CT-Scan Images Dataset (Kaggle), environ 1 000 images réparties en adénocarcinome, carcinome à grandes cellules, carcinome épidermoïde et tissu normal, avec un découpage train / validation / test fourni, ce qui limite le risque de fuite de données. Déséquilibre des classes compensé par une pondération de la CrossEntropyLoss. Méthode : augmentation de données à l'entraînement (recadrage 224×224, flips, rotation ±15°), puis fine-tuning en deux phases (backbone gelé, puis réseau dégelé avec CosineAnnealingLR et early stopping). Benchmark de plusieurs architectures pré-entraînées sur ImageNet : DenseNet121 91,7 %, ResNet50 91,4 %, EfficientNet-B1 86,0 %, EfficientNet-B0 85,4 %, VGG16 61,0 %. Un soft voting entre ResNet50 et DenseNet121 atteint 93,7 % d'accuracy et 0,939 de F1 macro, au-delà de l'objectif de 90 %. Une application web charge une image CT et renvoie la classe prédite, les probabilités par classe et une description clinique. Limites : 1 000 images restent insuffisantes pour une validation clinique ; l'étape suivante serait une validation sur un jeu clinique plus large comme LIDC-IDRI (images DICOM annotées par des radiologues).",
+      "tags": [
+        "PyTorch",
+        "Transfer Learning",
+        "DenseNet121",
+        "ResNet50",
+        "Ensemble learning",
+        "Python"
+      ],
+      "has3D": true,
+      "highlights": [
+        {
+          "value": "93,7 %",
+          "label": "accuracy test (ensemble)",
+          "color": "#3f5f86"
+        },
+        {
+          "value": "0,939",
+          "label": "F1 macro",
+          "color": "#2d8c5f"
+        },
+        {
+          "value": "4",
+          "label": "classes",
+          "color": "#3f5f86"
+        }
+      ],
+      "tables": [
+        {
+          "title": "Comparaison des modèles sur le jeu de test",
+          "columns": [
+            "Modèle",
+            "Epochs",
+            "Accuracy test",
+            "F1 macro"
+          ],
+          "rows": [
+            [
+              "Ensemble ResNet50 + DenseNet121 (soft voting)",
+              "—",
+              "93,7 %",
+              "0,939"
+            ],
+            [
+              "DenseNet121",
+              "20",
+              "91,7 %",
+              "0,924"
+            ],
+            [
+              "ResNet50",
+              "20",
+              "91,4 %",
+              "0,917"
+            ],
+            [
+              "EfficientNet-B1",
+              "20",
+              "86,0 %",
+              "—"
+            ],
+            [
+              "EfficientNet-B0",
+              "20",
+              "85,4 %",
+              "—"
+            ],
+            [
+              "VGG16",
+              "10",
+              "61,0 %",
+              "—"
+            ]
+          ],
+          "caption": "Résultats du poster final (avril 2026). Le soft voting moyenne les probabilités softmax des deux meilleurs modèles, sans réentraînement."
+        }
+      ],
+      "links": [
+        {
+          "label": "GitHub",
+          "href": "https://github.com/TouyeAchille/lung-cancer-ct-detection-ai"
+        }
+      ],
+      "linkedParcoursId": "esme"
+    },
+    {
+      "slug": "regulateur-glycemie",
+      "tier": 1,
+      "context": "BUT",
+      "title": "Régulation glycémie — Diabète T1",
+      "subtitle": "Synthèse de correcteur · MATLAB/Simulink",
+      "description": "Synthèse et validation d'un correcteur de glycémie pour un patient diabétique de type 1 virtuel, sur le simulateur UVA/Padova. Correcteur conçu pour le patient n°11 et vérifié sur ses 222 scénarios.",
+      "longDescription": "Projet tutoré S4 du BUT Mesures Physiques, en quadrinôme, tuteur J. Cieslak. Le simulateur UVA/Padova (UvaT1DM), accepté par la FDA comme alternative aux essais précliniques sur l'animal, modélise le métabolisme du glucose d'une cohorte de 11 patients virtuels, chacun avec 222 scénarios de simulation. Nous avons synthétisé un correcteur pour le patient n°11 à partir de son diagramme de Bode, vérifié le cahier des charges dans le diagramme de Black-Nichols sur ses 222 scénarios, ajusté le correcteur sur le cas le plus défavorable, puis intégré le correcteur dans le simulateur sous Simulink. En parallèle, nous avons prototypé un détecteur d'activité physique : seuil de fréquence cardiaque réglable, capteur GSR pour écarter les fortes émotions, alerte par buzzer et transmission Bluetooth vers un smartphone. Son intégration dans la boucle de régulation reste une perspective.",
+      "tags": [
+        "MATLAB",
+        "Simulink",
+        "Automatique",
+        "Bode / Black-Nichols",
+        "Arduino",
+        "BLE",
+        "GSR"
+      ],
+      "has3D": true,
+      "highlights": [
+        {
+          "value": "222",
+          "label": "scénarios simulés",
+          "color": "#3f5f86"
+        },
+        {
+          "value": "11",
+          "label": "patients virtuels",
+          "color": "#2d8c5f"
+        },
+        {
+          "value": "UVA/Padova",
+          "label": "simulateur",
+          "color": "#3f5f86"
+        }
+      ],
+      "chain": [
+        {
+          "label": "Patient T1D",
+          "sublabel": "patient virtuel n°11"
+        },
+        {
+          "label": "Simulateur",
+          "sublabel": "UVA/Padova"
+        },
+        {
+          "label": "Mesure glycémie",
+          "sublabel": "mg/dL"
+        },
+        {
+          "label": "Correcteur",
+          "sublabel": "Bode · Black-Nichols"
+        },
+        {
+          "label": "Pompe insuline",
+          "sublabel": "dose u/h"
+        }
+      ],
+      "chainFeedback": true,
+      "chainLabel": "Boucle de régulation",
+      "linkedParcoursId": "but"
+    },
+    {
+      "slug": "main-robotique-emg",
+      "tier": 1,
+      "context": "BUT",
+      "title": "Main robotique EMG",
+      "subtitle": "Commande myoélectrique",
+      "description": "Main robotique imprimée en 3D, commandée par l'activité musculaire de l'avant-bras (EMG de surface) et actionnée par des servomoteurs pilotés par Arduino.",
+      "longDescription": "Projet du BUT Mesures Physiques. Des électrodes EMG de surface captent l'activité musculaire de l'avant-bras ; le signal est traité par une carte Arduino qui commande les servomoteurs actionnant les doigts d'une main imprimée en 3D, conçue sous SolidWorks. Les fichiers CAO d'origine ayant été perdus, le modèle 3D présenté ici a été reconstruit à partir du rendu SolidWorks avec un outil image-to-3D (Trellis), puis optimisé pour le web (−88 % de poids). Les signaux affichés dans la démo sont une simulation illustrative, pas des enregistrements du prototype.",
+      "tags": [
+        "Arduino",
+        "EMG",
+        "SolidWorks",
+        "Impression 3D",
+        "Servomoteurs",
+        "Électronique"
+      ],
+      "has3D": true,
+      "highlights": [
+        {
+          "value": "EMG",
+          "label": "commande myoélectrique",
+          "color": "#3f5f86"
+        },
+        {
+          "value": "3D",
+          "label": "main imprimée",
+          "color": "#2d8c5f"
+        },
+        {
+          "value": "−88 %",
+          "label": "poids du modèle web",
+          "color": "#3f5f86"
+        }
+      ],
+      "chain": [
+        {
+          "label": "Électrodes EMG",
+          "sublabel": "surface · avant-bras"
+        },
+        {
+          "label": "Conditionnement",
+          "sublabel": "signal musculaire"
+        },
+        {
+          "label": "Arduino",
+          "sublabel": "traitement · commande"
+        },
+        {
+          "label": "Servomoteurs",
+          "sublabel": "doigts"
+        }
+      ],
+      "chainLabel": "Chaîne de commande EMG",
+      "linkedParcoursId": "du-sante"
+    },
+    {
+      "slug": "mon-wallet-medical",
+      "tier": 2,
+      "context": "Perso",
+      "title": "Mon Wallet Médical",
+      "subtitle": "Blockchain · Santé · Full-stack",
+      "description": "Application de gestion des données de santé personnelles avec stockage décentralisé (IPFS), blockchain Polygon et chiffrement AES-256-GCM côté client.",
+      "longDescription": "Projet personnel full-stack en cours depuis mars 2026. Architecture en 5 couches : interface React Native, API Fastify TypeScript, PostgreSQL/Prisma, IPFS (Pinata) pour le stockage décentralisé, smart contracts Solidity sur Polygon. Chiffrement AES-256-GCM côté client avec clés ECDSA secp256k1, identité décentralisée W3C DID, Verifiable Credentials. Conformité RGPD intégrée dès la conception. Monorepo Turborepo/pnpm.",
+      "tags": [
+        "Next.js",
+        "Solidity",
+        "IPFS",
+        "Blockchain",
+        "TypeScript",
+        "Fastify",
+        "Prisma",
+        "Polygon"
+      ],
+      "has3D": false,
+      "highlights": [
+        {
+          "value": "AES-256",
+          "label": "chiffrement client",
+          "color": "#2a6db5"
+        },
+        {
+          "value": "IPFS",
+          "label": "stockage décentralisé",
+          "color": "#8b5cf6"
+        },
+        {
+          "value": "W3C DID",
+          "label": "identité",
+          "color": "#2d8c5f"
+        }
+      ]
+    },
+    {
+      "slug": "ethylometre",
+      "tier": 2,
+      "context": "BUT",
+      "title": "Éthylomètre connecté",
+      "subtitle": "Prototype de A à Z",
+      "description": "Conception complète d'un éthylomètre connecté : capteur alcool, écran OLED, boîtier imprimé 3D. Modèle 3D Three.js réalisé.",
+      "longDescription": "Projet BUT 1A conçu de A à Z en binôme. Capteur MQ-3 pour la détection d'alcool, affichage OLED, LEDs de signalisation, buzzer d'alerte, boîtier imprimé en 3D avec skin \"Police Nationale\" pour la démo. Modèle Three.js complet du prototype réalisé (~865 lignes, rendu web en temps réel). Illustre la démarche complète d'un projet embarqué : spécification, conception électronique, firmware, boîtier mécanique, démonstration.",
+      "tags": [
+        "Arduino",
+        "OLED",
+        "Impression 3D",
+        "Three.js",
+        "MQ-3",
+        "Électronique"
+      ],
+      "has3D": true,
+      "highlights": [
+        {
+          "value": "3D",
+          "label": "modèle web interactif",
+          "color": "#2a6db5"
+        },
+        {
+          "value": "MQ-3",
+          "label": "capteur alcool",
+          "color": "#2d8c5f"
+        }
+      ],
+      "linkedParcoursId": "du-sante"
+    },
+    {
+      "slug": "anemometre",
+      "tier": 2,
+      "context": "ESME",
+      "title": "Anémomètre connecté",
+      "subtitle": "Éolienne · Effet Hall · SolidWorks",
+      "description": "Anémomètre connecté inspiré d'une nacelle d'éolienne. Capteur effet Hall, LCD RGB, boîtier imprimé 3D (52h d'impression).",
+      "longDescription": "Projet Ingé1 ESME (parcours Énergie & Environnement, déc. 2024, binôme avec Victor Maggiori, encadrant M. Delahaye). Boîtier inspiré d'une nacelle d'éolienne, conçu sous SolidWorks — 52h d'impression 3D. Mesure de vitesse par capteur à effet Hall, affichage LCD RGB, plage de mesure 11–90 km/h. Note d'honnêteté sur le projet : un conflit entre les interruptions et la gestion moteur pas-à-pas a empêché la démo complète le jour J. La solution \"deux cartes Arduino\" a été identifiée mais trop tard — la transparence technique est une qualité ingénieur.",
+      "tags": [
+        "Arduino",
+        "Effet Hall",
+        "SolidWorks",
+        "Impression 3D",
+        "LCD RGB",
+        "CAO"
+      ],
+      "has3D": true,
+      "highlights": [
+        {
+          "value": "52h",
+          "label": "impression 3D",
+          "color": "#2a6db5"
+        },
+        {
+          "value": "11–90",
+          "label": "km/h plage",
+          "color": "#2d8c5f"
+        }
+      ],
+      "linkedParcoursId": "esme"
+    },
+    {
+      "slug": "eaux-residuaires",
+      "tier": 2,
+      "context": "BUT",
+      "title": "Étude des eaux résiduaires",
+      "subtitle": "HPLC · GC-FID · Micropolluants",
+      "description": "Analyse de micropolluants (HAP, MTBE, Irgarol) dans des eaux douces et salées par HPLC-UV, GC-FID, SPME et SBSE.",
+      "longDescription": "Projet tutoré BUT Mesures Physiques (parcours MAE). Étude de la contamination par micropolluants organiques dans différents types d'eaux. Analyse des HAP (hydrocarbures aromatiques polycycliques), MTBE et Irgarol par chromatographie liquide haute performance (HPLC-UV) et chromatographie en phase gazeuse (GC-FID). Extraction par SPME (micro-extraction en phase solide) et SBSE (extraction par barrette agitante). Travail d'analyse environnementale et interprétation des résultats.",
+      "tags": [
+        "HPLC-UV",
+        "GC-FID",
+        "SPME",
+        "SBSE",
+        "HAP",
+        "Micropolluants",
+        "Chimie analytique"
+      ],
+      "has3D": false,
+      "highlights": [
+        {
+          "value": "HAP",
+          "label": "micropolluants",
+          "color": "#2a6db5"
+        },
+        {
+          "value": "2 milieux",
+          "label": "eau douce & salée",
+          "color": "#2d8c5f"
+        }
+      ],
+      "linkedParcoursId": "but"
+    }
+  ],
+  "parcours": [
+    {
+      "id": "but",
+      "type": "formation",
+      "period": "2021 – 2024",
+      "title": "BUT Mesures Physiques",
+      "institution": "IUT de Bordeaux",
+      "location": "Bordeaux",
+      "description": "Formation en instrumentation, métrologie, capteurs, traitement du signal et électronique. Base scientifique solide sur la mesure du monde physique.",
+      "tags": [
+        "Instrumentation",
+        "Métrologie",
+        "Électronique",
+        "Signal",
+        "Python",
+        "Arduino"
+      ],
+      "projects": [
+        "regulateur-glycemie",
+        "eaux-residuaires"
+      ],
+      "done": true
+    },
+    {
+      "id": "du-sante",
+      "type": "formation",
+      "period": "2021 – 2023",
+      "title": "DU Techniques au Service de la Santé (TSS)",
+      "institution": "IUT de Bordeaux",
+      "location": "Bordeaux",
+      "description": "Diplôme universitaire suivi en parallèle des deux premières années du BUT. Introduction aux dispositifs médicaux, à leur réglementation et aux usages du numérique en santé.",
+      "tags": [
+        "Dispositifs médicaux",
+        "Santé numérique",
+        "Réglementation",
+        "e-santé"
+      ],
+      "projects": [
+        "main-robotique-emg",
+        "ethylometre"
+      ],
+      "done": true
+    },
+    {
+      "id": "stage-excell",
+      "type": "stage",
+      "period": "Jan – Mars 2023",
+      "title": "Stage — Laboratoire Excell",
+      "institution": "Laboratoire Excell",
+      "location": "Floirac (33)",
+      "description": "Stage de 12 semaines en laboratoire d'analyses. Diagnostic et audit métrologique, participation aux processus qualité.",
+      "tags": [
+        "Métrologie",
+        "Qualité",
+        "Laboratoire",
+        "Audit"
+      ],
+      "done": true
+    },
+    {
+      "id": "stage-quantum",
+      "type": "stage",
+      "period": "Mars – Juin 2024",
+      "title": "Stage — Quantum Surgical",
+      "institution": "Quantum Surgical",
+      "location": "Montpellier",
+      "description": "Stage de 16 semaines chez un fabricant de robots chirurgicaux. Optimisation du processus de gestion du parc métrologique et digitalisation des processus qualité (BizzMine).",
+      "tags": [
+        "Robotique chirurgicale",
+        "Métrologie",
+        "Qualité",
+        "BizzMine",
+        "Dispositifs médicaux"
+      ],
+      "projects": [],
+      "done": true
+    },
+    {
+      "id": "esme",
+      "type": "formation",
+      "period": "2024 – 2027",
+      "title": "École d'ingénieur — ESME",
+      "institution": "ESME",
+      "location": "Paris",
+      "description": "Majeure Biotech & Numérique, en dernière année. Machine learning appliqué au médical, imagerie, dispositifs médicaux connectés et IoT.",
+      "tags": [
+        "Machine Learning",
+        "Deep Learning",
+        "Imagerie médicale",
+        "IoT",
+        "Dispositifs médicaux"
+      ],
+      "projects": [
+        "ct-scan-deep-learning",
+        "mon-wallet-medical",
+        "ai4industry-stm",
+        "anemometre"
+      ],
+      "done": false
+    },
+    {
+      "id": "coree",
+      "type": "echange",
+      "period": "Sept. 2025 – Fév. 2026",
+      "title": "Semestre international",
+      "institution": "Kyungpook National University",
+      "location": "Daegu, Corée du Sud",
+      "description": "S3 de l'ESME à l'étranger. Immersion dans un environnement académique asiatique, enseignements en anglais, découverte de l'écosystème tech coréen.",
+      "tags": [
+        "International",
+        "Anglais",
+        "Corée du Sud",
+        "KNU"
+      ],
+      "done": true
+    },
+    {
+      "id": "stage-inserm",
+      "type": "stage",
+      "period": "Juin – Sept. 2026",
+      "title": "Stage — INSERM U1211 (MRGM)",
+      "institution": "INSERM · Université de Bordeaux",
+      "location": "Bordeaux",
+      "description": "Stage de 12 semaines en bio-informatique pour le programme Austral-Omics : chaîne d'analyse de l'ADN environnemental séquencé par Nanopore, validée sur des communautés certifiées avant l'expédition, complétée par un modèle de Deep Learning et une application web pour l'équipe.",
+      "tags": [
+        "Bio-informatique",
+        "Metabarcoding",
+        "Nanopore",
+        "16S / COI",
+        "Deep Learning",
+        "Application web"
+      ],
+      "projects": [
+        "austral-omics"
+      ],
+      "done": true
+    },
+    {
+      "id": "pfe",
+      "type": "cible",
+      "period": "Avril 2027",
+      "title": "PFE — Stage de fin d'études, 6 mois",
+      "institution": "À définir",
+      "location": "France / International",
+      "description": "Recherche d'un stage de fin d'études de 6 mois à partir du 7 avril 2027, en R&D biomédicale et en IA appliquée aux données de santé : imagerie médicale, dispositifs médicaux, données biologiques.",
+      "tags": [
+        "R&D",
+        "IA santé",
+        "Imagerie médicale",
+        "Dispositifs médicaux",
+        "Bio-informatique"
+      ],
+      "done": false
+    }
+  ],
+  "stages": [
+    {
+      "slug": "inserm-mrgm",
+      "company": "INSERM U1211 — MRGM",
+      "role": "Stagiaire bio-informatique",
+      "context": "Stage ESME 4ᵉ année",
+      "period": "22 juin – 11 sept. 2026",
+      "duration": "12 semaines",
+      "location": "Bordeaux",
+      "description": "Construction et validation d'une chaîne d'analyse de metabarcoding sur séquençage Nanopore, pour les échantillons de l'océan Austral du programme Austral-Omics.",
+      "longDescription": "Stage de 12 semaines au sein de l'unité INSERM U1211 Maladies Rares : Génétique et Métabolisme (MRGM), sous la double tutelle de l'INSERM et de l'Université de Bordeaux, encadré par Christophe Hubert, ingénieur en métagénomique. L'unité porte le programme Austral-Omics, une campagne d'analyse multiomique du plancton et des procaryotes de l'océan Austral orientée vers la bioprospection en santé humaine. Les échantillons de l'expédition seront séquencés à bord avec un séquenceur portable Nanopore et n'étaient pas encore prélevés : il fallait construire et valider la méthode en amont, sur des communautés de composition connue et sur des données publiques. La question centrale : qu'y a-t-il dans cet échantillon, et à quel point peut-on croire la réponse ?",
+      "missions": [
+        "Chaîne d'analyse de metabarcoding complète, des lectures brutes Nanopore à la composition de l'échantillon",
+        "Deux marqueurs : 16S pour les bactéries, COI pour les animaux",
+        "Mesure de la fiabilité face à une vérité connue et identification du rang taxonomique à partir duquel la chaîne cesse d'être fiable (initiative personnelle)",
+        "Deep learning pour situer les séquences absentes des banques de référence, et mesure de son apport réel face à la méthode classique (initiative personnelle)",
+        "Application web pour rendre la chaîne utilisable par l'équipe"
+      ],
+      "tags": [
+        "Bio-informatique",
+        "Metabarcoding",
+        "Nanopore",
+        "16S",
+        "COI",
+        "Deep Learning",
+        "Application web"
+      ],
+      "highlights": [
+        {
+          "value": "12",
+          "label": "semaines",
+          "color": "#2d8c5f"
+        },
+        {
+          "value": "92–99 %",
+          "label": "lectures nommées au genre",
+          "color": "#3f5f86"
+        },
+        {
+          "value": "61,8 %",
+          "label": "familles retrouvées hors banque",
+          "color": "#3f5f86"
+        }
+      ],
+      "links": [
+        {
+          "label": "Voir le projet technique",
+          "href": "/projets/austral-omics"
+        }
+      ]
+    },
+    {
+      "slug": "quantum-surgical",
+      "company": "Quantum Surgical",
+      "role": "Stagiaire métrologie & qualité",
+      "context": "Stage BUT 3A",
+      "period": "Mars – Juin 2024",
+      "duration": "16 semaines",
+      "location": "Montpellier",
+      "description": "Optimisation du processus de gestion du parc métrologique et digitalisation des processus qualité, chez un fabricant de robots chirurgicaux.",
+      "longDescription": "Stage de 16 semaines chez Quantum Surgical à Montpellier, entreprise qui conçoit Epione, un robot d'assistance aux procédures percutanées guidées par l'image en oncologie interventionnelle. Mission : optimiser le processus de gestion du parc métrologique et digitaliser les processus qualité associés via BizzMine, dans le cadre exigeant d'un fabricant de dispositifs médicaux.",
+      "missions": [
+        "Optimisation du processus de gestion du parc métrologique",
+        "Digitalisation des processus qualité via BizzMine",
+        "Travail selon les bonnes pratiques de laboratoire et le référentiel ISO 17025"
+      ],
+      "tags": [
+        "Robotique chirurgicale",
+        "Métrologie",
+        "Qualité",
+        "BizzMine",
+        "Dispositifs médicaux"
+      ],
+      "highlights": [
+        {
+          "value": "16",
+          "label": "semaines",
+          "color": "#2d8c5f"
+        },
+        {
+          "value": "Medtech",
+          "label": "robotique chirurgicale",
+          "color": "#3f5f86"
+        }
+      ]
+    },
+    {
+      "slug": "laboratoire-excell",
+      "company": "Laboratoire Excell",
+      "role": "Stagiaire métrologie",
+      "context": "Stage BUT 2A",
+      "period": "Jan – Mars 2023",
+      "duration": "12 semaines",
+      "location": "Floirac (33)",
+      "description": "Étude et diagnostic du dispositif de métrologie d'un laboratoire d'analyses accrédité ISO/IEC 17025.",
+      "longDescription": "Stage de 12 semaines au Laboratoire Excell à Floirac, laboratoire d'analyses agroalimentaires et de boissons accrédité Cofrac selon la norme ISO/IEC 17025. Mission : étudier et diagnostiquer le dispositif de métrologie du laboratoire.",
+      "missions": [
+        "Étude et diagnostic du dispositif de métrologie du laboratoire",
+        "Immersion dans un environnement accrédité ISO/IEC 17025"
+      ],
+      "tags": [
+        "Métrologie",
+        "Qualité",
+        "Laboratoire",
+        "ISO 17025"
+      ],
+      "highlights": [
+        {
+          "value": "12",
+          "label": "semaines",
+          "color": "#2d8c5f"
+        },
+        {
+          "value": "ISO 17025",
+          "label": "labo accrédité",
+          "color": "#3f5f86"
+        }
+      ]
+    }
+  ]
+}

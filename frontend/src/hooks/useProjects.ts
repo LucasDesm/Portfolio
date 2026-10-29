@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { portfolioApi } from '@/lib/api'
+import { portfolioApi, API_ENABLED } from '@/lib/api'
 import { PROJECTS } from '@/lib/data'
 
 export function useProjects() {
@@ -7,6 +7,9 @@ export function useProjects() {
     queryKey: ['projects'],
     queryFn: portfolioApi.getProjects,
     initialData: PROJECTS,
+    // Le contenu local s'affiche tout de suite ; l'API (si déployée) le confirme en arrière-plan
+    initialDataUpdatedAt: 0,
+    enabled: API_ENABLED,
     staleTime: 5 * 60 * 1000,
   })
 }
@@ -16,6 +19,9 @@ export function useProject(slug: string) {
     queryKey: ['projects', slug],
     queryFn: () => portfolioApi.getProject(slug),
     initialData: () => PROJECTS.find(p => p.slug === slug),
+    // Le contenu local s'affiche tout de suite ; l'API (si déployée) le confirme en arrière-plan
+    initialDataUpdatedAt: 0,
+    enabled: API_ENABLED,
     staleTime: 5 * 60 * 1000,
   })
 }

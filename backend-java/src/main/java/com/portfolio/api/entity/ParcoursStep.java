@@ -1,5 +1,6 @@
 package com.portfolio.api.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,5 +39,6 @@ public class ParcoursStep {
     private List<String> projects = new ArrayList<>();
 
     private boolean done;
+    @JsonIgnore
     private int displayOrder;
 }

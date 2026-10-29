@@ -1,5 +1,6 @@
 package com.portfolio.api.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -49,4 +50,34 @@ public class Project {
     @CollectionTable(name = "project_links", joinColumns = @JoinColumn(name = "project_id"))
     @OrderColumn(name = "link_order")
     private List<ResourceLink> links = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "project_chain", joinColumns = @JoinColumn(name = "project_id"))
+    @OrderColumn(name = "step_order")
+    private List<ChainStep> chain = new ArrayList<>();
+
+    private Boolean chainFeedback;
+    private String chainLabel;
+    private String cover;
+
+    @Column(length = 2000)
+    private String role;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "project_sections", joinColumns = @JoinColumn(name = "project_id"))
+    @OrderColumn(name = "section_order")
+    private List<ProjectSection> sections = new ArrayList<>();
+
+    @Convert(converter = ResultTablesConverter.class)
+    @Column(length = 20000)
+    private List<ResultTable> tables = new ArrayList<>();
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "project_figures", joinColumns = @JoinColumn(name = "project_id"))
+    @OrderColumn(name = "figure_order")
+    private List<ProjectFigure> figures = new ArrayList<>();
+
+    /** Ordre d'affichage, identique à celui de data.ts côté frontend */
+    @JsonIgnore
+    private int position;
 }

@@ -16,7 +16,7 @@ public class StageService {
     private final StageRepository stageRepository;
 
     public List<Stage> findAll() {
-        return stageRepository.findAllByOrderByIdAsc();
+        return stageRepository.findAllByOrderByPositionAsc();
     }
 
     public Stage findBySlug(String slug) {
