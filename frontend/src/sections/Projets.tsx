@@ -5,6 +5,7 @@ import { animate, stagger } from 'animejs'
 import PageTransition from '@/components/PageTransition'
 import Reveal from '@/components/Reveal'
 import ThreeBoundary from '@/components/ThreeBoundary'
+import CurieField from '@/three/CurieField'
 import { colors, fonts, ca, contextColors, justify } from '@/lib/tokens'
 import { type ProjectContext } from '@/lib/data'
 import { useProjects } from '@/hooks/useProjects'
@@ -395,6 +396,7 @@ function Tier2Visual({ slug, accent }: { slug: string; accent: string }) {
     )
   }
   switch (slug) {
+    case 'institut-curie':     return <CurieField {...p} />
     case 'mon-wallet-medical': return <WalletScene {...p} />
     case 'eaux-residuaires':   return <EauxScene {...p} />
     default: return null

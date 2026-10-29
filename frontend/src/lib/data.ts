@@ -70,7 +70,7 @@ export const PARCOURS: ParcoursStep[] = [
     location: 'Paris',
     description: 'Majeure Biotech & Numérique, en dernière année. Machine learning appliqué au médical, imagerie, dispositifs médicaux connectés et IoT.',
     tags: ['Machine Learning', 'Deep Learning', 'Imagerie médicale', 'IoT', 'Dispositifs médicaux'],
-    projects: ['ct-scan-deep-learning', 'mon-wallet-medical', 'ai4industry-stm', 'anemometre'],
+    projects: ['institut-curie', 'ct-scan-deep-learning', 'mon-wallet-medical', 'ai4industry-stm', 'anemometre'],
     done: false,
   },
   {
@@ -454,6 +454,29 @@ export const PROJECTS: Project[] = [
     ],
     chainLabel: 'Chaîne de commande EMG',
     linkedParcoursId: 'du-sante',
+  },
+  {
+    slug: 'institut-curie',
+    tier: 2,
+    context: 'ESME',
+    title: 'Phénotype collectif de cellules cancéreuses',
+    subtitle: 'Analyse d\'images · Institut Curie · en cours',
+    description: 'Projet ESME en cours, en collaboration avec l\'Institut Curie : mesurer automatiquement l\'orientation et la vitesse de cellules cancéreuses sur des images de microscopie de fluorescence, pour relier leur comportement collectif au grade tumoral.',
+    longDescription: 'Projet étudiant en cours, mené en collaboration avec une équipe de recherche de l\'Institut Curie. Les cellules sont cultivées sur des substrats microfabriqués (pistes larges, microrails, géométries multiéchelles) et filmées en microscopie de fluorescence sur plusieurs jours. Le projet porte sur l\'analyse de ces séquences d\'images : construire une chaîne automatisée qui mesure l\'ordre local des cellules (champ d\'orientation) et leur champ de vitesse, en confrontant des méthodes d\'apprentissage aux approches classiques. Ces mesures seront ensuite comparées aux prédictions théoriques, puis reliées au grade tumoral des cellules. Le projet étant en cours et en partie confidentiel, seul son cadre général est présenté ici.',
+    tags: ['Analyse d\'images', 'Microscopie de fluorescence', 'Apprentissage automatique', 'Champ d\'orientation', 'Champ de vitesse'],
+    has3D: false,
+    highlights: [
+      { value: 'En cours', label: 'projet ESME · Institut Curie' },
+    ],
+    chain: [
+      { label: 'Substrat microfabriqué', sublabel: 'pistes · microrails' },
+      { label: 'Microscopie', sublabel: 'fluorescence · plusieurs jours' },
+      { label: 'Analyse d\'images', sublabel: 'orientation · vitesse' },
+      { label: 'Théorie', sublabel: 'paramètres physiques' },
+      { label: 'Grade tumoral', sublabel: 'objectif à terme' },
+    ],
+    chainLabel: 'Chaîne d\'analyse',
+    linkedParcoursId: 'esme',
   },
   {
     slug: 'mon-wallet-medical',

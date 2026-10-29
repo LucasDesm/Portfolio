@@ -6,6 +6,7 @@ import PageTransition from '@/components/PageTransition'
 import ThreeBoundary from '@/components/ThreeBoundary'
 import { ChainDiagram } from '@/components/ChainDiagram'
 import ProjectEvidence from '@/components/ProjectEvidence'
+import CurieField from '@/three/CurieField'
 import { colors, fonts, ca, contextColors, justify } from '@/lib/tokens'
 import { useProjects } from '@/hooks/useProjects'
 import { useParcours } from '@/hooks/useParcours'
@@ -23,6 +24,7 @@ const CTX_COLOR: Record<string, string> = contextColors
 // Projets dont le haut de page est une animation (sinon : figure de couverture)
 const SCENES: Record<string, React.ReactNode> = {
   'austral-omics':         <AustralCanvas />,
+  'institut-curie':        <CurieField a={contextColors.ESME} />,
   'ct-scan-deep-learning': <CTScanCanvas />,
   'regulateur-glycemie':   <GlycemieCanvas />,
   'main-robotique-emg':    <HandCanvas />,
