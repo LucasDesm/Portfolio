@@ -20,6 +20,7 @@ const CTScanCanvasLazy   = lazy(() => import('@/three/CTScanCanvas'))
 const GlycemieCanvasLazy = lazy(() => import('@/three/GlycemieCanvas'))
 const EthylCanvasLazy    = lazy(() => import('@/three/EthylCanvas'))
 const AnemCanvasLazy     = lazy(() => import('@/three/AnemCanvas'))
+const AustralCanvasLazy  = lazy(() => import('@/three/AustralCanvas').then(m => ({ default: m.AustralCanvasCompact })))
 
 // Adds alpha — handles both hex (#rrggbb) and oklch/rgb functions
 const ao = (c: string, a: number) => {
@@ -888,6 +889,7 @@ const PROJ_ACCENT: Record<string, string> = {
   'main-robotique-emg':    '#60a5fa',
   'ethylometre':           '#a78bfa',
   'anemometre':            '#fbbf24',
+  'austral-omics':         colors.rustLight,
 }
 
 const PROJECT_3D: Record<string, React.LazyExoticComponent<React.ComponentType>> = {
@@ -896,6 +898,7 @@ const PROJECT_3D: Record<string, React.LazyExoticComponent<React.ComponentType>>
   'main-robotique-emg':    HandOnlyLazy,
   'ethylometre':           EthylCanvasLazy,
   'anemometre':            AnemCanvasLazy,
+  'austral-omics':         AustralCanvasLazy,
 }
 
 // Positions finales des cartes autour du dossier (px, relatif au centre du viewport)
@@ -906,6 +909,7 @@ const CARD_POSITIONS = [
   { x: -370, y:  170 }, // gauche bas
   { x:  370, y:  170 }, // droite bas
   { x:    0, y:  200 }, // centre bas
+  { x:    0, y: -175 }, // centre haut (Austral-Omics), y ≥ -175 évite l'en-tête à 768px
 ]
 
 
@@ -1102,7 +1106,11 @@ function DossierCard({
 
 function ProjetDossier() {
   const { data: projects } = useProjects()
-  const featured = (projects as Project[]).filter(p => p.has3D)
+  // Austral-Omics (stage INSERM) en dernier : sa carte sort en haut, au centre du dossier
+  const featured = [
+    ...(projects as Project[]).filter(p => p.has3D),
+    ...(projects as Project[]).filter(p => p.slug === 'austral-omics'),
+  ]
   const N = featured.length
 
   const containerRef = useRef<HTMLDivElement>(null)

@@ -6,9 +6,11 @@ import { colors, fonts } from '@/lib/tokens'
 // passe par l'encodeur et se place dans l'espace appris, où la distance reflète
 // la parenté. Une lecture sur quatre ne ressemble à rien de connu : elle est
 // signalée comme nouveauté. Aucune donnée réelle n'est tracée.
+// Version compacte (dossier de l'accueil) : l'espace appris seul.
 
 type V3 = [number, number, number]
 type Box = { x: number; y: number; w: number; h: number }
+type Pt = { x: number; y: number }
 
 const BASE_RATE   = 7     // bases lues par seconde
 const READ_LEN    = 24    // bases par lecture
@@ -86,26 +88,29 @@ function layout(W: number, H: number, fs: number) {
   return { S, L, enc: { x: W / 2, y: encY } }
 }
 
-function draw(ctx: CanvasRenderingContext2D, W: number, H: number, t: number) {
-  const fs = Math.round(Math.max(9, Math.min(11, W * 0.016)))
-  const mono = `${fs}px ${fonts.mono}`
-  const { S, L, enc } = layout(W, H, fs)
-  const pos = t * BASE_RATE
+function pen(ctx: CanvasRenderingContext2D) {
+  return {
+    dot:  (x: number, y: number, r: number) => { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill() },
+    ring: (x: number, y: number, r: number) => { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke() },
+    line: (x1: number, y1: number, x2: number, y2: number) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke() },
+  }
+}
 
-  ctx.globalAlpha = 1
-  ctx.setLineDash([])
-  ctx.fillStyle = colors.bgCard
-  ctx.fillRect(0, 0, W, H)
+// Légende complète si elle tient, sinon version courte
+function caption(ctx: CanvasRenderingContext2D, full: string, short: string, x: number, y: number, maxW: number) {
+  ctx.fillText(ctx.measureText(full).width <= maxW ? full : short, x, y)
+}
 
-  const dot = (x: number, y: number, r: number) => { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill() }
-  const line = (x1: number, y1: number, x2: number, y2: number) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke() }
-
-  // ── Capteur : membrane et nanopore ─────────────────────────────────────────
+// ── Capteur : nanopore, brin d'ADN, courant mesuré. Renvoie la sortie du tracé ──
+function drawSensor(ctx: CanvasRenderingContext2D, S: Box, t: number, fs: number): Pt {
+  const { dot, ring, line } = pen(ctx)
+  const pos   = t * BASE_RATE
   const poreX = S.x + S.w / 2
   const memY  = S.y + S.h * 0.3
   const tailY = S.y + S.h * 0.5
   const gap   = 10
 
+  // Membrane et pore
   ctx.lineWidth = 1
   for (let x = S.x; x <= S.x + S.w; x += 7) {
     if (Math.abs(x - poreX) < gap + 6) continue
@@ -126,17 +131,16 @@ function draw(ctx: CanvasRenderingContext2D, W: number, H: number, t: number) {
   // Une mesure à chaque base qui traverse le pore
   ctx.strokeStyle = colors.accent
   ctx.globalAlpha = (1 - (pos % 1)) * 0.35
-  ctx.beginPath(); ctx.arc(poreX, memY, gap + 2 + (pos % 1) * 8, 0, Math.PI * 2); ctx.stroke()
+  ring(poreX, memY, gap + 2 + (pos % 1) * 8)
   ctx.globalAlpha = 1
 
-  // ── Brin d'ADN ─────────────────────────────────────────────────────────────
+  // Brin d'ADN
   const sp = 11
   const beads: { i: number; x: number; y: number; a: number }[] = []
   for (let i = Math.ceil(pos + (memY - S.y) / sp); i >= Math.floor(pos - (tailY - memY) / sp); i--) {
     const y = memY - (i - pos) * sp
     const d = Math.min(1, Math.abs(y - memY) / (memY - S.y))
-    const above = y <= memY
-    const a = above ? Math.min(1, (y - S.y + 4) / 14) : Math.max(0, 1 - (y - memY) / (tailY - memY))
+    const a = y <= memY ? Math.min(1, (y - S.y + 4) / 14) : Math.max(0, 1 - (y - memY) / (tailY - memY))
     beads.push({ i, x: poreX + Math.sin(i * 0.8 + t * 1.3) * 9 * d, y, a })
   }
   ctx.strokeStyle = colors.textMuted
@@ -159,10 +163,9 @@ function draw(ctx: CanvasRenderingContext2D, W: number, H: number, t: number) {
   }
   ctx.globalAlpha = 1
 
-  // ── Courant mesuré ─────────────────────────────────────────────────────────
+  // Courant mesuré
   const trTop = S.y + S.h * 0.6
   const trBot = S.y + S.h
-  const trMid = (trTop + trBot) / 2
   const right = S.x + S.w
   const step  = Math.max(5, S.w / 34)   // px par base
 
@@ -170,7 +173,7 @@ function draw(ctx: CanvasRenderingContext2D, W: number, H: number, t: number) {
   ctx.lineWidth = 1
   line(S.x, trTop, right, trTop)
   line(S.x, trBot, right, trBot)
-  ctx.font = mono
+  ctx.font = `${fs}px ${fonts.mono}`
   ctx.fillStyle = colors.textLight
   ctx.textBaseline = 'bottom'
   ctx.fillText('pA', S.x, trTop - 4)
@@ -205,6 +208,39 @@ function draw(ctx: CanvasRenderingContext2D, W: number, H: number, t: number) {
   }
   ctx.globalAlpha = 1
   if (prev) { ctx.fillStyle = colors.accent; dot(right, prev[1], 2.6) }
+
+  ctx.fillStyle = colors.textLight
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'top'
+  caption(ctx, 'capteur · courant du nanopore', 'capteur', S.x + S.w / 2, S.y + S.h + 10, S.w)
+
+  return { x: right + 6, y: (trTop + trBot) / 2 }
+}
+
+function draw(ctx: CanvasRenderingContext2D, W: number, H: number, t: number, compact: boolean) {
+  const { dot, ring, line } = pen(ctx)
+  const fs = Math.round(Math.max(9, Math.min(11, W * 0.016)))
+  const mono = `${fs}px ${fonts.mono}`
+  const pos = t * BASE_RATE
+
+  ctx.globalAlpha = 1
+  ctx.setLineDash([])
+  ctx.fillStyle = colors.bgCard
+  ctx.fillRect(0, 0, W, H)
+
+  // Compact : le bas de la carte est couvert par le titre, l'espace appris occupe le haut
+  let L: Box
+  let src: Pt
+  let enc: Pt | null = null
+  if (compact) {
+    L = { x: 8, y: 10, w: W - 16, h: H * 0.6 }
+    src = { x: W / 2, y: -10 }
+  } else {
+    const lay = layout(W, H, fs)
+    L = lay.L
+    enc = lay.enc
+    src = drawSensor(ctx, lay.S, t, fs)
+  }
 
   // ── Espace appris (rotation lente, projection en perspective) ─────────────
   const cx = L.x + L.w / 2
@@ -242,36 +278,37 @@ function draw(ctx: CanvasRenderingContext2D, W: number, H: number, t: number) {
   }
   ctx.globalAlpha = 1
 
-  // ── Encodeur et liaisons ───────────────────────────────────────────────────
-  const encW = Math.max(64, fs * 7.4)
-  const encH = fs * 2.5
-  ctx.setLineDash([3, 4])
-  ctx.strokeStyle = colors.border
-  ctx.globalAlpha = 0.45
-  line(right + 6, trMid, enc.x, enc.y)
-  line(enc.x, enc.y, cx, cy)
-  ctx.setLineDash([])
-  ctx.globalAlpha = 1
+  // ── Liaisons capteur → encodeur → espace appris ───────────────────────────
+  if (enc) {
+    ctx.setLineDash([3, 4])
+    ctx.strokeStyle = colors.border
+    ctx.globalAlpha = 0.45
+    line(src.x, src.y, enc.x, enc.y)
+    line(enc.x, enc.y, cx, cy)
+    ctx.setLineDash([])
+    ctx.globalAlpha = 1
+  }
 
-  // ── Lectures : du pore à l'espace appris ──────────────────────────────────
+  // ── Lectures : en vol, puis placées dans l'espace appris ──────────────────
   const rLast  = Math.floor(pos / READ_LEN) - 1
   const rFirst = Math.max(0, rLast - Math.ceil(((POINT_LIFE + FLIGHT) * BASE_RATE) / READ_LEN) - 1)
   let encActive = false
-  const flying: { x: number; y: number }[] = []
+  const flying: Pt[] = []
   for (let r = rFirst; r <= rLast; r++) {
     const tc = ((r + 1) * READ_LEN) / BASE_RATE
     const age = t - tc - FLIGHT
     const target = readTarget(r)
     const p = proj(target.p)
     if (age < 0) {
-      // En vol : jusqu'à l'encodeur, puis vers sa place dans l'espace appris
+      // Par l'encodeur quand il est affiché, sinon directement vers sa place
       const u = (t - tc) / FLIGHT
-      if (Math.abs(u - TO_ENCODER) < 0.12) encActive = true
-      const [x0, y0, x1, y1, v] = u < TO_ENCODER
-        ? [right + 6, trMid, enc.x, enc.y, u / TO_ENCODER]
-        : [enc.x, enc.y, p.x, p.y, (u - TO_ENCODER) / (1 - TO_ENCODER)]
+      let from = src, to: Pt = p, v = u
+      if (enc) {
+        if (Math.abs(u - TO_ENCODER) < 0.12) encActive = true
+        if (u < TO_ENCODER) { to = enc; v = u / TO_ENCODER } else { from = enc; v = (u - TO_ENCODER) / (1 - TO_ENCODER) }
+      }
       const e = v * v * (3 - 2 * v)
-      flying.push({ x: x0 + (x1 - x0) * e, y: y0 + (y1 - y0) * e - Math.sin(Math.PI * v) * 18 })
+      flying.push({ x: from.x + (to.x - from.x) * e, y: from.y + (to.y - from.y) * e - (enc ? Math.sin(Math.PI * v) * 18 : 0) })
       continue
     }
     if (age > POINT_LIFE) continue
@@ -280,15 +317,15 @@ function draw(ctx: CanvasRenderingContext2D, W: number, H: number, t: number) {
       ctx.strokeStyle = colors.rust
       ctx.lineWidth = 1.6
       ctx.globalAlpha = fade
-      ctx.beginPath(); ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2); ctx.stroke()
+      ring(p.x, p.y, 4.5)
       ctx.setLineDash([3, 3])
       ctx.lineDashOffset = -t * 10
       ctx.lineWidth = 1
       ctx.globalAlpha = 0.7 * fade
-      ctx.beginPath(); ctx.arc(p.x, p.y, 12 + Math.sin(t * 3) * 1.5, 0, Math.PI * 2); ctx.stroke()
+      ring(p.x, p.y, 12 + Math.sin(t * 3) * 1.5)
       ctx.setLineDash([])
       ctx.lineDashOffset = 0
-      if (age < 4 && W >= 220) {
+      if (age < 4 && W >= 200) {
         ctx.globalAlpha = Math.min(1, 4 - age) * fade
         ctx.fillStyle = colors.rust
         ctx.font = mono
@@ -304,45 +341,46 @@ function draw(ctx: CanvasRenderingContext2D, W: number, H: number, t: number) {
         ctx.strokeStyle = target.color
         ctx.lineWidth = 1.2
         ctx.globalAlpha = (1 - age / 1.2) * 0.6
-        ctx.beginPath(); ctx.arc(p.x, p.y, 4 + age * 12, 0, Math.PI * 2); ctx.stroke()
+        ring(p.x, p.y, 4 + age * 12)
       }
     }
   }
   ctx.globalAlpha = 1
 
-  ctx.fillStyle = colors.bgCard
-  ctx.strokeStyle = encActive ? colors.accent : colors.border
-  ctx.lineWidth = encActive ? 1.5 : 1
-  ctx.beginPath()
-  ctx.roundRect(enc.x - encW / 2, enc.y - encH / 2, encW, encH, 8)
-  ctx.fill()
-  ctx.stroke()
-  ctx.font = mono
-  ctx.fillStyle = encActive ? colors.accent : colors.textMuted
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillText('encodeur', enc.x, enc.y)
+  if (enc) {
+    const encW = Math.max(64, fs * 7.4)
+    const encH = fs * 2.5
+    ctx.fillStyle = colors.bgCard
+    ctx.strokeStyle = encActive ? colors.accent : colors.border
+    ctx.lineWidth = encActive ? 1.5 : 1
+    ctx.beginPath()
+    ctx.roundRect(enc.x - encW / 2, enc.y - encH / 2, encW, encH, 8)
+    ctx.fill()
+    ctx.stroke()
+    ctx.font = mono
+    ctx.fillStyle = encActive ? colors.accent : colors.textMuted
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText('encodeur', enc.x, enc.y)
+  }
 
   ctx.fillStyle = colors.textMuted
   for (const f of flying) dot(f.x, f.y, 2.6)
 
   // ── Légendes ───────────────────────────────────────────────────────────────
+  if (compact) return
   ctx.font = mono
   ctx.fillStyle = colors.textLight
   ctx.textAlign = 'center'
   ctx.textBaseline = 'top'
-  // Légende complète si elle tient, sinon version courte
-  const caption = (full: string, short: string, x: number, y: number, maxW: number) =>
-    ctx.fillText(ctx.measureText(full).width <= maxW ? full : short, x, y)
-  caption('capteur · courant du nanopore', 'capteur', S.x + S.w / 2, S.y + S.h + 10, S.w)
-  caption('modèle · espace appris', 'modèle', cx, L.y + L.h + 10, L.w)
+  caption(ctx, 'modèle · espace appris', 'modèle', cx, L.y + L.h + 10, L.w)
   if (W >= 300) {
     ctx.textAlign = 'right'
     ctx.fillText('schéma de principe', W - Math.max(16, W * 0.04), 20)
   }
 }
 
-export default function AustralCanvas() {
+export default function AustralCanvas({ compact = false }: { compact?: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -358,7 +396,7 @@ export default function AustralCanvas() {
     const render = () => {
       const W = canvas.offsetWidth
       const H = canvas.offsetHeight
-      if (W && H) draw(ctx, W, H, t)
+      if (W && H) draw(ctx, W, H, t, compact)
     }
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
@@ -384,16 +422,23 @@ export default function AustralCanvas() {
     io.observe(canvas)
 
     return () => { stop(); ro.disconnect(); io.disconnect() }
-  }, [])
+  }, [compact])
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>
       <canvas
         ref={canvasRef}
         role="img"
-        aria-label="Schéma animé : un brin d'ADN traverse un nanopore, le courant mesuré passe par l'encodeur et devient un point de l'espace appris ; une séquence sans parenté connue est signalée comme nouveauté."
+        aria-label={compact
+          ? "Schéma animé : des séquences d'ADN se placent dans l'espace appris par le modèle ; une séquence sans parenté connue est signalée comme nouveauté."
+          : "Schéma animé : un brin d'ADN traverse un nanopore, le courant mesuré passe par l'encodeur et devient un point de l'espace appris ; une séquence sans parenté connue est signalée comme nouveauté."}
         style={{ width: '100%', height: '100%', display: 'block' }}
       />
     </div>
   )
+}
+
+// Pour le dossier de projets de l'accueil (composant sans props)
+export function AustralCanvasCompact() {
+  return <AustralCanvas compact />
 }

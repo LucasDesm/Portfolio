@@ -39,6 +39,7 @@ export const colors = {
   border:      P.light,
   borderLight: '#D5E1EA',
   rust:        P.rust,
+  rustLight:   '#ebb3a2',  // rouille éclaircie : texte sur fond sombre (cartes du dossier de l'accueil)
   wine:        P.wine,
   olive:       P.olive,
 } as const
