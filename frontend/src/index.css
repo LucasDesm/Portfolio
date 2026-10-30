@@ -1,27 +1,14 @@
 @import "tailwindcss";
 
-/* Design tokens — à affiner lors du choix de l'identité visuelle (Phase 0 ébauches) */
+/* Les couleurs du site sont définies dans src/lib/tokens.ts (styles en ligne).
+   On ne reprend ici que le fond et le texte de la page, visibles hors React
+   (rebond du défilement sur mobile). */
 @theme {
-  --color-bg:           oklch(97.2% 0.008 240);
-  --color-bg-card:      oklch(99.2% 0.004 240);
-  --color-bg-subtle:    oklch(95.5% 0.013 240);
-  --color-text:         oklch(22% 0.05 242);
-  --color-text-muted:   oklch(52% 0.04 245);
-  --color-text-light:   oklch(68% 0.035 245);
-  --color-accent:       oklch(51% 0.18 245);
-  --color-accent-light: oklch(94% 0.04 245);
-  --color-green:        oklch(57% 0.14 155);
-  --color-green-light:  oklch(95% 0.04 155);
-  --color-border:       oklch(88% 0.022 240);
-  --color-border-light: oklch(94% 0.012 240);
+  --color-bg:   #F4EFE6;
+  --color-text: #0E2233;
 
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-
-  --breakpoint-sm: 640px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 1024px;
-  --breakpoint-xl: 1280px;
 }
 
 /* Reset de base */

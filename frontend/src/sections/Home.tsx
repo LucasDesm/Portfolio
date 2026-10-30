@@ -9,7 +9,7 @@ import { animate, stagger } from 'animejs'
 import PageTransition from '@/components/PageTransition'
 import AnimeCharReveal from '@/components/AnimeCharReveal'
 import { useAnimeCounter } from '@/hooks/useAnimeCounter'
-import { colors, ca, fonts, justify } from '@/lib/tokens'
+import { colors, ca, fonts, justify, typeColors, contextColorsOnDark } from '@/lib/tokens'
 import { useParcours } from '@/hooks/useParcours'
 import { useProjects } from '@/hooks/useProjects'
 import type { Project } from '@/lib/data'
@@ -199,8 +199,8 @@ function HeroParticleBurst() {
   }, [shouldReduce])
 
   const BURST_COLORS = [
-    colors.accent, colors.green, '#8b5cf6', '#d97706',
-    colors.accent, colors.accent, colors.green, '#8b5cf6',
+    colors.accent, colors.rust, colors.olive, colors.textLight,
+    colors.accent, colors.wine, colors.rust, colors.olive,
   ]
 
   return (
@@ -255,7 +255,7 @@ function RotatingBadge() {
           <path id="cp" d="M 65,65 m -46,0 a 46,46 0 1,1 92,0 a 46,46 0 1,1 -92,0" />
         </defs>
         <text style={{ fontSize: '8.5px', letterSpacing: '0.18em' }} fill={colors.textLight} fontFamily={fonts.mono}>
-          <textPath href="#cp">INGÉNIEUR BIOMÉDICAL · ESME · PROMO 2027 · </textPath>
+          <textPath href="#cp">ÉLÈVE-INGÉNIEUR BIOMÉDICAL · ESME 2027 · </textPath>
         </text>
         <circle cx="65" cy="65" r="3.5" fill={colors.accent} />
       </svg>
@@ -284,9 +284,9 @@ function Hero() {
 
   const ORBS: OrbDef[] = [
     { bg: ca.accent(0.13), size: 800, top: '-220px', right: '-180px', dx: 40,  dy: -30, dur: 16 },
-    { bg: ca.green(0.10),  size: 650, bottom: '-180px', left: '-220px', dx: -25, dy: 35, dur: 20, delay: 3 },
+    { bg: ca.olive(0.10),  size: 650, bottom: '-180px', left: '-220px', dx: -25, dy: 35, dur: 20, delay: 3 },
     { bg: ca.accent(0.06), size: 500, top: '20%', left: '30%',          dx: 20,  dy: 20, dur: 25, delay: 7 },
-    { bg: ca.green(0.07),  size: 350, bottom: '15%', right: '20%',      dx: -15, dy: -20, dur: 18, delay: 4 },
+    { bg: ca.olive(0.07),  size: 350, bottom: '15%', right: '20%',      dx: -15, dy: -20, dur: 18, delay: 4 },
   ]
 
   return (
@@ -497,11 +497,11 @@ function MarqueeStripReversed() {
 
 const SCHOOL_LOGOS = [
   { name: 'IUT Bordeaux',     short: 'IUT',  sub: 'BUT Mesures Physiques', color: colors.accent,            logo: '/logos/mesures-physiques.png' },
-  { name: 'DU Santé & Tech',  short: 'DU',   sub: 'Techniques au Service de la Santé',   color: colors.green,             logo: '/logos/iut-bordeaux.png' },
-  { name: 'Quantum Surgical', short: 'QS',   sub: 'Stage · Robotique',     color: 'oklch(60% 0.22 300)',    logo: '/logos/quantum-surgical.png' },
-  { name: 'ESME',             short: 'ESME', sub: 'Biotech & Numérique',   color: 'oklch(65% 0.17 65)',     logo: '/logos/Esme-sudria-logo.png' },
-  { name: 'KNU Corée',        short: 'KNU',  sub: 'Daegu · S3 ESME',       color: 'oklch(55% 0.23 25)',     logo: '/logos/knu.png' },
-  { name: 'INSERM',           short: 'INSERM', sub: 'Stage · Bio-informatique', color: colors.rust,     logo: '/logos/inserm.png' },
+  { name: 'DU Santé & Tech',  short: 'DU',   sub: 'Techniques au Service de la Santé',   color: typeColors.formation,             logo: '/logos/iut-bordeaux.png' },
+  { name: 'Quantum Surgical', short: 'QS',   sub: 'Stage · Robotique',     color: typeColors.stage,    logo: '/logos/quantum-surgical.png' },
+  { name: 'ESME',             short: 'ESME', sub: 'Biotech & Numérique',   color: typeColors.formation,     logo: '/logos/Esme-sudria-logo.png' },
+  { name: 'KNU Corée',        short: 'KNU',  sub: 'Daegu · S3 ESME',       color: typeColors.echange,     logo: '/logos/knu.png' },
+  { name: 'INSERM',           short: 'INSERM', sub: 'Stage · Bio-informatique', color: typeColors.stage,     logo: '/logos/inserm.png' },
   { name: 'Institut Curie',   short: 'Curie',  sub: 'Projet ESME · en cours',   color: colors.accent,   logo: '/logos/institut-curie.png' },
 ]
 
@@ -629,12 +629,7 @@ function DataStrip() {
 
 // ─── Carousel3D ───────────────────────────────────────────────────────────────
 
-const TYPE_COLOR: Record<string, string> = {
-  formation: colors.accent,
-  stage:     '#954130',
-  echange:   '#3b0014',
-  cible:     colors.textLight,
-}
+const TYPE_COLOR: Record<string, string> = typeColors
 const TYPE_LABEL: Record<string, string> = {
   formation: 'Formation', stage: 'Stage', echange: 'Séjour international', cible: 'Prochain objectif',
 }
@@ -886,15 +881,6 @@ function Carousel3D() {
 
 // ─── ProjetDossier ────────────────────────────────────────────────────────────
 
-const PROJ_ACCENT: Record<string, string> = {
-  'ct-scan-deep-learning': '#6b9fc8',
-  'regulateur-glycemie':   '#22c55e',
-  'main-robotique-emg':    '#60a5fa',
-  'ethylometre':           '#a78bfa',
-  'anemometre':            '#fbbf24',
-  'austral-omics':         colors.rustLight,
-}
-
 const PROJECT_3D: Record<string, React.LazyExoticComponent<React.ComponentType>> = {
   'ct-scan-deep-learning': CTScanCanvasLazy,
   'regulateur-glycemie':   GlycemieCanvasLazy,
@@ -1029,7 +1015,8 @@ function DossierCard({
   scrollYProgress: MotionValue<number>
 }) {
   const Render3D = PROJECT_3D[project.slug]
-  const accent   = PROJ_ACCENT[project.slug] ?? '#6b9fc8'
+  // Couleur du contexte (ESME, BUT, Stage), en version claire lisible sur le dégradé sombre
+  const accent   = contextColorsOnDark[project.context]
 
   const segStart = Math.max(0.05, (index / total) * 0.60)
 

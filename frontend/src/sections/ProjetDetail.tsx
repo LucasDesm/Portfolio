@@ -33,12 +33,6 @@ const SCENES: Record<string, React.ReactNode> = {
   'anemometre':            <AnemCanvas />,
 }
 
-const TIER_LABEL: Record<number, string> = {
-  1: 'Projet phare',
-  2: 'Projet solide',
-  3: 'Mention',
-}
-
 // ─── Scene selector ───────────────────────────────────────────────────────────
 
 function SceneFallback({ ctxColor }: { ctxColor: string }) {
@@ -165,9 +159,6 @@ export default function ProjetDetail() {
             <div className="ph" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '32px', opacity: 0 }}>
               <span style={{ fontFamily: fonts.body, fontSize: '11px', fontWeight: 700, color: ctxColor, textTransform: 'uppercase', letterSpacing: '0.1em', padding: '5px 14px', borderRadius: '20px', background: `${ctxColor}14`, border: `1px solid ${ctxColor}28` }}>
                 {project.context}
-              </span>
-              <span style={{ fontFamily: fonts.body, fontSize: '11px', fontWeight: 600, color: colors.textMuted, padding: '5px 14px', borderRadius: '20px', background: colors.bgSubtle, border: `1px solid ${colors.border}` }}>
-                {TIER_LABEL[project.tier]}
               </span>
             </div>
 

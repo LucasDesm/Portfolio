@@ -34,8 +34,6 @@ export const colors = {
   accent:      P.accent,
   accentLight: '#DDEDF9',
   accentHover: '#0558A3',
-  green:       'oklch(57% 0.14 155)',
-  greenLight:  'oklch(95% 0.04 155)',
   border:      P.light,
   borderLight: '#D5E1EA',
   rust:        P.rust,
@@ -61,6 +59,14 @@ export const contextColors = {
   Perso: colors.wine,
 } as const
 
+// Variantes claires pour du texte sur fond sombre (cartes du dossier de l'accueil), contraste ≥ 4,5:1
+export const contextColorsOnDark = {
+  Stage: colors.rustLight,
+  ESME:  '#a9c4df',
+  BUT:   '#d8c6b0',
+  Perso: '#dcb3bd',
+} as const
+
 // Domaines de compétences (pages Compétences et Parcours)
 export const domainColors = {
   ml:         colors.accent,
@@ -79,10 +85,10 @@ export const justify = { textAlign: 'justify' } as const
 export const ca = {
   accent: (a: number) => rgba(P.accent,   a),
   text:   (a: number) => rgba(P.darkest,  a),
-  green:  (a: number) => `oklch(57% 0.14 155 / ${a})`,
   border: (a: number) => rgba(P.light,    a),
   bg:     (a: number) => rgba(P.lightest, a),
   glow:   (a: number) => rgba(P.glow,    a),
+  olive:  (a: number) => rgba(P.olive,   a),
 } as const
 
 export const fonts = {

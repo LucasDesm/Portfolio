@@ -780,7 +780,7 @@ export default function Projets() {
                 transition={{ duration: 0.4 }}
                 style={{ paddingBottom: '80px' }}
               >
-                <SectionLabel label="Vitrine" color={colors.accent} />
+                <SectionLabel label="Projets principaux" color={colors.accent} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                   {tier1.map((p, i) => <Tier1Card key={p.slug} project={p} index={i} />)}
                 </div>
@@ -796,7 +796,7 @@ export default function Projets() {
                 transition={{ duration: 0.4, delay: 0.05 }}
                 style={{ paddingBottom: '80px' }}
               >
-                <SectionLabel label="Projets solides" color={colors.textMuted} />
+                <SectionLabel label="Autres projets" color={colors.textMuted} />
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: '16px' }}>
                   {tier2.map(p => <Tier2Card key={p.slug} project={p} />)}
                 </div>
@@ -812,7 +812,7 @@ export default function Projets() {
                 transition={{ duration: 0.4, delay: 0.1 }}
                 style={{ paddingBottom: '80px' }}
               >
-                <SectionLabel label="Mentions" color={colors.textLight} />
+                <SectionLabel label="En bref" color={colors.textLight} />
                 <div>
                   {tier3.map((p, i) => <Tier3Row key={p.slug} project={p} index={i} />)}
                 </div>
