@@ -526,8 +526,8 @@ function QuiJeSuis() {
           </p>
         </motion.div>
 
-        {/* Logos — LEFT ALIGNED */}
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'flex-start', marginTop: '56px' }}>
+        {/* Logos : largeur égale, 3 par ligne alignées sur le texte, dernière ligne centrée ; 1 par ligne sur mobile */}
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '56px' }}>
           {SCHOOL_LOGOS.map((school, i) => (
             <motion.div key={school.name}
               initial={{ opacity: 0, y: 20, scale: 0.92 }}
@@ -535,7 +535,7 @@ function QuiJeSuis() {
               viewport={{ once: true }}
               transition={{ duration: 0.44, ease: [0.22, 1, 0.36, 1], delay: i * 0.07 }}
               whileHover={{ y: -6, boxShadow: `0 16px 40px ${ao(school.color, 0.14)}` }}
-              style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', borderRadius: '14px', background: colors.bgCardHome, border: `1px solid ${colors.border}`, cursor: 'default', boxShadow: `0 2px 8px ${ca.text(0.04)}` }}
+              style={{ flex: '0 0 max(calc((100% - 20px) / 3), min(100%, 240px))', boxSizing: 'border-box', minWidth: 0, display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', borderRadius: '14px', background: colors.bgCardHome, border: `1px solid ${colors.border}`, cursor: 'default', boxShadow: `0 2px 8px ${ca.text(0.04)}` }}
             >
               <div style={{ width: 44, height: 44, borderRadius: '10px', background: colors.bgCardHome, border: `1px solid ${ao(school.color, 0.13)}`, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '5px', flexShrink: 0 }}>
                 {school.logo ? (
