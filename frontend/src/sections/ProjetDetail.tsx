@@ -10,6 +10,7 @@ import CurieField from '@/three/CurieField'
 import { colors, fonts, ca, contextColors, justify } from '@/lib/tokens'
 import { useProjects } from '@/hooks/useProjects'
 import { useParcours } from '@/hooks/useParcours'
+import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
 
 const GlycemieExtras = lazy(() => import('@/sections/GlycemieExtras'))
 
@@ -95,6 +96,7 @@ export default function ProjetDetail() {
     : null
 
   const titleRef   = useRef<HTMLHeadingElement>(null)
+  const narrow     = useMediaQuery(NARROW)
   const heroRef    = useRef<HTMLDivElement>(null)
 
   const { scrollYProgress } = useScroll({ target: containerRef })
@@ -145,7 +147,7 @@ export default function ProjetDetail() {
       <div ref={containerRef} style={{ paddingTop: '64px', minHeight: '100svh', background: colors.bg }}>
 
         {/* ── Hero centré ── */}
-        <section style={{ padding: '72px 48px 0', maxWidth: '1100px', margin: '0 auto' }}>
+        <section style={{ padding: '72px clamp(16px, 5vw, 48px) 0', maxWidth: '1100px', margin: '0 auto' }}>
 
           {/* Retour */}
           <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}
@@ -211,10 +213,10 @@ export default function ProjetDetail() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.0, ease: [0.22, 1, 0.36, 1], delay: 0.5 }}
-          style={{ padding: '56px 48px 0', maxWidth: '1100px', margin: '0 auto' }}
+          style={{ padding: '56px clamp(16px, 5vw, 48px) 0', maxWidth: '1100px', margin: '0 auto' }}
         >
           <div style={{
-            height: showCover ? 'auto' : 'clamp(420px, 52vh, 560px)',
+            height: showCover ? 'auto' : narrow ? 'clamp(280px, 80vw, 360px)' : 'clamp(420px, 52vh, 560px)',
             borderRadius: '20px',
             overflow: 'hidden',
             background: `linear-gradient(145deg, ${ctxColor}07 0%, ${ctxColor}18 60%, ${ctxColor}0a 100%)`,
@@ -240,8 +242,8 @@ export default function ProjetDetail() {
 
         {/* ── Highlights ── */}
         {project.highlights && project.highlights.length > 0 && (
-          <section style={{ padding: '32px 48px 0', maxWidth: '1100px', margin: '0 auto' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${project.highlights.length}, 1fr)`, gap: '14px' }}>
+          <section style={{ padding: '32px clamp(16px, 5vw, 48px) 0', maxWidth: '1100px', margin: '0 auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '14px' }}>
               {project.highlights.map((h, i) => (
                 <motion.div key={h.label}
                   initial={{ opacity: 0, y: 20 }}
@@ -264,7 +266,7 @@ export default function ProjetDetail() {
 
         {/* ── Chaîne de mesure ── */}
         {project.chain && project.chain.length > 0 && (
-          <section style={{ padding: '80px 48px 0', maxWidth: '1100px', margin: '0 auto' }}>
+          <section style={{ padding: '80px clamp(16px, 5vw, 48px) 0', maxWidth: '1100px', margin: '0 auto' }}>
             <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}>
               <h2 style={{ fontFamily: fonts.heading, fontSize: 'clamp(22px, 2.5vw, 32px)', fontWeight: 400, color: colors.text, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
                 {project.chainLabel ?? 'Chaîne de mesure'}
@@ -292,8 +294,8 @@ export default function ProjetDetail() {
 
         {/* ── Description longue + Technologies ── */}
         {project.longDescription && (
-          <section style={{ padding: '80px 48px 0', maxWidth: '1100px', margin: '0 auto' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '80px', alignItems: 'start' }}>
+          <section style={{ padding: '80px clamp(16px, 5vw, 48px) 0', maxWidth: '1100px', margin: '0 auto' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: 'clamp(40px, 8vw, 80px)', alignItems: 'start' }}>
 
               <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.7 }}>
                 <h2 style={{ fontFamily: fonts.heading, fontSize: 'clamp(22px, 2.5vw, 32px)', fontWeight: 400, color: colors.text, margin: '0 0 8px', letterSpacing: '-0.02em' }}>
@@ -336,7 +338,7 @@ export default function ProjetDetail() {
 
         {/* ── Parcours lié ── */}
         {linkedStep && (
-          <section style={{ padding: '80px 48px 0', maxWidth: '1100px', margin: '0 auto' }}>
+          <section style={{ padding: '80px clamp(16px, 5vw, 48px) 0', maxWidth: '1100px', margin: '0 auto' }}>
             <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.65 }}>
               <h2 style={{ fontFamily: fonts.heading, fontSize: 'clamp(22px, 2.5vw, 32px)', fontWeight: 400, color: colors.text, margin: '0 0 24px', letterSpacing: '-0.02em' }}>
                 Contexte du parcours
@@ -368,9 +370,9 @@ export default function ProjetDetail() {
         )}
 
         {/* ── Navigation Projets ── */}
-        <section style={{ padding: '80px 48px 120px', maxWidth: '1100px', margin: '0 auto' }}>
+        <section style={{ padding: '80px clamp(16px, 5vw, 48px) 120px', maxWidth: '1100px', margin: '0 auto' }}>
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
-            style={{ borderTop: `1px solid ${colors.border}`, paddingTop: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'stretch', gap: '16px' }}>
+            style={{ borderTop: `1px solid ${colors.border}`, paddingTop: '48px', display: 'flex', flexDirection: narrow ? 'column' : 'row', justifyContent: 'space-between', alignItems: 'stretch', gap: narrow ? '12px' : '16px' }}>
 
             <div style={{ flex: 1 }}>
               <AnimatePresence>

@@ -1,20 +1,23 @@
 import { motion } from 'motion/react'
 import { colors, fonts } from '@/lib/tokens'
 import type { ChainStep } from '@/lib/data'
+import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
 
-function ChainArrow({ ctxColor }: { ctxColor: string }) {
+// Flèche entre deux étapes : horizontale, ou verticale sur téléphone
+function ChainArrow({ ctxColor, vertical }: { ctxColor: string; vertical: boolean }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, width: '48px' }}>
+    <div style={{ display: 'flex', flexDirection: vertical ? 'column' : 'row', alignItems: 'center', flexShrink: 0, width: vertical ? 'auto' : '48px', height: vertical ? '28px' : 'auto' }}>
       <motion.div
         animate={{ opacity: [0.35, 1, 0.35] }}
         transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
-        style={{ flex: 1, height: '1.5px', background: `linear-gradient(to right, ${ctxColor}50, ${ctxColor}90)` }}
+        style={vertical
+          ? { flex: 1, width: '1.5px', background: `linear-gradient(to bottom, ${ctxColor}50, ${ctxColor}90)` }
+          : { flex: 1, height: '1.5px', background: `linear-gradient(to right, ${ctxColor}50, ${ctxColor}90)` }}
       />
-      <div style={{
-        width: 0, height: 0, flexShrink: 0,
-        borderTop: '4px solid transparent', borderBottom: '4px solid transparent',
-        borderLeft: `7px solid ${ctxColor}90`,
-      }} />
+      <div style={vertical
+        ? { width: 0, height: 0, flexShrink: 0, borderLeft: '4px solid transparent', borderRight: '4px solid transparent', borderTop: `7px solid ${ctxColor}90` }
+        : { width: 0, height: 0, flexShrink: 0, borderTop: '4px solid transparent', borderBottom: '4px solid transparent', borderLeft: `7px solid ${ctxColor}90` }}
+      />
     </div>
   )
 }
@@ -25,12 +28,14 @@ export function ChainDiagram({ steps, ctxColor, feedback, label }: {
   feedback?: boolean
   label?: string
 }) {
+  const vertical = useMediaQuery(NARROW)   // téléphone : une étape sous l'autre
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'center', overflowX: 'auto', paddingBottom: '4px' }}>
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+      {/* Centrée quand elle tient, défilable depuis le début sinon */}
+      <div style={{ display: 'flex', overflowX: 'auto', paddingBottom: '4px' }}>
+        <div style={{ display: 'flex', flexDirection: vertical ? 'column' : 'row', alignItems: vertical ? 'stretch' : 'center', margin: '0 auto', width: vertical ? '100%' : 'auto' }}>
           {steps.map((step, i) => (
-            <div key={step.label} style={{ display: 'flex', alignItems: 'center' }}>
+            <div key={step.label} style={{ display: 'flex', flexDirection: vertical ? 'column' : 'row', alignItems: 'center' }}>
               <motion.div
                 initial={{ opacity: 0, y: 18 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -42,6 +47,8 @@ export function ChainDiagram({ steps, ctxColor, feedback, label }: {
                   background: colors.bgCard,
                   border: `1px solid ${ctxColor}30`,
                   minWidth: '130px',
+                  width: vertical ? '100%' : 'auto',
+                  boxSizing: 'border-box',
                   textAlign: 'center',
                   boxShadow: `0 4px 20px ${ctxColor}0c`,
                 }}
@@ -55,7 +62,7 @@ export function ChainDiagram({ steps, ctxColor, feedback, label }: {
                   </div>
                 )}
               </motion.div>
-              {i < steps.length - 1 && <ChainArrow ctxColor={ctxColor} />}
+              {i < steps.length - 1 && <ChainArrow ctxColor={ctxColor} vertical={vertical} />}
             </div>
           ))}
         </div>

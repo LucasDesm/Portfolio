@@ -6,13 +6,15 @@ import { colors, fonts, ca, contextColors, justify } from '@/lib/tokens'
 import { type Stage } from '@/lib/data'
 import { useStages } from '@/hooks/useStages'
 import StageScene from '@/three/StageScene'
+import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
 
 const STAGE_ACCENT = contextColors.Stage
 
 // ─── Stage Card ───────────────────────────────────────────────────────────────
 
 function StageCard({ stage, index }: { stage: Stage; index: number }) {
-  const isReversed = index % 2 === 1
+  const narrow = useMediaQuery(NARROW)   // téléphone : une colonne, animation au-dessus du texte
+  const isReversed = index % 2 === 1 && !narrow
 
   const visualZone = (
     <div style={{
@@ -88,7 +90,7 @@ function StageCard({ stage, index }: { stage: Stage; index: number }) {
   )
 
   const textZone = (
-    <div style={{ padding: '44px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+    <div style={{ padding: narrow ? '24px 20px 28px' : '44px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
       <div style={{ fontFamily: fonts.mono, fontSize: '11px', color: STAGE_ACCENT, marginBottom: '14px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
         {stage.context}
       </div>
@@ -154,7 +156,7 @@ function StageCard({ stage, index }: { stage: Stage; index: number }) {
       whileHover={!stage.upcoming ? { boxShadow: `0 20px 60px ${ca.text(0.12)}` } : {}}
       style={{
         display: 'grid',
-        gridTemplateColumns: isReversed ? '1fr 1.1fr' : '1.1fr 1fr',
+        gridTemplateColumns: narrow ? '1fr' : isReversed ? '1fr 1.1fr' : '1.1fr 1fr',
         borderRadius: '18px', overflow: 'hidden',
         border: stage.upcoming ? `1.5px dashed ${colors.border}` : `1px solid ${colors.border}`,
         background: colors.bgCard,
@@ -189,7 +191,7 @@ export default function Stages() {
   return (
     <PageTransition>
       <div style={{ paddingTop: '64px', background: colors.bg, minHeight: '100svh' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 48px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 clamp(16px, 5vw, 48px)' }}>
 
           {/* ── Header ── */}
           <section style={{ padding: '80px 0 56px' }}>

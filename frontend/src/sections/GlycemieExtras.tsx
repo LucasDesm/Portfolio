@@ -118,9 +118,9 @@ export default function GlycemieExtras({ ctxColor }: { ctxColor: string }) {
     <>
 
       {/* ── Avant / Après PID ── */}
-      <section style={{ padding: '80px 48px 0', maxWidth: '1100px', margin: '0 auto' }}>
+      <section style={{ padding: '80px clamp(16px, 5vw, 48px) 0', maxWidth: '1100px', margin: '0 auto' }}>
         <SectionHead title="Principe de la régulation (illustration)" accent={ctxColor} />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '20px' }}>
 
           {/* Sans correcteur */}
           <motion.div
@@ -166,7 +166,7 @@ export default function GlycemieExtras({ ctxColor }: { ctxColor: string }) {
       </section>
 
       {/* ── Extension matérielle Arduino ── */}
-      <section style={{ padding: '80px 48px 0', maxWidth: '1100px', margin: '0 auto' }}>
+      <section style={{ padding: '80px clamp(16px, 5vw, 48px) 0', maxWidth: '1100px', margin: '0 auto' }}>
         <SectionHead title="Prototype : détecteur d'activité physique" accent={ctxColor} />
         <motion.p
           initial={{ opacity: 0 }}

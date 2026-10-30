@@ -6,6 +6,7 @@ import { colors, fonts, ca, typeColors, domainColors, justify } from '@/lib/toke
 import { type ParcoursStep } from '@/lib/data'
 import { useParcours } from '@/hooks/useParcours'
 import { useProjects } from '@/hooks/useProjects'
+import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
@@ -75,6 +76,7 @@ function Chapter({ step, index, total, onActive }: {
   const logo      = STEP_LOGOS[step.id]
   const highlights = STEP_HIGHLIGHTS[step.id] ?? []
   const flip      = index % 2 === 1   // alternance layout
+  const narrow    = useMediaQuery(NARROW)   // téléphone : texte puis visuel, sans colonne collante
 
   useEffect(() => { if (inView) onActive(index) }, [inView, index, onActive])
 
@@ -150,9 +152,9 @@ function Chapter({ step, index, total, onActive }: {
       {/* ── Corps : description | visuel (layout alterné) ── */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: '1fr 260px',
-        gap: '56px',
-        direction: flip ? 'rtl' : 'ltr',
+        gridTemplateColumns: narrow ? '1fr' : '1fr 260px',
+        gap: narrow ? '28px' : '56px',
+        direction: flip && !narrow ? 'rtl' : 'ltr',
       }}>
 
         {/* Colonne texte */}
@@ -202,7 +204,7 @@ function Chapter({ step, index, total, onActive }: {
         </div>
 
         {/* Colonne visuelle */}
-        <div style={{ direction: 'ltr', position: 'sticky', top: '100px', alignSelf: 'start' }}>
+        <div style={{ direction: 'ltr', position: narrow ? 'static' : 'sticky', top: '100px', alignSelf: 'start' }}>
           <motion.div
             initial={{ opacity: 0, y: 22 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -315,8 +317,8 @@ function Competences() {
             viewport={{ once: true }}
             transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: gi * 0.06 }}
           >
-            <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '32px', alignItems: 'start' }}>
-              <div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 32px', alignItems: 'flex-start' }}>
+              <div style={{ flex: '0 0 200px' }}>
                 <motion.div initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }}
                   transition={{ duration: 0.45, delay: gi * 0.06 }}
                   style={{ width: 24, height: 2, borderRadius: 1, background: group.color, marginBottom: '8px', transformOrigin: 'left' }} />
@@ -467,13 +469,14 @@ export default function Parcours() {
   const [activeStep, setActiveStep] = useState(0)
   const handleActive = useCallback((i: number) => setActiveStep(i), [])
   const { data: parcours } = useParcours()
+  const narrow = useMediaQuery(NARROW)
 
   return (
     <PageTransition>
       <div style={{ paddingTop: '64px', background: colors.bg, minHeight: '100svh' }}>
-        <SidebarIndicator active={activeStep} steps={parcours} />
+        {!narrow && <SidebarIndicator active={activeStep} steps={parcours} />}
 
-        <div style={{ maxWidth: '960px', margin: '0 auto', padding: '0 48px' }}>
+        <div style={{ maxWidth: '960px', margin: '0 auto', padding: '0 clamp(16px, 5vw, 48px)' }}>
           <Intro />
 
           {/* Séparateur d'entrée */}

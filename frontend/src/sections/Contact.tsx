@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion, useScroll, useTransform } from 'motion/react'
 import PageTransition from '@/components/PageTransition'
 import { colors, fonts, ca, justify } from '@/lib/tokens'
+import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
 
 const DIRECT_EMAIL = 'lucasdesmartin@yahoo.fr'
 
@@ -93,12 +94,13 @@ function ContactLink({ icon, label, href, sublabel }: { icon: string; label: str
 // ─── Panel gauche ─────────────────────────────────────────────────────────────
 
 function InfoPanel() {
+  const narrow = useMediaQuery(NARROW)
   return (
     <motion.div
       initial={{ opacity: 0, x: -24 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-      style={{ position: 'sticky', top: '100px', alignSelf: 'start' }}
+      style={{ position: narrow ? 'static' : 'sticky', top: '100px', alignSelf: 'start' }}
     >
       {/* Badge disponible */}
       <div
@@ -180,6 +182,7 @@ function InfoPanel() {
 export default function Contact() {
   const { scrollYProgress } = useScroll()
   const lineScale = useTransform(scrollYProgress, [0, 1], [0, 1])
+  const narrow = useMediaQuery(NARROW)   // téléphone : une colonne
 
   return (
     <PageTransition>
@@ -191,10 +194,10 @@ export default function Contact() {
       }} />
 
       <div style={{ paddingTop: '64px', background: colors.bg, minHeight: '100svh' }}>
-        <div style={{ maxWidth: '1020px', margin: '0 auto', padding: '60px 48px 100px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.1fr', gap: '72px', alignItems: 'start' }}>
+        <div style={{ maxWidth: '1020px', margin: '0 auto', padding: '60px clamp(16px, 5vw, 48px) 100px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: narrow ? '1fr' : '1fr 1.1fr', gap: narrow ? '40px' : '72px', alignItems: 'start' }}>
             <InfoPanel />
-            <div style={{ paddingTop: '80px' }}>
+            <div style={{ paddingTop: narrow ? 0 : '80px' }}>
               <DirectContact />
             </div>
           </div>

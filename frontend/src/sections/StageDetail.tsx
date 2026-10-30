@@ -27,7 +27,7 @@ export default function StageDetail() {
   return (
     <PageTransition>
       <div style={{ paddingTop: '64px', background: colors.bg, minHeight: '100svh' }}>
-        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 48px' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 clamp(16px, 5vw, 48px)' }}>
 
           {/* ── Retour ── */}
           <motion.div
@@ -119,7 +119,7 @@ export default function StageDetail() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.35 }}
-            style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px', marginBottom: '56px' }}
+            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '32px', marginBottom: '56px' }}
           >
             {/* Missions */}
             {stage.missions.length > 0 && (
