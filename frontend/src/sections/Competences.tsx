@@ -238,11 +238,11 @@ function OverviewSection() {
     <section style={{ padding: '80px 0', borderTop: `1px solid ${colors.borderLight}` }}>
       <SectionTitle title="Vue d'ensemble" intro="Les domaines mobilisés par chaque stage et chaque projet. Un point = au moins un outil du domaine utilisé." />
 
-      <div role="table" aria-label="Domaines mobilisés par projet et par stage" style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '16px', padding: 'clamp(14px, 3vw, 32px)' }}>
-        <div role="row" style={{ display: 'grid', gridTemplateColumns: cols, alignItems: 'end', paddingBottom: '14px' }}>
+      <div role="table" aria-label="Domaines mobilisés par projet et par stage" style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '16px', padding: 'clamp(12px, 3vw, 24px)' }}>
+        <div role="row" style={{ display: 'grid', gridTemplateColumns: cols, alignItems: 'end', paddingBottom: '10px' }}>
           <span role="columnheader" />
           {DOMAINS.map(d => (
-            <span key={d.short} role="columnheader" title={d.label} style={{ justifySelf: 'center', writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontFamily: fonts.body, fontSize: 'clamp(13px, 1.4vw, 15px)', fontWeight: 700, color: d.color, letterSpacing: '0.02em' }}>
+            <span key={d.short} role="columnheader" title={d.label} style={{ justifySelf: 'center', writingMode: 'vertical-rl', transform: 'rotate(180deg)', fontFamily: fonts.body, fontSize: '11px', fontWeight: 700, color: d.color, letterSpacing: '0.02em' }}>
               {d.short}
             </span>
           ))}
@@ -250,10 +250,10 @@ function OverviewSection() {
         {PROOF_ORDER.map((k, ri) => {
           const p = PROOFS[k]
           return (
-            <div key={k} role="row" style={{ display: 'grid', gridTemplateColumns: cols, alignItems: 'center', minHeight: '48px', padding: '8px 0', borderTop: `1px solid ${colors.borderLight}` }}>
-              <span role="rowheader" style={{ fontFamily: fonts.body, fontSize: 'clamp(15px, 1.6vw, 17px)', fontWeight: 600, color: colors.text, paddingRight: '8px', minWidth: 0 }}>
+            <div key={k} role="row" style={{ display: 'grid', gridTemplateColumns: cols, alignItems: 'center', minHeight: '34px', padding: '4px 0', borderTop: `1px solid ${colors.borderLight}` }}>
+              <span role="rowheader" style={{ fontFamily: fonts.body, fontSize: '13px', fontWeight: 600, color: colors.text, paddingRight: '8px', minWidth: 0 }}>
                 {p.to ? <Link to={p.to} style={{ color: 'inherit', textDecoration: 'none' }}>{p.label}</Link> : p.label}
-                {p.note && <span style={{ display: 'block', fontWeight: 400, fontSize: 'clamp(12px, 1.2vw, 13px)', color: colors.textLight, marginTop: '2px' }}>{p.note}</span>}
+                {p.note && <span style={{ fontWeight: 400, fontSize: '11px', color: colors.textLight }}> · {p.note}</span>}
               </span>
               {DOMAINS.map((d, ci) => (
                 <span key={d.short} role="cell" aria-label={usesDomain(k, d) ? d.label : undefined} style={{ justifySelf: 'center' }}>
@@ -263,7 +263,7 @@ function OverviewSection() {
                       whileInView={{ scale: 1, opacity: 1 }}
                       viewport={{ once: true }}
                       transition={{ duration: 0.3, delay: ri * 0.04 + ci * 0.03, ease: [0.22, 1, 0.36, 1] }}
-                      style={{ display: 'block', width: 14, height: 14, borderRadius: '50%', background: d.color }}
+                      style={{ display: 'block', width: 10, height: 10, borderRadius: '50%', background: d.color }}
                     />
                   )}
                 </span>
