@@ -64,7 +64,8 @@ export const contextColors = {
 // Domaines de compétences (pages Compétences et Parcours)
 export const domainColors = {
   ml:         colors.accent,
-  embarque:   colors.olive,
+  bio:        colors.olive,
+  embarque:   colors.textMuted,
   biomedical: colors.rust,
   cao:        colors.textLight,
   web:        colors.wine,

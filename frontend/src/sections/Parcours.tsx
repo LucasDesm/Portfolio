@@ -275,7 +275,7 @@ function Chapter({ step, index, total, onActive }: {
 
 const SKILLS_GROUPS = [
   { label: 'Machine Learning & IA',        color: domainColors.ml,         skills: ['PyTorch', 'Scikit-learn', 'Transfer Learning', 'CNN', 'Python', 'Pandas'] },
-  { label: 'Bio-informatique',             color: domainColors.embarque,   skills: ['Séquençage Nanopore', 'Metabarcoding 16S / COI', 'vsearch', 'SILVA / BOLD', 'R', 'Linux · Slurm'] },
+  { label: 'Bio-informatique',             color: domainColors.bio,        skills: ['Séquençage Nanopore', 'Metabarcoding 16S / COI', 'vsearch', 'SILVA / BOLD', 'R', 'Linux · Slurm'] },
   { label: 'Embarqué & Instrumentation',   color: domainColors.embarque,   skills: ['Arduino', 'C/C++', 'MATLAB', 'Simulink', 'LabVIEW', 'Capteurs', 'Métrologie ISO 17025', 'Électronique'] },
   { label: 'Développement web & logiciel', color: domainColors.web,        skills: ['React', 'TypeScript', 'Vite', 'Spring Boot', 'Rust', 'Three.js', 'REST API', 'PostgreSQL'] },
   { label: 'Conception & Fabrication',     color: domainColors.cao,        skills: ['SolidWorks', 'CAO 3D', 'Impression 3D', 'Blender', 'Prototypage'] },
