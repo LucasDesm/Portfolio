@@ -1,19 +1,27 @@
 import { useEffect, useRef } from 'react'
+import { colors, fonts } from '@/lib/tokens'
 
-// ── Palette médicale / CGM ────────────────────────────────────────────────────
+// ── Palette du site (fond clair) ──────────────────────────────────────────────
 const C = {
-  bg:     '#040811',
-  panel:  '#070e1b',
-  border: '#162233',
-  green:  '#22c55e',   // in range
-  yellow: '#f59e0b',   // hyperglycémie
-  red:    '#ef4444',   // hypoglycémie
-  blue:   '#60a5fa',   // insuline / info
-  cyan:   '#22d3ee',   // courbe
-  white:  '#dceef8',
-  muted:  '#3d5570',
-  dim:    '#0f1f32',
+  bg:     colors.bgCard,
+  panel:  colors.bg,
+  border: colors.borderLight,
+  green:  colors.olive,      // dans la cible
+  yellow: colors.rust,       // hyperglycémie
+  red:    colors.wine,       // hypoglycémie
+  blue:   colors.accent,     // insuline / info
+  cyan:   colors.accent,     // courbe
+  white:  colors.text,
+  muted:  colors.textMuted,
+  dim:    colors.borderLight,
 } as const
+const MONO = fonts.mono
+
+// Couleur hexadécimale avec transparence
+function alpha(hex: string, a: number): string {
+  const n = parseInt(hex.slice(1), 16)
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`
+}
 
 // ── Profil glycémique réaliste (repas + correction PID) ───────────────────────
 function glucose(t: number): number {
@@ -34,7 +42,8 @@ function gy(g: number, top: number, h: number): number {
 const CYCLE  = 13000   // ms par cycle complet
 const WINDOW = 0.37    // fraction du cycle visible dans le graphe
 
-export default function GlycemieCanvas() {
+// titleInset : marge gauche du titre, pour laisser la place à une pastille posée sur la carte
+export default function GlycemieCanvas({ titleInset = 12 }: { titleInset?: number }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -96,18 +105,28 @@ export default function GlycemieCanvas() {
 
       if (Math.sin(ts * 0.005) > 0) {
         ctx.fillStyle = C.green
-        ctx.beginPath(); ctx.arc(14, HDR / 2, hFS * 0.38, 0, Math.PI * 2); ctx.fill()
+        ctx.beginPath(); ctx.arc(titleInset + 2, HDR / 2, hFS * 0.38, 0, Math.PI * 2); ctx.fill()
       }
-      ctx.font = `bold ${hFS}px "Courier New",monospace`
+      const titleL = '  BOUCLE FERMÉE'
+      const titleC = 'CORRECTEUR · BODE / BLACK-NICHOLS'
+      const titleR = 'UVA/PADOVA · SIMULATION ILLUSTRATIVE'
+      ctx.font = `bold ${hFS}px ${MONO}`
+      const wL = ctx.measureText(titleL).width
       ctx.fillStyle = C.green; ctx.textAlign = 'left'
-      ctx.fillText('  CLOSED LOOP ACTIVE', 12, HDR / 2)
+      ctx.fillText(titleL, titleInset, HDR / 2)
 
-      ctx.font = `${hFS - 1}px "Courier New",monospace`
-      ctx.fillStyle = C.muted; ctx.textAlign = 'center'
-      ctx.fillText('PID · ZIEGLER-NICHOLS', W / 2, HDR / 2)
-
-      ctx.textAlign = 'right'
-      ctx.fillText('UVA/PADOVA · SIMULATION ILLUSTRATIVE', W - 12, HDR / 2)
+      ctx.font = `${hFS - 1}px ${MONO}`
+      const wC = ctx.measureText(titleC).width
+      const wR = ctx.measureText(titleR).width
+      ctx.fillStyle = C.muted
+      if (titleInset + wL + wR + 36 < W) {
+        ctx.textAlign = 'right'
+        ctx.fillText(titleR, W - 12, HDR / 2)
+      }
+      if (titleInset + wL + 24 < (W - wC) / 2 && wC / 2 + wR + 36 < W / 2) {
+        ctx.textAlign = 'center'
+        ctx.fillText(titleC, W / 2, HDR / 2)
+      }
       ctx.textAlign = 'left'
 
       // ── Séparateur panneau gauche ──────────────────────────────────────────
@@ -119,13 +138,12 @@ export default function GlycemieCanvas() {
       const readY = HDR + bigFS + H * 0.022
       ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
 
-      ctx.font = `bold ${bigFS}px "Courier New",monospace`
+      ctx.font = `bold ${bigFS}px ${MONO}`
       ctx.fillStyle = gColor
-      ctx.shadowColor = gColor; ctx.shadowBlur = 18
       ctx.fillText(String(Math.round(gNow)), LFT / 2, readY)
       ctx.shadowBlur = 0
 
-      ctx.font = `${Math.max(8, Math.round(bigFS * 0.30))}px "Courier New",monospace`
+      ctx.font = `${Math.max(8, Math.round(bigFS * 0.30))}px ${MONO}`
       ctx.fillStyle = C.muted
       ctx.fillText('mg/dL', LFT / 2, readY + bigFS * 0.46)
 
@@ -134,7 +152,7 @@ export default function GlycemieCanvas() {
       ctx.fillText(arrow, LFT / 2, readY + bigFS * 1.08)
 
       const sbFS = Math.max(8, Math.round(H * 0.022))
-      ctx.font = `bold ${sbFS}px "Courier New",monospace`
+      ctx.font = `bold ${sbFS}px ${MONO}`
       ctx.fillStyle = gColor
       ctx.fillText(status, LFT / 2, readY + bigFS * 1.64)
 
@@ -148,9 +166,9 @@ export default function GlycemieCanvas() {
       ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'
 
       const info = (label: string, val: string) => {
-        ctx.font = `${iFS}px "Courier New",monospace`
+        ctx.font = `${iFS}px ${MONO}`
         ctx.fillStyle = C.muted; ctx.fillText(label, 10, iY); iY += iFS * 1.5
-        ctx.font = `bold ${iFS + 1}px "Courier New",monospace`
+        ctx.font = `bold ${iFS + 1}px ${MONO}`
         ctx.fillStyle = C.white; ctx.fillText(val, 10, iY); iY += iFS * 2.4
       }
 
@@ -162,27 +180,27 @@ export default function GlycemieCanvas() {
       ctx.beginPath(); ctx.moveTo(10, div2Y); ctx.lineTo(LFT - 10, div2Y); ctx.stroke()
       iY = div2Y + H * 0.04
 
-      ctx.font = `bold ${iFS}px "Courier New",monospace`
+      ctx.font = `bold ${iFS}px ${MONO}`
       if (isMeal && !isPID) {
         const blk = Math.sin(ts * 0.008) > 0
-        ctx.fillStyle = blk ? C.yellow : 'rgba(245,158,11,0.32)'
-        ctx.fillText('⚠ MEAL EVENT', 10, iY); iY += iFS * 2
-        ctx.font = `${iFS}px "Courier New",monospace`
+        ctx.fillStyle = blk ? C.yellow : alpha(C.yellow, 0.35)
+        ctx.fillText('⚠ REPAS', 10, iY); iY += iFS * 2
+        ctx.font = `${iFS}px ${MONO}`
         ctx.fillStyle = C.muted; ctx.fillText('Glycémie ↑ ↑', 10, iY)
       } else if (isPID) {
         ctx.fillStyle = C.blue
-        ctx.fillText('◎ PID ACTIF', 10, iY); iY += iFS * 2
-        ctx.font = `${iFS}px "Courier New",monospace`
+        ctx.fillText('◎ CORRECTEUR ACTIF', 10, iY); iY += iFS * 2
+        ctx.font = `${iFS}px ${MONO}`
         ctx.fillStyle = C.muted; ctx.fillText('Insuline ↑', 10, iY)
       } else {
         ctx.fillStyle = C.green
         ctx.fillText('✓ STABLE', 10, iY); iY += iFS * 2
-        ctx.font = `${iFS}px "Courier New",monospace`
+        ctx.font = `${iFS}px ${MONO}`
         ctx.fillStyle = C.muted; ctx.fillText('Cible atteinte', 10, iY)
       }
 
       iY += iFS * 2.8
-      ctx.font = `${iFS}px "Courier New",monospace`
+      ctx.font = `${iFS}px ${MONO}`
       ctx.fillStyle = C.muted; ctx.fillText('CAPTEURS BLE', 10, iY)
       iY += iFS * 1.6
       ctx.fillStyle = C.blue; ctx.fillText('● GSR · Cardio', 10, iY)
@@ -190,12 +208,12 @@ export default function GlycemieCanvas() {
       // ── Étiquettes axe Y ───────────────────────────────────────────────────
       const gridGs = [50, 70, 100, 140, 180, 240, 300]
       const lFS = Math.max(7, Math.round(H * 0.018))
-      ctx.font = `${lFS}px "Courier New",monospace`
+      ctx.font = `${lFS}px ${MONO}`
       ctx.textBaseline = 'middle'; ctx.textAlign = 'right'
       gridGs.forEach(g => {
         const y = gy(g, cY, cH)
         const isTgt = g === 70 || g === 140
-        ctx.fillStyle = isTgt ? 'rgba(34,197,94,0.7)' : 'rgba(61,85,112,0.6)'
+        ctx.fillStyle = isTgt ? C.green : C.muted
         ctx.fillText(String(g), cX - 5, y)
       })
 
@@ -210,14 +228,14 @@ export default function GlycemieCanvas() {
       // Bande cible 70–140
       const yTop140 = gy(140, cY, cH)
       const yBot70  = gy(70, cY, cH)
-      ctx.fillStyle = 'rgba(34,197,94,0.055)'
+      ctx.fillStyle = alpha(C.green, 0.08)
       ctx.fillRect(cX, yTop140, cW, yBot70 - yTop140)
 
       // Grille horizontale
       gridGs.forEach(g => {
         const y = gy(g, cY, cH)
         const isTgt = g === 70 || g === 140
-        ctx.strokeStyle = isTgt ? 'rgba(34,197,94,0.28)' : 'rgba(15,31,50,0.9)'
+        ctx.strokeStyle = isTgt ? alpha(C.green, 0.45) : C.dim
         ctx.lineWidth = isTgt ? 1 : 0.5
         ctx.setLineDash(isTgt ? [4, 4] : [])
         ctx.beginPath(); ctx.moveTo(cX, y); ctx.lineTo(cR, y); ctx.stroke()
@@ -226,10 +244,10 @@ export default function GlycemieCanvas() {
 
       // Labels HYPER / HYPO
       ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic'
-      ctx.font = `bold ${lFS}px "Courier New",monospace`
-      ctx.fillStyle = 'rgba(245,158,11,0.36)'
+      ctx.font = `bold ${lFS}px ${MONO}`
+      ctx.fillStyle = C.yellow
       ctx.fillText('HYPER', cX + 5, yTop140 - 3)
-      ctx.fillStyle = 'rgba(239,68,68,0.36)'
+      ctx.fillStyle = C.red
       ctx.fillText('HYPO', cX + 5, cB - 3)
 
       // ── Courbe glycémique ──────────────────────────────────────────────────
@@ -250,7 +268,7 @@ export default function GlycemieCanvas() {
       }
       ctx.lineTo(cX + (tRange / WINDOW) * cW, cB)
       ctx.closePath()
-      ctx.fillStyle = 'rgba(34,211,238,0.05)'; ctx.fill()
+      ctx.fillStyle = alpha(C.cyan, 0.06); ctx.fill()
 
       // Ligne de la courbe
       ctx.beginPath()
@@ -264,14 +282,12 @@ export default function GlycemieCanvas() {
         else ctx.lineTo(x, y)
       }
       ctx.strokeStyle = C.cyan; ctx.lineWidth = 2
-      ctx.shadowColor = C.cyan; ctx.shadowBlur = 6
-      ctx.stroke(); ctx.shadowBlur = 0
+      ctx.stroke()
 
       // Point "NOW"
       const nowX = cX + (tRange / WINDOW) * cW
       const nowY = gy(gNow, cY, cH)
       ctx.fillStyle = gColor
-      ctx.shadowColor = gColor; ctx.shadowBlur = 14
       ctx.beginPath(); ctx.arc(nowX, nowY, 5, 0, Math.PI * 2); ctx.fill()
       ctx.shadowBlur = 0
 
@@ -281,7 +297,7 @@ export default function GlycemieCanvas() {
         for (let p = 0.40; p < 0.77; p += pStep) {
           const px = cX + ((p - tStart) / WINDOW) * cW
           if (px < cX || px > cR) continue
-          ctx.strokeStyle = 'rgba(96,165,250,0.5)'; ctx.lineWidth = 1
+          ctx.strokeStyle = alpha(C.blue, 0.5); ctx.lineWidth = 1
           ctx.setLineDash([2, 3])
           ctx.beginPath(); ctx.moveTo(px, cB - 14); ctx.lineTo(px, cB); ctx.stroke()
           ctx.setLineDash([])
@@ -290,14 +306,14 @@ export default function GlycemieCanvas() {
           ctx.closePath(); ctx.fill()
         }
         ctx.textAlign = 'left'
-        ctx.font = `${lFS}px "Courier New",monospace`
-        ctx.fillStyle = 'rgba(96,165,250,0.46)'
+        ctx.font = `${lFS}px ${MONO}`
+        ctx.fillStyle = C.blue
         ctx.fillText('▼ bolus insuline', cX + 5, cB - 17)
       }
 
       // Fondu bord gauche
       const fade = ctx.createLinearGradient(cX, 0, cX + cW * 0.05, 0)
-      fade.addColorStop(0, C.panel); fade.addColorStop(1, 'transparent')
+      fade.addColorStop(0, C.panel); fade.addColorStop(1, alpha(C.panel, 0))
       ctx.fillStyle = fade
       ctx.fillRect(cX, cY, cW * 0.05, cH)
 
@@ -309,7 +325,7 @@ export default function GlycemieCanvas() {
 
       // ── Axe temps ──────────────────────────────────────────────────────────
       ctx.textAlign = 'center'; ctx.textBaseline = 'top'
-      ctx.font = `${lFS}px "Courier New",monospace`; ctx.fillStyle = C.muted
+      ctx.font = `${lFS}px ${MONO}`; ctx.fillStyle = C.muted
       ;[{ f: 0, l: '-45m' }, { f: 1/3, l: '-30m' }, { f: 2/3, l: '-15m' }, { f: 1, l: 'NOW' }]
         .forEach(({ f, l }) => ctx.fillText(l, cX + f * cW, cB + 4))
 
@@ -319,7 +335,7 @@ export default function GlycemieCanvas() {
       ctx.beginPath(); ctx.moveTo(0, H - FTR); ctx.lineTo(W, H - FTR); ctx.stroke()
 
       const ftFS = Math.max(8, Math.round(FTR * 0.30))
-      ctx.font = `${ftFS}px "Courier New",monospace`
+      ctx.font = `${ftFS}px ${MONO}`
       ctx.textBaseline = 'middle'; ctx.fillStyle = C.muted
       ctx.textAlign = 'left'
       ctx.fillText('RÉGULATEUR GLYCÉMIE · IUT BORDEAUX', 14, H - FTR / 2)
@@ -335,7 +351,7 @@ export default function GlycemieCanvas() {
 
     animId = requestAnimationFrame(draw)
     return () => { cancelAnimationFrame(animId); ro.disconnect() }
-  }, [])
+  }, [titleInset])
 
   return (
     <div style={{ position: 'absolute', inset: 0 }}>

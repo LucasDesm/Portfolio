@@ -2,11 +2,13 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { useGLTF, Center, Bounds } from '@react-three/drei'
 import { useRef, Suspense, useEffect } from 'react'
 import * as THREE from 'three'
+import { colors, fonts } from '@/lib/tokens'
+import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
 
 // ─── Material ─────────────────────────────────────────────────────────────────
 
 const HAND_MAT = new THREE.MeshPhysicalMaterial({
-  color: 0x2a6db5,
+  color: 0x3f5f86,
   roughness: 0.35,
   metalness: 0.08,
   clearcoat: 0.4,
@@ -95,10 +97,10 @@ function HandModelAnimated() {
 // ─── EMG constants ────────────────────────────────────────────────────────────
 
 const CHANNELS = [
-  { label: 'CH1 · Flex. digit. superf.', short: 'CH1', color: '#3b82f6' },
-  { label: 'CH2 · Ext. digitorum',       short: 'CH2',  color: '#10b981' },
-  { label: 'CH3 · Flex. pollicis long.', short: 'CH3', color: '#06b6d4' },
-  { label: 'CH4 · Abd. pollicis brev.',  short: 'CH4', color: '#f59e0b' },
+  { label: 'CH1 · Flex. digit. superf.', short: 'CH1', color: colors.accent },
+  { label: 'CH2 · Ext. digitorum',       short: 'CH2', color: colors.olive },
+  { label: 'CH3 · Flex. pollicis long.', short: 'CH3', color: colors.textLight },
+  { label: 'CH4 · Abd. pollicis brev.',  short: 'CH4', color: colors.rust },
 ]
 
 // [FDS, ED, FPL, APB] activations + finger activations [P, I, M, An, Au]
@@ -110,7 +112,7 @@ const GRIP_STATES = [
   { name: 'EXTEND',  act: [0.08, 0.88, 0.08, 0.06], fingers: [0.1, 0.1, 0.1, 0.1, 0.1] },
 ]
 
-const FINGER_COLORS = ['#f59e0b', '#3b82f6', '#10b981', '#06b6d4', '#3b82f6']
+const FINGER_COLORS = [colors.rust, colors.accent, colors.olive, colors.textLight, colors.accent]
 const STATE_DUR = 3.5
 const HIST      = 80    // ~1.3s à 60fps → réactivité immédiate au changement d'état
 
@@ -174,48 +176,50 @@ function EMGMonitor() {
       const PAD = 8
 
       // ── Fond ─────────────────────────────────────────────────────────────────
-      ctx.fillStyle = '#040811'
+      ctx.fillStyle = colors.bgCard
       ctx.fillRect(0, 0, W, H)
 
       // ── Header ───────────────────────────────────────────────────────────────
-      ctx.fillStyle = '#070e1b'
+      ctx.fillStyle = colors.bg
       ctx.fillRect(0, 0, W, HDR)
-      ctx.strokeStyle = '#162233'; ctx.lineWidth = 1
+      ctx.strokeStyle = colors.borderLight; ctx.lineWidth = 1
       ctx.beginPath(); ctx.moveTo(0, HDR); ctx.lineTo(W, HDR); ctx.stroke()
 
       const hFS = Math.max(8, Math.round(HDR * 0.30))
       ctx.textBaseline = 'middle'
-      ctx.font = `bold ${hFS}px "Courier New",monospace`
-      ctx.fillStyle = '#3b82f6'; ctx.textAlign = 'left'
+      ctx.font = `bold ${hFS}px ${fonts.mono}`
+      ctx.fillStyle = colors.accent; ctx.textAlign = 'left'
       ctx.fillText('Commande myoélectrique', 14, HDR / 2)
-      ctx.font = `${hFS}px "Courier New",monospace`
-      ctx.fillStyle = '#3d5570'; ctx.textAlign = 'right'
-      ctx.fillText('simulation illustrative · EMG', W - 12, HDR / 2)
+      const wTitle = ctx.measureText('Commande myoélectrique').width
+      ctx.font = `${hFS}px ${fonts.mono}`
+      ctx.fillStyle = colors.textMuted; ctx.textAlign = 'right'
+      if (14 + wTitle + 24 + ctx.measureText('simulation illustrative · EMG').width < W - 12) {
+        ctx.fillText('simulation illustrative · EMG', W - 12, HDR / 2)
+      }
 
       // ── Séparateur panneau gauche ─────────────────────────────────────────────
-      ctx.strokeStyle = '#162233'; ctx.lineWidth = 1
+      ctx.strokeStyle = colors.borderLight; ctx.lineWidth = 1
       ctx.beginPath(); ctx.moveTo(LFT, HDR); ctx.lineTo(LFT, H - FTR); ctx.stroke()
 
       // ── PANNEAU GAUCHE : état + barres doigts ────────────────────────────────
 
       // Label "PRÉHENSION"
       const lFS = Math.max(7, Math.round(H * 0.018))
-      ctx.font = `${lFS}px "Courier New",monospace`
-      ctx.fillStyle = '#3d5570'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
+      ctx.font = `${lFS}px ${fonts.mono}`
+      ctx.fillStyle = colors.textMuted; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
       ctx.fillText('PRÉHENSION', LFT / 2, HDR + H * 0.065)
 
       // Grand texte état
       const bigFS = Math.max(18, Math.round(H * 0.075))
-      ctx.font = `bold ${bigFS}px "Courier New",monospace`
-      ctx.fillStyle = '#3b82f6'
-      ctx.shadowColor = '#3b82f6'; ctx.shadowBlur = 16
+      ctx.font = `bold ${bigFS}px ${fonts.mono}`
+      ctx.fillStyle = colors.accent
       ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'
       ctx.fillText(cur.name, LFT / 2, HDR + H * 0.20)
       ctx.shadowBlur = 0
 
       // Divider fin
       const div1Y = HDR + H * 0.26
-      ctx.strokeStyle = '#1a2a3a'; ctx.lineWidth = 1
+      ctx.strokeStyle = colors.borderLight; ctx.lineWidth = 1
       ctx.beginPath(); ctx.moveTo(10, div1Y); ctx.lineTo(LFT - 10, div1Y); ctx.stroke()
 
       // Barres horizontales doigts
@@ -231,16 +235,16 @@ function EMGMonitor() {
       fingers.forEach((act, fi) => {
         const midY  = barAreaTop + fi * slotH + slotH / 2
         const barH  = Math.max(4, slotH * 0.28)
-        const color = act > 0.05 ? FINGER_COLORS[fi] : '#1e2d3d'
+        const color = act > 0.05 ? FINGER_COLORS[fi] : colors.borderLight
 
         // Nom
-        ctx.font = `${lFS}px "Courier New",monospace`
-        ctx.fillStyle = act > 0.05 ? FINGER_COLORS[fi] : '#3d5570'
+        ctx.font = `${lFS}px ${fonts.mono}`
+        ctx.fillStyle = act > 0.05 ? FINGER_COLORS[fi] : colors.textMuted
         ctx.textAlign = 'left'; ctx.textBaseline = 'middle'
         ctx.fillText(FINGER_NAMES_FR[fi], 8, midY)
 
         // Track
-        ctx.fillStyle = '#0d1a2e'
+        ctx.fillStyle = colors.bg
         ctx.fillRect(barX, midY - barH / 2, barMaxW, barH)
 
         // Barre active
@@ -253,8 +257,8 @@ function EMGMonitor() {
         }
 
         // Pourcentage
-        ctx.font = `bold ${lFS}px "Courier New",monospace`
-        ctx.fillStyle = act > 0.05 ? FINGER_COLORS[fi] : '#3d5570'
+        ctx.font = `bold ${lFS}px ${fonts.mono}`
+        ctx.fillStyle = act > 0.05 ? FINGER_COLORS[fi] : colors.textMuted
         ctx.textAlign = 'right'
         ctx.fillText(`${Math.round(act * 100)}%`, LFT - 4, midY)
       })
@@ -273,22 +277,22 @@ function EMGMonitor() {
         const chartH = chH - lblH - 3
 
         if (ci > 0) {
-          ctx.strokeStyle = '#0f1f32'; ctx.lineWidth = 0.5
+          ctx.strokeStyle = colors.borderLight; ctx.lineWidth = 0.5
           ctx.beginPath(); ctx.moveTo(cX, rowY); ctx.lineTo(cX + cW, rowY); ctx.stroke()
         }
 
         // Label canal (court)
         const chFS = Math.max(8, Math.round(chH * 0.15))
-        ctx.font = `${chFS}px "Courier New",monospace`
+        ctx.font = `${chFS}px ${fonts.mono}`
         ctx.fillStyle = ch.color; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'
         ctx.fillText(ch.short, cX + 2, rowY + lblH / 2)
 
         // Fond du graphe
-        ctx.fillStyle = '#060d1a'
+        ctx.fillStyle = colors.bg
         ctx.fillRect(cX, chartY, cW, chartH)
 
         // Grille légère
-        ctx.strokeStyle = '#ffffff06'; ctx.lineWidth = 0.5
+        ctx.strokeStyle = `${colors.border}22`; ctx.lineWidth = 0.5
         for (let g = 1; g < 4; g++) {
           const gy = chartY + (g / 4) * chartH
           ctx.beginPath(); ctx.moveTo(cX, gy); ctx.lineTo(cX + cW, gy); ctx.stroke()
@@ -313,13 +317,12 @@ function EMGMonitor() {
           if (x === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py)
         }
         ctx.strokeStyle = ch.color; ctx.lineWidth = 1.2
-        ctx.shadowColor = ch.color; ctx.shadowBlur = 3
-        ctx.stroke(); ctx.shadowBlur = 0
+        ctx.stroke()
 
         // Fondu bord gauche (passé) → droite = maintenant
         const fade = ctx.createLinearGradient(cX, 0, cX + cW * 0.18, 0)
-        fade.addColorStop(0, '#060d1a')
-        fade.addColorStop(1, 'transparent')
+        fade.addColorStop(0, colors.bg)
+        fade.addColorStop(1, `${colors.bg}00`)
         ctx.fillStyle = fade
         ctx.fillRect(cX, chartY, cW * 0.18, chartH)
 
@@ -332,14 +335,14 @@ function EMGMonitor() {
       })
 
       // ── Footer ───────────────────────────────────────────────────────────────
-      ctx.fillStyle = '#070e1b'
+      ctx.fillStyle = colors.bg
       ctx.fillRect(0, H - FTR, W, FTR)
-      ctx.strokeStyle = '#162233'; ctx.lineWidth = 1
+      ctx.strokeStyle = colors.borderLight; ctx.lineWidth = 1
       ctx.beginPath(); ctx.moveTo(0, H - FTR); ctx.lineTo(W, H - FTR); ctx.stroke()
 
       const fFS = Math.max(7, Math.round(FTR * 0.30))
-      ctx.font = `${fFS}px "Courier New",monospace`
-      ctx.fillStyle = '#3d5570'; ctx.textBaseline = 'middle'
+      ctx.font = `${fFS}px ${fonts.mono}`
+      ctx.fillStyle = colors.textMuted; ctx.textBaseline = 'middle'
       ctx.textAlign = 'left'
       ctx.fillText('IUT de Bordeaux · BUT Mesures Physiques', 12, H - FTR / 2)
       ctx.textAlign = 'right'
@@ -362,9 +365,10 @@ function EMGMonitor() {
 // ─── Main export (main + EMG monitor) ────────────────────────────────────────
 
 export default function HandCanvas() {
+  const narrow = useMediaQuery(NARROW)
   return (
-    <div style={{ position: 'absolute', inset: 0, display: 'flex' }}>
-      <div style={{ flex: '0 0 50%', position: 'relative' }}>
+    <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: narrow ? 'column' : 'row' }}>
+      <div style={{ flex: narrow ? '0 0 42%' : '0 0 50%', position: 'relative', minHeight: 0 }}>
         <Canvas
           style={{ width: '100%', height: '100%' }}
           camera={{ position: [0, 0, 4], fov: 45 }}
@@ -383,9 +387,9 @@ export default function HandCanvas() {
         </Canvas>
       </div>
 
-      <div style={{ width: 1, background: '#3b82f620', flexShrink: 0 }} />
+      <div style={{ [narrow ? 'height' : 'width']: 1, background: colors.borderLight, flexShrink: 0 }} />
 
-      <div style={{ flex: 1, position: 'relative', minWidth: 0 }}>
+      <div style={{ flex: 1, position: 'relative', minWidth: 0, minHeight: 0 }}>
         <EMGMonitor />
       </div>
     </div>
@@ -399,7 +403,6 @@ export function HandCanvasOnly() {
     <iframe
       src="/3d/hand-embed.html"
       title="Main robotique EMG 3D"
-      allowTransparency
       style={{
         position: 'absolute', inset: 0,
         width: '100%', height: '100%',

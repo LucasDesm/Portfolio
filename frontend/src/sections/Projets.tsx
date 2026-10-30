@@ -357,7 +357,7 @@ function Tier1Visual({ slug, accent }: { slug: string; accent: string }) {
     return (
       <ThreeBoundary fallback={<GlycemieScene {...p} />}>
         <Suspense fallback={<GlycemieScene {...p} />}>
-          <GlycemieCanvas />
+          <GlycemieCanvas titleInset={72} />
         </Suspense>
       </ThreeBoundary>
     )
