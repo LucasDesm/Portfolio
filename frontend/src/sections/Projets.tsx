@@ -9,6 +9,7 @@ import CurieField from '@/three/CurieField'
 import { colors, fonts, ca, contextColors, justify } from '@/lib/tokens'
 import { type ProjectContext } from '@/lib/data'
 import { useProjects } from '@/hooks/useProjects'
+import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
 
 const HandCanvasOnly  = lazy(() => import('@/three/HandCanvas').then(m => ({ default: m.HandCanvasOnly })))
 const EthylCanvas     = lazy(() => import('@/three/EthylCanvas'))
@@ -434,13 +435,14 @@ function SectionLabel({ label, color }: { label: string; color: string }) {
 // ─── Tier 1 Card ──────────────────────────────────────────────────────────────
 
 function Tier1Card({ project, index }: { project: ReturnType<typeof useProjects>['data'][0]; index: number }) {
-  const isReversed = index % 2 === 1
+  const narrow = useMediaQuery(NARROW)   // téléphone : une colonne, visuel au-dessus du texte
+  const isReversed = index % 2 === 1 && !narrow
   const accent = CTX_COLOR[project.context]
   const [hovered, setHovered] = useState(false)
 
   const visualZone = (
     <div style={{
-      height: '420px',
+      height: narrow ? 'clamp(240px, 70vw, 320px)' : '420px',
       background: `linear-gradient(145deg, ${accent}06 0%, ${accent}18 100%)`,
       position: 'relative', overflow: 'hidden', flexShrink: 0,
     }}>
@@ -475,7 +477,7 @@ function Tier1Card({ project, index }: { project: ReturnType<typeof useProjects>
   const textZone = (
     <div style={{
       position: 'relative', zIndex: 1,
-      padding: '44px 44px', display: 'flex', flexDirection: 'column', justifyContent: 'center',
+      padding: narrow ? '24px 20px 28px' : '44px 44px', display: 'flex', flexDirection: 'column', justifyContent: 'center',
     }}>
       <div style={{
         fontFamily: fonts.mono, fontSize: '11px', letterSpacing: '0.08em', marginBottom: '14px',
@@ -540,7 +542,7 @@ function Tier1Card({ project, index }: { project: ReturnType<typeof useProjects>
           onMouseLeave={() => setHovered(false)}
           style={{
             display: 'grid',
-            gridTemplateColumns: isReversed ? '1fr 1.15fr' : '1.15fr 1fr',
+            gridTemplateColumns: narrow ? '1fr' : isReversed ? '1fr 1.15fr' : '1.15fr 1fr',
             borderRadius: '18px', overflow: 'hidden', cursor: 'pointer',
             border: `1px solid ${hovered ? accent + '60' : colors.border}`,
             background: colors.bgCard,
@@ -717,7 +719,7 @@ export default function Projets() {
   return (
     <PageTransition>
       <div style={{ paddingTop: '64px', background: colors.bg, minHeight: '100svh' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 48px' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 clamp(16px, 5vw, 48px)' }}>
 
           {/* ── Header ── */}
           <section style={{ padding: '80px 0 56px' }}>
@@ -795,7 +797,7 @@ export default function Projets() {
                 style={{ paddingBottom: '80px' }}
               >
                 <SectionLabel label="Projets solides" color={colors.textMuted} />
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 420px), 1fr))', gap: '16px' }}>
                   {tier2.map(p => <Tier2Card key={p.slug} project={p} />)}
                 </div>
               </motion.section>
