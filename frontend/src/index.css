@@ -18,6 +18,13 @@
   border-radius: 6px;
 }
 
+/* Easter egg (Konami code) : squelette de la page pendant la radiographie.
+   Contours sombres, rendus clairs par le négatif appliqué au-dessus. */
+html.xray #root :not(.xray-ui, .xray-ui *) {
+  outline: 1px solid rgba(14, 34, 51, 0.6);
+  outline-offset: -1px;
+}
+
 /* Reset de base */
 *, *::before, *::after {
   box-sizing: border-box;

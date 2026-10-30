@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router'
 import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react'
 import { colors, fonts, ca } from '@/lib/tokens'
 import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
+import { XRAY_EVENT } from '@/components/XRayEasterEgg'
 
 const NAV_LINKS = [
   { label: 'Parcours',     to: '/parcours' },
@@ -64,6 +65,15 @@ export default function Header() {
   const open = narrow && menuOpen
   const close = () => setMenuOpen(false)
 
+  // Sans clavier : 5 taps rapides sur le nom déclenchent la radiographie (comme le Konami code)
+  const taps = useRef<number[]>([])
+  const onLogo = () => {
+    close()
+    const now = Date.now()
+    taps.current = [...taps.current.filter(t => now - t < 2000), now]
+    if (taps.current.length >= 5) { taps.current = []; window.dispatchEvent(new Event(XRAY_EVENT)) }
+  }
+
   return (
     <motion.header
       style={{
@@ -89,7 +99,7 @@ export default function Header() {
         justifyContent: 'space-between',
       }}>
         {/* Logo */}
-        <NavLink to="/" onClick={close} style={{ textDecoration: 'none' }}>
+        <NavLink to="/" onClick={onLogo} style={{ textDecoration: 'none' }}>
           <motion.span
             initial={{ opacity: 0, x: -12 }}
             animate={{ opacity: 1, x: 0 }}

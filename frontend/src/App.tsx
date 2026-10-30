@@ -7,6 +7,7 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
 })
 import Header from '@/components/Header'
+import XRayEasterEgg from '@/components/XRayEasterEgg'
 import { colors, ca } from '@/lib/tokens'
 
 const Home          = lazy(() => import('@/sections/Home'))
@@ -90,6 +91,7 @@ export default function App() {
           <Header />
           <AnimatedRoutes />
         </div>
+        <XRayEasterEgg />
       </div>
     </BrowserRouter>
     </MotionConfig>
