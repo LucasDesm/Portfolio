@@ -16,6 +16,7 @@ const ProjetDetail  = lazy(() => import('@/sections/ProjetDetail'))
 const StageDetail   = lazy(() => import('@/sections/StageDetail'))
 const Competences   = lazy(() => import('@/sections/Competences'))
 const Contact       = lazy(() => import('@/sections/Contact'))
+const NotFound      = lazy(() => import('@/sections/NotFound'))
 
 // Blobs statiques — filter: blur() sur élément animé force une re-rasterisation GPU à chaque frame
 function AmbientBackground() {
@@ -70,6 +71,7 @@ function AnimatedRoutes() {
           <Route path="/stages/:slug"  element={<StageDetail />} />
           <Route path="/competences"   element={<Competences />} />
           <Route path="/contact"       element={<Contact />} />
+          <Route path="*"              element={<NotFound />} />
         </Routes>
       </AnimatePresence>
     </Suspense>

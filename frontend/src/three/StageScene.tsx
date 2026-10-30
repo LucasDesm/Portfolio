@@ -60,7 +60,7 @@ function InsermScene() {
               const t0 = start - 0.45 + k * 0.15
               return (
                 <motion.circle key={k} cx={x + (k ? 3 : -3)} r={1.8} fill={s.c}
-                  cy={OBS_Y} opacity={0}
+                  initial={{ cy: 8, opacity: 0 }}
                   animate={reduce ? undefined : { cy: [8, 8, 8, OBS_Y, OBS_Y, 8], opacity: [0, 0, 0.9, 0.9, 0, 0] }}
                   transition={loop(L, [0, t0 - 0.01, t0, t0 + 0.45, t0 + 0.5, L])}
                 />
@@ -169,8 +169,8 @@ function QuantumScene() {
             )}
             {/* Alerte à l'échéance */}
             {expires && !reduce && (
-              <motion.circle cx={TX + 68} cy={y} r={10} fill="none" stroke={A} strokeWidth={0.8}
-                opacity={0}
+              <motion.circle cx={TX + 68} cy={y} fill="none" stroke={A} strokeWidth={0.8}
+                initial={{ r: 10, opacity: 0 }}
                 animate={{ opacity: [0, 0, 0.8, 0, 0], r: [10, 10, 10, 22, 22] }}
                 transition={loop(L, [0, 6.1, 6.2, 6.9, L])}
               />
@@ -233,6 +233,7 @@ function ExcellScene() {
       {/* L'étalonnage se transmet d'un maillon au suivant */}
       {!reduce && (
         <motion.circle cy={Y} r={2.6} fill={colors.accent}
+          initial={{ cx: LINKS[0].x, opacity: 0 }}
           animate={{ cx: [LINKS[0].x, LINKS[0].x, LINKS[3].x, LINKS[3].x, LINKS[0].x], opacity: [0, 1, 1, 0, 0] }}
           transition={loop(L, [0, 0.3, 3.3, 3.6, L])}
         />

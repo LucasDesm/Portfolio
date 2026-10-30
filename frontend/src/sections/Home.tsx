@@ -14,6 +14,10 @@ import { useParcours } from '@/hooks/useParcours'
 import { useProjects } from '@/hooks/useProjects'
 import type { Project } from '@/lib/data'
 import { useMediaQuery, useViewportSize, NARROW } from '@/hooks/useMediaQuery'
+import { usePageTitle } from '@/hooks/usePageTitle'
+
+// Lien animé : un seul élément cliquable (pas de bouton dans un lien)
+const MotionLink = motion.create(Link)
 
 // ─── Lazy 3D renders (chargés uniquement quand la carte est active) ────────────
 const HandOnlyLazy       = lazy(() => import('@/three/HandCanvas').then(m => ({ default: m.HandCanvasOnly })))
@@ -396,28 +400,26 @@ function Hero() {
             transition={{ duration: 0.48, ease: [0.22, 1, 0.36, 1], delay: 0.88}}
             style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}
           >
-            <Link to="/projets" style={{ textDecoration: 'none' }}>
-              <motion.button
-                whileHover={{ scale: 1.04, boxShadow: `0 14px 44px ${ca.accent(0.32)}` }}
-                whileTap={{ scale: 0.97 }}
-                style={{ background: colors.accent, color: colors.bg, border: 'none', padding: '16px 34px', borderRadius: '14px', fontSize: '15px', fontFamily: fonts.body, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: `0 6px 24px ${ca.accent(0.22)}` }}
-              >
-                Voir mes projets
-                <motion.span
-                  animate={shouldReduce ? {} : { x: [0, 5, 0] }}
-                  transition={{ duration: 1.6, repeat: Infinity }}
-                >→</motion.span>
-              </motion.button>
-            </Link>
-            <Link to="/parcours" style={{ textDecoration: 'none' }}>
-              <motion.button
-                whileHover={{ scale: 1.04, background: colors.borderLight }}
-                whileTap={{ scale: 0.97 }}
-                style={{ background: 'transparent', color: colors.text, border: `1.5px solid ${colors.border}`, padding: '16px 34px', borderRadius: '14px', fontSize: '15px', fontFamily: fonts.body, fontWeight: 600, cursor: 'pointer' }}
-              >
-                Mon parcours
-              </motion.button>
-            </Link>
+            <MotionLink
+              to="/projets"
+              whileHover={{ scale: 1.04, boxShadow: `0 14px 44px ${ca.accent(0.32)}` }}
+              whileTap={{ scale: 0.97 }}
+              style={{ textDecoration: 'none', background: colors.accent, color: colors.bg, border: 'none', padding: '16px 34px', borderRadius: '14px', fontSize: '15px', fontFamily: fonts.body, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: `0 6px 24px ${ca.accent(0.22)}` }}
+            >
+              Voir mes projets
+              <motion.span
+                animate={shouldReduce ? {} : { x: [0, 5, 0] }}
+                transition={{ duration: 1.6, repeat: Infinity }}
+              >→</motion.span>
+            </MotionLink>
+            <MotionLink
+              to="/parcours"
+              whileHover={{ scale: 1.04, background: colors.borderLight }}
+              whileTap={{ scale: 0.97 }}
+              style={{ textDecoration: 'none', background: 'transparent', color: colors.text, border: `1.5px solid ${colors.border}`, padding: '16px 34px', borderRadius: '14px', fontSize: '15px', fontFamily: fonts.body, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            >
+              Mon parcours
+            </MotionLink>
           </motion.div>
         </div>
       </motion.div>
@@ -483,7 +485,6 @@ function MarqueeStripReversed() {
             color: item === '·' ? colors.border : colors.accent,
             letterSpacing: item === '·' ? 0 : '0.08em',
             textTransform: 'uppercase',
-            opacity: item === '·' ? 1 : 0.65,
           }}>
             {item}
           </span>
@@ -1280,6 +1281,7 @@ function Contact() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Home() {
+  usePageTitle()
   return (
     <PageTransition>
       <Hero />

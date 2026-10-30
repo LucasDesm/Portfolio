@@ -542,4 +542,15 @@ export const PROJECTS: Project[] = [
     ],
     linkedParcoursId: 'but',
   },
+  {
+    slug: 'ai4industry-stm',
+    tier: 3,
+    context: 'ESME',
+    title: 'AI4Industry',
+    subtitle: 'Challenge IA · Bordeaux INP (ENSEIRB-MATMECA)',
+    description: 'Participation au challenge d\'intelligence artificielle AI4Industry, mené avec Bordeaux INP (ENSEIRB-MATMECA).',
+    tags: ['Intelligence artificielle', 'Challenge'],
+    has3D: false,
+    linkedParcoursId: 'esme',
+  },
 ]

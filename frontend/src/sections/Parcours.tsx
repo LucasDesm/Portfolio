@@ -2,13 +2,14 @@ import { useRef, useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router'
 import { motion, useScroll, useTransform, useInView } from 'motion/react'
 import PageTransition from '@/components/PageTransition'
-import { colors, fonts, ca, typeColors, domainColors, justify } from '@/lib/tokens'
+import { colors, fonts, ca, typeColors, justify } from '@/lib/tokens'
 import { type ParcoursStep } from '@/lib/data'
 import { useParcours } from '@/hooks/useParcours'
 import { useProjects } from '@/hooks/useProjects'
 import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
 import { useStages } from '@/hooks/useStages'
 import StageScene from '@/three/StageScene'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
@@ -340,77 +341,33 @@ function Chapter({ step, index, total, onActive }: {
   )
 }
 
-// ─── Compétences ─────────────────────────────────────────────────────────────
+// ─── Compétences : renvoi vers la page dédiée (outils reliés à leurs preuves) ──
 
-const SKILLS_GROUPS = [
-  { label: 'Machine Learning & IA',        color: domainColors.ml,         skills: ['PyTorch', 'Scikit-learn', 'Transfer Learning', 'CNN', 'Python', 'Pandas'] },
-  { label: 'Bio-informatique',             color: domainColors.bio,        skills: ['Séquençage Nanopore', 'Metabarcoding 16S / COI', 'vsearch', 'SILVA / BOLD', 'R', 'Linux · Slurm'] },
-  { label: 'Embarqué & Instrumentation',   color: domainColors.embarque,   skills: ['Arduino', 'C/C++', 'MATLAB', 'Simulink', 'LabVIEW', 'Capteurs', 'Métrologie ISO 17025', 'Électronique'] },
-  { label: 'Développement web & logiciel', color: domainColors.web,        skills: ['React', 'TypeScript', 'Vite', 'Spring Boot', 'Rust', 'Three.js', 'REST API', 'PostgreSQL'] },
-  { label: 'Conception & Fabrication',     color: domainColors.cao,        skills: ['SolidWorks', 'CAO 3D', 'Impression 3D', 'Blender', 'Prototypage'] },
-  { label: 'Biomédical & Réglementaire',   color: domainColors.biomedical, skills: ['Dispositifs médicaux', 'RGPD', 'BizzMine', 'Qualité', 'Métrologie'] },
-]
-
-function Competences() {
+function SkillsLink() {
   return (
-    <section style={{ padding: '100px 0 100px', borderTop: `2px solid ${colors.border}` }}>
-      <div style={{ marginBottom: '60px' }}>
+    <section style={{ padding: '80px 0 100px', borderTop: `2px solid ${colors.border}` }}>
+      <Link to="/competences" style={{ textDecoration: 'none' }}>
         <motion.div
-          initial={{ clipPath: 'inset(0 100% 0 0)' }}
-          whileInView={{ clipPath: 'inset(0 0% 0 0)' }}
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          whileHover={{ y: -4, boxShadow: `0 20px 56px ${ca.accent(0.12)}` }}
+          style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: 'clamp(22px, 4vw, 32px)', borderRadius: '20px', background: colors.bgCard, border: `1px solid ${colors.border}`, cursor: 'pointer' }}
         >
-          <h2 style={{ fontFamily: fonts.heading, fontSize: 'clamp(36px, 4vw, 56px)', fontWeight: 400, color: colors.text, margin: '0 0 10px', letterSpacing: '-0.025em' }}>
-            Compétences
-          </h2>
+          <div>
+            <h2 style={{ fontFamily: fonts.heading, fontSize: 'clamp(28px, 3.5vw, 40px)', fontWeight: 400, color: colors.text, margin: '0 0 6px', letterSpacing: '-0.02em' }}>
+              Compétences
+            </h2>
+            <p style={{ fontFamily: fonts.body, fontSize: '14px', color: colors.textMuted, margin: 0 }}>
+              Construites à chaque étape du parcours : chaque outil renvoie au projet ou au stage où je l'ai utilisé.
+            </p>
+          </div>
+          <span style={{ fontFamily: fonts.body, fontSize: '14px', fontWeight: 600, color: colors.accent, whiteSpace: 'nowrap' }}>
+            Voir les compétences →
+          </span>
         </motion.div>
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          style={{ fontFamily: fonts.body, fontSize: '15px', color: colors.textMuted, margin: 0 }}
-        >
-          Construites à travers chaque étape du parcours.
-        </motion.p>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-        {SKILLS_GROUPS.map((group, gi) => (
-          <motion.div key={group.label}
-            initial={{ opacity: 0, x: -16 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: gi * 0.06 }}
-          >
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 32px', alignItems: 'flex-start' }}>
-              <div style={{ flex: '0 0 200px' }}>
-                <motion.div initial={{ scaleX: 0 }} whileInView={{ scaleX: 1 }} viewport={{ once: true }}
-                  transition={{ duration: 0.45, delay: gi * 0.06 }}
-                  style={{ width: 24, height: 2, borderRadius: 1, background: group.color, marginBottom: '8px', transformOrigin: 'left' }} />
-                <span style={{ fontFamily: fonts.body, fontSize: '13px', fontWeight: 600, color: colors.text, lineHeight: 1.4 }}>
-                  {group.label}
-                </span>
-              </div>
-              <div style={{ display: 'flex', gap: '7px', flexWrap: 'wrap', paddingTop: '2px' }}>
-                {group.skills.map((skill, i) => (
-                  <motion.span key={skill}
-                    initial={{ opacity: 0, scale: 0.88 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: gi * 0.04 + i * 0.03, duration: 0.26 }}
-                    whileHover={{ y: -3, background: `${group.color}1c`, color: group.color, borderColor: `${group.color}35` }}
-                    style={{ fontFamily: fonts.body, fontSize: '12.5px', fontWeight: 500, padding: '6px 14px', borderRadius: '8px', background: colors.bgSubtle, color: colors.textMuted, border: `1px solid ${colors.borderLight}`, cursor: 'default', transition: 'all 0.15s' }}
-                  >
-                    {skill}
-                  </motion.span>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
+      </Link>
     </section>
   )
 }
@@ -474,6 +431,7 @@ function Intro() {
       {/* Titre — wipe */}
       <div style={{ overflow: 'hidden', marginBottom: '6px' }}>
         <motion.h1
+          aria-label="Un parcours en trois actes."
           initial={{ clipPath: 'inset(0 100% 0 0)' }}
           animate={{ clipPath: 'inset(0 0% 0 0)' }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
@@ -483,14 +441,15 @@ function Intro() {
         </motion.h1>
       </div>
       <div style={{ overflow: 'hidden', marginBottom: '32px' }}>
-        <motion.h1
+        <motion.p
+          aria-hidden
           initial={{ clipPath: 'inset(0 100% 0 0)' }}
           animate={{ clipPath: 'inset(0 0% 0 0)' }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
           style={{ fontFamily: fonts.heading, fontSize: 'clamp(52px, 7.5vw, 96px)', fontWeight: 300, fontStyle: 'italic', color: colors.textMuted, margin: 0, letterSpacing: '-0.035em', lineHeight: 1.02 }}
         >
           en trois actes.
-        </motion.h1>
+        </motion.p>
       </div>
 
       <motion.p
@@ -533,6 +492,7 @@ function Intro() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Parcours() {
+  usePageTitle('Parcours')
   const [activeStep, setActiveStep] = useState(0)
   const handleActive = useCallback((i: number) => setActiveStep(i), [])
   const { data: parcours } = useParcours()
@@ -559,7 +519,7 @@ export default function Parcours() {
             ))}
           </div>
 
-          <Competences />
+          <SkillsLink />
         </div>
       </div>
     </PageTransition>

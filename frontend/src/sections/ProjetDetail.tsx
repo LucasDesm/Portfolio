@@ -11,6 +11,7 @@ import { colors, fonts, ca, contextColors, justify } from '@/lib/tokens'
 import { useProjects } from '@/hooks/useProjects'
 import { useParcours } from '@/hooks/useParcours'
 import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 const GlycemieExtras = lazy(() => import('@/sections/GlycemieExtras'))
 
@@ -81,6 +82,7 @@ export default function ProjetDetail() {
   const { data: parcours } = useParcours()
 
   const project = allProjects.find(p => p.slug === slug)
+  usePageTitle(project?.title ?? 'Projet introuvable')
   const currentIdx = allProjects.findIndex(p => p.slug === slug)
   const prevProject = currentIdx > 0 ? allProjects[currentIdx - 1] : null
   const nextProject = currentIdx < allProjects.length - 1 ? allProjects[currentIdx + 1] : null
@@ -99,6 +101,12 @@ export default function ProjetDetail() {
   // Anime.js entrance on project load
   useEffect(() => {
     if (!titleRef.current) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      for (const el of [titleRef.current, ...(heroRef.current?.querySelectorAll<HTMLElement>('.ph') ?? [])]) {
+        el.style.opacity = '1'; el.style.transform = 'none'
+      }
+      return
+    }
     animate(titleRef.current, {
       translateY: ['100%', '0%'],
       opacity: [0, 1],

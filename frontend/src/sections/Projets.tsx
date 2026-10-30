@@ -10,6 +10,7 @@ import { colors, fonts, ca, contextColors, justify } from '@/lib/tokens'
 import { type ProjectContext } from '@/lib/data'
 import { useProjects } from '@/hooks/useProjects'
 import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 const HandCanvasOnly  = lazy(() => import('@/three/HandCanvas').then(m => ({ default: m.HandCanvasOnly })))
 const EthylCanvas     = lazy(() => import('@/three/EthylCanvas'))
@@ -654,13 +655,13 @@ function Tier3Row({ project, index }: { project: ReturnType<typeof useProjects>[
         <motion.div
           whileHover={{ x: 6, background: colors.bgCard }}
           style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            display: 'flex', flexWrap: 'wrap', gap: '8px 16px', justifyContent: 'space-between', alignItems: 'center',
             padding: '18px 20px', borderRadius: '10px',
             borderBottom: `1px solid ${colors.borderLight}`, cursor: 'pointer',
             transition: 'background 0.15s',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 14px' }}>
             <span style={{ fontFamily: fonts.body, fontSize: '10px', fontWeight: 700, color: accent, background: `${accent}12`, padding: '3px 9px', borderRadius: '6px', letterSpacing: '0.07em' }}>
               {project.context}
             </span>
@@ -682,6 +683,7 @@ function Tier3Row({ project, index }: { project: ReturnType<typeof useProjects>[
 // ─── Page Projets ─────────────────────────────────────────────────────────────
 
 export default function Projets() {
+  usePageTitle('Projets')
   const [activeFilter, setActiveFilter] = useState<Filter>('tous')
   const { data: projects } = useProjects()
 
@@ -690,6 +692,12 @@ export default function Projets() {
   const filtersRef  = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      for (const el of [h1Ref.current, subtitleRef.current, filtersRef.current]) {
+        if (el) { el.style.opacity = '1'; el.style.transform = 'none' }
+      }
+      return
+    }
     if (h1Ref.current) {
       animate(h1Ref.current, {
         translateY: ['110%', '0%'],

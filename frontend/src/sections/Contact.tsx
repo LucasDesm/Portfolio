@@ -3,6 +3,7 @@ import { motion, useScroll, useTransform } from 'motion/react'
 import PageTransition from '@/components/PageTransition'
 import { colors, fonts, ca, justify } from '@/lib/tokens'
 import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 const DIRECT_EMAIL = 'lucasdesmartin@yahoo.fr'
 
@@ -170,7 +171,8 @@ function InfoPanel() {
         </div>
         <div style={{ fontFamily: fonts.body, fontSize: '13px', color: colors.text, lineHeight: 1.6 }}>
           Paris · ESME Sudria<br />
-          <span style={{ color: colors.textMuted, fontSize: '12px' }}>Mobilité France et international</span>
+          <span style={{ color: colors.textMuted, fontSize: '12px' }}>Mobilité France et international</span><br />
+          <span style={{ color: colors.textMuted, fontSize: '12px' }}>Anglais B2 · TOEIC 850</span>
         </div>
       </motion.div>
     </motion.div>
@@ -180,6 +182,7 @@ function InfoPanel() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Contact() {
+  usePageTitle('Contact')
   const { scrollYProgress } = useScroll()
   const lineScale = useTransform(scrollYProgress, [0, 1], [0, 1])
   const narrow = useMediaQuery(NARROW)   // téléphone : une colonne

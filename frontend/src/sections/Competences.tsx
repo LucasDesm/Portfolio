@@ -2,6 +2,7 @@ import { Link } from 'react-router'
 import { motion, useScroll, useTransform, useReducedMotion } from 'motion/react'
 import PageTransition from '@/components/PageTransition'
 import { colors, fonts, ca, domainColors, justify } from '@/lib/tokens'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 // Compétences prouvées : chaque outil renvoie au projet ou au stage où il a servi.
 // Pas de niveau auto-évalué, la preuve remplace le pourcentage.
@@ -161,6 +162,7 @@ function Hero() {
       {/* Titre */}
       <div style={{ overflow: 'hidden', marginBottom: '6px' }}>
         <motion.h1
+          aria-label="Compétences & outils."
           initial={{ clipPath: 'inset(0 100% 0 0)' }}
           animate={{ clipPath: 'inset(0 0% 0 0)' }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
@@ -170,14 +172,15 @@ function Hero() {
         </motion.h1>
       </div>
       <div style={{ overflow: 'hidden', marginBottom: '36px' }}>
-        <motion.h1
+        <motion.p
+          aria-hidden
           initial={{ clipPath: 'inset(0 100% 0 0)' }}
           animate={{ clipPath: 'inset(0 0% 0 0)' }}
           transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.3 }}
           style={{ fontFamily: fonts.heading, fontSize: 'clamp(52px, 7.5vw, 96px)', fontWeight: 300, fontStyle: 'italic', color: colors.textMuted, margin: 0, letterSpacing: '-0.035em', lineHeight: 1.02 }}
         >
           & outils.
-        </motion.h1>
+        </motion.p>
       </div>
 
       <motion.p
@@ -309,6 +312,26 @@ function DomainSection() {
           </motion.div>
         ))}
       </div>
+
+      {/* Langues */}
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        style={{ marginTop: '20px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px 24px', background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '16px', padding: '20px 26px', boxShadow: `0 2px 12px ${ca.text(0.04)}` }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <span style={{ width: 28, height: 3, borderRadius: 2, background: colors.accent, flexShrink: 0 }} />
+          <span style={{ fontFamily: fonts.body, fontSize: '14px', fontWeight: 700, color: colors.text }}>Langues</span>
+        </div>
+        <span style={{ fontFamily: fonts.body, fontSize: '13px', fontWeight: 500, color: colors.text }}>
+          Anglais · niveau B2 · TOEIC 850
+        </span>
+        <Link to="/parcours" style={{ fontFamily: fonts.body, fontSize: '11px', fontWeight: 500, lineHeight: 1.4, padding: '2px 9px', borderRadius: '20px', textDecoration: 'none', color: colors.accent, background: `${colors.accent}10`, border: `1px solid ${colors.accent}33` }}>
+          Semestre à KNU, cours en anglais
+        </Link>
+      </motion.div>
     </section>
   )
 }
@@ -580,6 +603,7 @@ function CurriculumSections() {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Competences() {
+  usePageTitle('Compétences')
   return (
     <PageTransition>
       <div style={{ paddingTop: '64px', background: colors.bg, minHeight: '100svh' }}>

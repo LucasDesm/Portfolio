@@ -4,12 +4,14 @@ import PageTransition from '@/components/PageTransition'
 import { colors, fonts, contextColors, justify } from '@/lib/tokens'
 import { useStage } from '@/hooks/useStages'
 import StageScene from '@/three/StageScene'
+import { usePageTitle } from '@/hooks/usePageTitle'
 
 const STAGE_ACCENT = contextColors.Stage
 
 export default function StageDetail() {
   const { slug } = useParams<{ slug: string }>()
   const { data: stage } = useStage(slug ?? '')
+  usePageTitle(stage ? `Stage · ${stage.company}` : 'Stage introuvable')
 
   if (!stage) {
     return (
