@@ -13,6 +13,7 @@ import { colors, ca, fonts, justify } from '@/lib/tokens'
 import { useParcours } from '@/hooks/useParcours'
 import { useProjects } from '@/hooks/useProjects'
 import type { Project } from '@/lib/data'
+import { useMediaQuery, useViewportSize, NARROW } from '@/hooks/useMediaQuery'
 
 // ─── Lazy 3D renders (chargés uniquement quand la carte est active) ────────────
 const HandOnlyLazy       = lazy(() => import('@/three/HandCanvas').then(m => ({ default: m.HandCanvasOnly })))
@@ -914,6 +915,16 @@ const CARD_POSITIONS = [
   { x:    0, y: -175 }, // centre haut (Austral-Omics), y ≥ -175 évite l'en-tête à 768px
 ]
 
+// Téléphone : mêmes cartes, rangées en 2 colonnes × 3 lignes autour du dossier
+const CARD_POSITIONS_NARROW = [
+  { x: -118, y: -312 }, { x: 118, y: -312 },
+  { x: -118, y:    0 }, { x: 118, y:    0 },
+  { x: -118, y:  312 }, { x: 118, y:  312 },
+]
+// Encombrement de chaque composition (cartes de 220 × 290), pour la mise à l'échelle
+const DOSSIER_SPAN        = { w: 960, h: 665 }
+const DOSSIER_SPAN_NARROW = { w: 456, h: 914 }
+
 
 const PAPER_STRIPS = [
   { color: '#acb087', left: 20, right: 20 },
@@ -1009,16 +1020,16 @@ function FolderIcon({ open }: { open: boolean }) {
 }
 
 function DossierCard({
-  project, index, total, scrollYProgress,
+  project, index, total, pos, scrollYProgress,
 }: {
   project: Project
   index: number
   total: number
+  pos: { x: number; y: number }
   scrollYProgress: MotionValue<number>
 }) {
   const Render3D = PROJECT_3D[project.slug]
   const accent   = PROJ_ACCENT[project.slug] ?? '#6b9fc8'
-  const pos      = CARD_POSITIONS[index] ?? { x: 0, y: 0 }
 
   const segStart = Math.max(0.05, (index / total) * 0.60)
 
@@ -1115,6 +1126,13 @@ function ProjetDossier() {
   ]
   const N = featured.length
 
+  // Mise à l'échelle : le dossier et ses cartes tiennent toujours dans l'écran (échelle 1 en desktop)
+  const narrow = useMediaQuery(NARROW)
+  const { width: vw, height: vh } = useViewportSize()
+  const positions = narrow ? CARD_POSITIONS_NARROW : CARD_POSITIONS
+  const span = narrow ? DOSSIER_SPAN_NARROW : DOSSIER_SPAN
+  const scale = Math.min(1, (vw - 24) / span.w, (vh - 88) / span.h)
+
   const containerRef = useRef<HTMLDivElement>(null)
   const [mounted, setMounted] = useState(false)
   const [folderHovered, setFolderHovered] = useState(false)
@@ -1193,23 +1211,31 @@ function ProjetDossier() {
             </motion.span>
           </div>
 
-          <div
-            onMouseEnter={() => setFolderHovered(true)}
-            onMouseLeave={() => setFolderHovered(false)}
-            style={{ cursor: 'pointer', zIndex: 5 }}
-          >
-            <FolderIcon open={folderOpen} />
-          </div>
+          <div style={{
+            position: 'absolute', inset: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            // Téléphone : centré sous l'en-tête (64 px) plutôt qu'au milieu de l'écran
+            transform: narrow ? `translateY(32px) scale(${scale})` : scale < 1 ? `scale(${scale})` : undefined,
+          }}>
+            <div
+              onMouseEnter={() => setFolderHovered(true)}
+              onMouseLeave={() => setFolderHovered(false)}
+              style={{ cursor: 'pointer', zIndex: 5 }}
+            >
+              <FolderIcon open={folderOpen} />
+            </div>
 
-          {mounted && featured.map((project, i) => (
-            <DossierCard
-              key={project.slug}
-              project={project}
-              index={i}
-              total={N}
-              scrollYProgress={scrollYProgress}
-            />
-          ))}
+            {mounted && featured.map((project, i) => (
+              <DossierCard
+                key={project.slug}
+                project={project}
+                index={i}
+                total={N}
+                pos={positions[i] ?? { x: 0, y: 0 }}
+                scrollYProgress={scrollYProgress}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

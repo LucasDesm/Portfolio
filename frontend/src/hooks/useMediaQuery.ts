@@ -18,3 +18,15 @@ export function useMediaQuery(query: string): boolean {
 
 /** Écran étroit (téléphone) : une colonne, menu repliable */
 export const NARROW = '(max-width: 767px)'
+
+const onResize = (cb: () => void) => {
+  window.addEventListener('resize', cb)
+  return () => window.removeEventListener('resize', cb)
+}
+
+/** Taille de la fenêtre, pour mettre à l'échelle une composition à dimensions fixes */
+export function useViewportSize(): { width: number; height: number } {
+  const width = useSyncExternalStore(onResize, () => window.innerWidth, () => 1440)
+  const height = useSyncExternalStore(onResize, () => window.innerHeight, () => 900)
+  return { width, height }
+}
