@@ -3,6 +3,7 @@ import { useRef, useEffect, lazy, Suspense } from 'react'
 import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react'
 import { animate, stagger } from 'animejs'
 import PageTransition from '@/components/PageTransition'
+import NotFound from '@/sections/NotFound'
 import ThreeBoundary from '@/components/ThreeBoundary'
 import { ChainDiagram } from '@/components/ChainDiagram'
 import ProjectEvidence from '@/components/ProjectEvidence'
@@ -126,16 +127,7 @@ export default function ProjetDetail() {
   }, [slug])
 
   if (!project) {
-    return (
-      <PageTransition>
-        <div style={{ paddingTop: '64px', minHeight: '100svh', background: colors.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center' }}>
-            <h1 style={{ fontFamily: fonts.heading, fontSize: '48px', fontWeight: 400, color: colors.text, margin: '0 0 16px' }}>Projet introuvable</h1>
-            <Link to="/projets" style={{ fontFamily: fonts.body, color: colors.accent, fontSize: '15px', fontWeight: 600 }}>← Retour aux projets</Link>
-          </div>
-        </div>
-      </PageTransition>
-    )
+    return <NotFound />   // adresse inconnue : même page 404 que le reste du site
   }
 
   const ctxColor = CTX_COLOR[project.context] ?? colors.textMuted

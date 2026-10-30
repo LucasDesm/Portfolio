@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router'
 import { motion } from 'motion/react'
 import PageTransition from '@/components/PageTransition'
+import NotFound from '@/sections/NotFound'
 import { colors, fonts, contextColors, justify } from '@/lib/tokens'
 import { useStage } from '@/hooks/useStages'
 import StageScene from '@/three/StageScene'
@@ -14,16 +15,7 @@ export default function StageDetail() {
   usePageTitle(stage ? `Stage · ${stage.company}` : 'Stage introuvable')
 
   if (!stage) {
-    return (
-      <PageTransition>
-        <div style={{ paddingTop: '64px', minHeight: '100svh', background: colors.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ textAlign: 'center' }}>
-            <p style={{ fontFamily: fonts.body, color: colors.textMuted, marginBottom: '16px' }}>Stage introuvable.</p>
-            <Link to="/parcours" style={{ color: STAGE_ACCENT, fontFamily: fonts.body, fontSize: '14px' }}>← Retour au parcours</Link>
-          </div>
-        </div>
-      </PageTransition>
-    )
+    return <NotFound />   // adresse inconnue : même page 404 que le reste du site
   }
 
   return (
