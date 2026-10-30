@@ -500,6 +500,8 @@ const SCHOOL_LOGOS = [
   { name: 'Quantum Surgical', short: 'QS',   sub: 'Stage · Robotique',     color: 'oklch(60% 0.22 300)',    logo: '/logos/quantum-surgical.png' },
   { name: 'ESME',             short: 'ESME', sub: 'Biotech & Numérique',   color: 'oklch(65% 0.17 65)',     logo: '/logos/Esme-sudria-logo.png' },
   { name: 'KNU Corée',        short: 'KNU',  sub: 'Daegu · S3 ESME',       color: 'oklch(55% 0.23 25)',     logo: '/logos/knu.png' },
+  { name: 'INSERM',           short: 'INSERM', sub: 'Stage · Bio-informatique', color: colors.rust,     logo: '/logos/inserm.png' },
+  { name: 'Institut Curie',   short: 'Curie',  sub: 'Projet ESME · en cours',   color: colors.accent,   logo: '/logos/institut-curie.png' },
 ]
 
 function QuiJeSuis() {
@@ -568,17 +570,17 @@ function QuiJeSuis() {
 // ─── DataStrip ────────────────────────────────────────────────────────────────
 
 function DataStrip() {
-  // anime.js v4 — spring elastic : léger overshoot avant de se stabiliser
-  const c0 = useAnimeCounter(93.7, { decimals: 1, duration: 1760 })
-  const c1 = useAnimeCounter(16,   { duration: 1280 })
-  const c2 = useAnimeCounter(61.8, { decimals: 1, duration: 1920 })
-  const c3 = useAnimeCounter(3,    { duration: 960 })
+  // Chiffres du parcours (pas des projets), compteurs anime.js
+  const c0 = useAnimeCounter(6, { duration: 1280 })
+  const c1 = useAnimeCounter(3, { duration: 960 })
+  const c2 = useAnimeCounter(3, { duration: 960 })
+  const c3 = useAnimeCounter(1, { duration: 800 })
 
   const metrics = [
-    { counter: c0, format: () => c0.val.toFixed(1).replace('.', ',') + ' %', label: 'accuracy',         sub: 'CT-scan · 4 classes',        prominent: true  },
-    { counter: c1, format: () => c1.val + ' sem.',          label: 'Quantum Surgical', sub: 'robotique chirurgicale', prominent: false },
-    { counter: c2, format: () => c2.val.toFixed(1).replace('.', ',') + ' %', label: 'familles retrouvées', sub: 'ADN hors banque · INSERM', prominent: false },
-    { counter: c3, format: () => String(c3.val),            label: 'stages',           sub: 'Excell · Quantum · INSERM',       prominent: false },
+    { counter: c0, format: () => c0.val + ' ans',  label: 'd\'études supérieures', sub: '2021 – 2027',               prominent: true  },
+    { counter: c1, format: () => String(c1.val),   label: 'formations',            sub: 'BUT · DU · ESME',           prominent: false },
+    { counter: c2, format: () => String(c2.val),   label: 'stages',                sub: 'Excell · Quantum · INSERM', prominent: false },
+    { counter: c3, format: () => String(c3.val),   label: 'semestre à l\'étranger', sub: 'Daegu · Corée du Sud',     prominent: false },
   ]
 
   return (
