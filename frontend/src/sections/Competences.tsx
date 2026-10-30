@@ -1,6 +1,7 @@
 import { useRef, useEffect } from 'react'
 import { motion, useInView, useScroll, useSpring, useTransform } from 'motion/react'
 import { animate, stagger } from 'animejs'
+import { Link } from 'react-router'
 import PageTransition from '@/components/PageTransition'
 import { colors, fonts, ca, domainColors, justify } from '@/lib/tokens'
 
@@ -531,6 +532,113 @@ function DetailSection() {
   )
 }
 
+// ─── Cette année : Ingé3, majeure Biotech & Numérique (syllabus ESME) ─────────
+// Compétences en cours d'acquisition : pas de niveau chiffré, distinctes des compétences prouvées.
+
+const THIS_YEAR = [
+  {
+    ue: 'UE1',
+    label: 'Vision, réalité virtuelle et réalité augmentée',
+    color: domainColors.embarque,
+    modules: [
+      { name: 'Modélisation et simulation', notions: 'démarche ASME V&V40, jumeaux numériques, simulation sous SolidWorks' },
+      { name: 'Vision et réalité augmentée', notions: 'détection et suivi d\'objets, calibration de caméra, reconstruction 3D' },
+      { name: 'Réalité virtuelle immersive', notions: 'interaction 3D, déploiement sur casque de réalité virtuelle' },
+      { name: 'Thérapie par le jeu', notions: 'informatique physiologique, interfaces cerveau-ordinateur' },
+    ],
+  },
+  {
+    ue: 'UE2',
+    label: 'Data Analytics',
+    color: domainColors.ml,
+    modules: [
+      { name: 'Deep Learning', notions: 'réseaux de neurones, vision par ordinateur, réglage des hyperparamètres' },
+      { name: 'Apprentissage non supervisé', notions: 'ACP, k-means, DBSCAN, classification hiérarchique' },
+      { name: 'NLP en santé', notions: 'vectorisation de texte, modèles ML et DL, explicabilité' },
+      { name: 'Modèles formels pour le Big Data', notions: 'fondements de l\'apprentissage supervisé, langage R' },
+      { name: 'Big Data et microbiote', notions: 'stratégies thérapeutiques, enjeux réglementaires et éthiques' },
+    ],
+  },
+  {
+    ue: 'UE3',
+    label: 'Écosystème, SI et sécurité en santé',
+    color: domainColors.biomedical,
+    modules: [
+      { name: 'Gestion du risque patient', notions: 'analyse de risque d\'un dispositif médical, matériovigilance' },
+      { name: 'Cybersécurité de la santé', notions: 'réseaux de soins, sécurité des données' },
+      { name: 'Systèmes d\'information hospitaliers', notions: 'SIH, PACS' },
+      { name: 'Systèmes de santé et modèles économiques', notions: 'acteurs, financement, projet entrepreneurial en santé' },
+      { name: 'Qualité en entreprise', notions: 'objectifs qualité, interaction avec le département qualité' },
+    ],
+  },
+]
+
+function ThisYearSection() {
+  return (
+    <section style={{ padding: '80px 0 100px', borderTop: `1px solid ${colors.borderLight}` }}>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        style={{ marginBottom: '48px' }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', margin: '0 0 8px' }}>
+          <h2 style={{ fontFamily: fonts.heading, fontSize: 'clamp(28px, 3.5vw, 42px)', fontWeight: 400, color: colors.text, margin: 0, letterSpacing: '-0.02em' }}>
+            Cette année
+          </h2>
+          <span style={{ fontFamily: fonts.body, fontSize: '12px', fontWeight: 600, color: colors.accent, background: colors.accentLight, padding: '4px 12px', borderRadius: '20px', border: `1px solid ${ca.accent(0.2)}` }}>
+            en cours · 2026–2027
+          </span>
+        </div>
+        <p style={{ fontFamily: fonts.body, fontSize: '14px', lineHeight: 1.75, color: colors.textMuted, margin: 0, maxWidth: '640px', ...justify }}>
+          Dernière année de la majeure Biotech & Numérique à l'ESME : compétences en cours d'acquisition, en parallèle du projet de recherche mené avec l'Institut Curie.
+        </p>
+      </motion.div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 270px), 1fr))', gap: '20px' }}>
+        {THIS_YEAR.map((ue, i) => (
+          <motion.div key={ue.ue}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: i * 0.07 }}
+            style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '16px', padding: '26px 26px 22px', boxShadow: `0 2px 12px ${ca.text(0.04)}` }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+              <span style={{ width: 28, height: 3, borderRadius: 2, background: ue.color, flexShrink: 0 }} />
+              <span style={{ fontFamily: fonts.mono, fontSize: '11px', fontWeight: 700, color: ue.color, letterSpacing: '0.08em' }}>{ue.ue}</span>
+            </div>
+            <h3 style={{ fontFamily: fonts.body, fontSize: '15px', fontWeight: 700, color: colors.text, margin: '0 0 16px', lineHeight: 1.35 }}>
+              {ue.label}
+            </h3>
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {ue.modules.map(m => (
+                <li key={m.name}>
+                  <div style={{ fontFamily: fonts.body, fontSize: '13px', fontWeight: 600, color: colors.text }}>{m.name}</div>
+                  <div style={{ fontFamily: fonts.body, fontSize: '12px', lineHeight: 1.55, color: colors.textMuted, marginTop: '2px' }}>{m.notions}</div>
+                </li>
+              ))}
+            </ul>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Mise en pratique cette année */}
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '20px' }}>
+        <Link to="/projets/institut-curie" style={{ flex: '1 1 min(100%, 300px)', textDecoration: 'none', padding: '16px 20px', borderRadius: '14px', background: colors.bgCard, border: `1px solid ${colors.border}` }}>
+          <div style={{ fontFamily: fonts.mono, fontSize: '10px', color: colors.textLight, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>Projet d'innovation et de recherche</div>
+          <div style={{ fontFamily: fonts.body, fontSize: '14px', fontWeight: 600, color: colors.accent }}>Analyse d'images de cellules · Institut Curie →</div>
+        </Link>
+        <Link to="/contact" style={{ flex: '1 1 min(100%, 300px)', textDecoration: 'none', padding: '16px 20px', borderRadius: '14px', background: colors.bgCard, border: `1px solid ${colors.border}` }}>
+          <div style={{ fontFamily: fonts.mono, fontSize: '10px', color: colors.textLight, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>Stage ingénieur</div>
+          <div style={{ fontFamily: fonts.body, fontSize: '14px', fontWeight: 600, color: colors.rust }}>PFE de 6 mois à partir du 7 avril 2027 →</div>
+        </Link>
+      </div>
+    </section>
+  )
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Competences() {
@@ -541,6 +649,7 @@ export default function Competences() {
           <Hero />
           <RadarSection />
           <DetailSection />
+          <ThisYearSection />
         </div>
       </div>
     </PageTransition>
