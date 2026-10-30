@@ -2,6 +2,26 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8"/>
+<script>
+// Pause hors écran : la page parente envoie « pause » / « resume » (composant Embed3D).
+// Tant que la page est en pause, les images d'animation sont retenues au lieu d'être dessinées.
+(function () {
+  var paused = false, queued = [];
+  var raf = window.requestAnimationFrame.bind(window);
+  window.requestAnimationFrame = function (cb) {
+    if (paused) { queued.push(cb); return 0; }
+    return raf(cb);
+  };
+  window.addEventListener('message', function (e) {
+    if (e.origin !== window.location.origin) return;
+    if (e.data === 'pause') paused = true;
+    else if (e.data === 'resume' && paused) {
+      paused = false;
+      queued.splice(0).forEach(function (cb) { raf(cb); });
+    }
+  });
+})();
+</script>
 <title>Anémomètre connecté — CAO 3D</title>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <style>

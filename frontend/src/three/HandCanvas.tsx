@@ -4,6 +4,7 @@ import { useRef, Suspense, useEffect } from 'react'
 import * as THREE from 'three'
 import { colors, fonts } from '@/lib/tokens'
 import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
+import Embed3D from '@/components/Embed3D'
 
 // ─── Material ─────────────────────────────────────────────────────────────────
 
@@ -399,18 +400,7 @@ export default function HandCanvas() {
 // ─── Hand only (sans tableau EMG) ────────────────────────────────────────────
 
 export function HandCanvasOnly() {
-  return (
-    <iframe
-      src="/3d/hand-embed.html"
-      title="Main robotique EMG 3D"
-      style={{
-        position: 'absolute', inset: 0,
-        width: '100%', height: '100%',
-        border: 'none', background: 'transparent',
-        pointerEvents: 'none',
-      }}
-    />
-  )
+  return <Embed3D src="/3d/hand-embed.html" title="Main robotique EMG 3D" />
 }
 
 // Pas de préchargement : le module est importé par l'accueil, qui n'affiche que l'iframe
