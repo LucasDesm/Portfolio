@@ -270,6 +270,7 @@ function RotatingBadge() {
 function Hero() {
   const containerRef = useRef<HTMLDivElement>(null)
   const shouldReduce = useReducedMotion()
+  const narrow = useMediaQuery(NARROW)   // téléphone : marges réduites, badge plus petit, sans « Scroll »
   const { scrollYProgress } = useScroll({ target: containerRef, offset: ['start start', 'end start'] })
   const y       = useTransform(scrollYProgress, [0, 1], ['0%', '22%'])
   const fadeOut = useTransform(scrollYProgress, [0, 0.55], [1, 0])
@@ -337,7 +338,7 @@ function Hero() {
 
       {/* Contenu — CENTERED */}
       <motion.div style={{ y, opacity: fadeOut, width: '100%', position: 'relative', zIndex: 2 }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '80px 80px 0', textAlign: 'center' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: narrow ? '80px 20px 112px' : '80px 80px 0', textAlign: 'center' }}>
 
           {/* Badge */}
           <motion.div
@@ -429,13 +430,13 @@ function Hero() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2, duration: 1 }}
-        style={{ position: 'absolute', bottom: '48px', right: '48px', zIndex: 2 }}
+        style={{ position: 'absolute', bottom: narrow ? '14px' : '48px', right: narrow ? '12px' : '48px', zIndex: 2, scale: narrow ? 0.62 : 1, originX: 1, originY: 1 }}
       >
         <RotatingBadge />
       </motion.div>
 
       {/* Scroll indicator */}
-      <motion.div
+      {!narrow && <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.28, duration: 0.8 }}
@@ -447,7 +448,7 @@ function Hero() {
           transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
           style={{ width: 1, height: 50, background: `linear-gradient(to bottom, ${colors.accent}, transparent)`, transformOrigin: 'top' }}
         />
-      </motion.div>
+      </motion.div>}
     </section>
   )
 }
@@ -754,12 +755,19 @@ function Carousel3D() {
 
   const anglePerItem = 360 / N
   const RADIUS = Math.max(660, N * 105)
+  // Cartes de 420 × 400 : réduites pour tenir dans l'écran du téléphone (échelle 1 en desktop)
+  const narrow = useMediaQuery(NARROW)
+  const { width: vw } = useViewportSize()
+  const ringScale = narrow ? Math.min(1, (vw - 48) / 420) : 1
 
-  const rawRotY = useTransform(scrollYProgress, [0, 1], [0, -(N - 1) * anglePerItem])
-  const rotY = useSpring(rawRotY, { stiffness: 55, damping: 22 })
+  // Desktop : rotation continue au défilement. Téléphone : elle s'arrête sur chaque carte, centrée à l'écran
+  const rotTarget = useMotionValue(0)
+  const rotY = useSpring(rotTarget, { stiffness: 55, damping: 22 })
 
   useMotionValueEvent(scrollYProgress, 'change', v => {
-    setActive(Math.min(Math.round(v * (N - 1)), N - 1))
+    const idx = Math.min(Math.round(v * (N - 1)), N - 1)
+    setActive(idx)
+    rotTarget.set(-(narrow ? idx : v * (N - 1)) * anglePerItem)
   })
 
   const step = steps[active] as ParcoursStep
@@ -789,7 +797,7 @@ function Carousel3D() {
           {(steps as ParcoursStep[]).map(s => {
             const color = TYPE_COLOR[s.type]
             return (
-              <div key={s.id} style={{ flexShrink: 0, width: '420px', height: '400px', background: colors.bgCardHome, border: `1.5px solid ${color}`, borderRadius: '24px', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div key={s.id} style={{ flexShrink: 0, width: 'min(420px, 82vw)', height: '400px', background: colors.bgCardHome, border: `1.5px solid ${color}`, borderRadius: '24px', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {CAROUSEL_LOGOS[s.id] ? (
                   <img
                     src={CAROUSEL_LOGOS[s.id]}
@@ -853,7 +861,7 @@ function Carousel3D() {
           </AnimatePresence>
 
           {/* Ring — static div, each card computes its own 3D transform */}
-          <div style={{ position: 'relative', width: 0, height: 0, transform: 'translateY(-60px)', zIndex: 1 }}>
+          <div style={{ position: 'relative', width: 0, height: 0, transform: ringScale < 1 ? `translateY(-40px) scale(${ringScale})` : 'translateY(-60px)', zIndex: 1 }}>
             {(steps as ParcoursStep[]).map((s, i) => (
               <CarouselCard
                 key={s.id}

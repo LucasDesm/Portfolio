@@ -8,6 +8,7 @@ const queryClient = new QueryClient({
 })
 import Header from '@/components/Header'
 import XRayEasterEgg from '@/components/XRayEasterEgg'
+import PageLoader from '@/components/PageLoader'
 import { colors, ca } from '@/lib/tokens'
 
 const Home          = lazy(() => import('@/sections/Home'))
@@ -60,7 +61,7 @@ function ScrollToTop() {
 function AnimatedRoutes() {
   const location = useLocation()
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<PageLoader />}>
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/"              element={<Home />} />

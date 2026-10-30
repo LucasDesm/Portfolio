@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, lazy, Suspense } from 'react'
 import { Link } from 'react-router'
-import { motion, AnimatePresence, useMotionValue, useSpring } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import { animate, stagger } from 'animejs'
 import PageTransition from '@/components/PageTransition'
 import Reveal from '@/components/Reveal'
@@ -32,29 +32,6 @@ const FILTERS: { key: Filter; label: string }[] = [
   { key: 'BUT', label: 'BUT' },
   { key: 'Perso', label: 'Perso' },
 ]
-
-// ─── TiltCard ─────────────────────────────────────────────────────────────────
-
-function TiltCard({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
-  const ref = useRef<HTMLDivElement>(null)
-  const rotX = useMotionValue(0), rotY = useMotionValue(0)
-  const sRotX = useSpring(rotX, { stiffness: 180, damping: 22 })
-  const sRotY = useSpring(rotY, { stiffness: 180, damping: 22 })
-  const handleMove = (e: React.MouseEvent) => {
-    const rect = ref.current?.getBoundingClientRect()
-    if (!rect) return
-    rotX.set(-(((e.clientY - rect.top) / rect.height) - 0.5) * 8)
-    rotY.set(((e.clientX - rect.left) / rect.width - 0.5) * 8)
-  }
-  return (
-    <div style={{ perspective: '900px', ...style }}>
-      <motion.div ref={ref} style={{ rotateX: sRotX, rotateY: sRotY, transformStyle: 'preserve-3d' }}
-        onMouseMove={handleMove} onMouseLeave={() => { rotX.set(0); rotY.set(0) }} whileHover={{ scale: 1.01 }}>
-        {children}
-      </motion.div>
-    </div>
-  )
-}
 
 // ─── Tier 1 Visual Scenes ─────────────────────────────────────────────────────
 
@@ -575,7 +552,6 @@ function Tier2Card({ project }: { project: ReturnType<typeof useProjects>['data'
   const [hovered, setHovered] = useState(false)
   return (
     <Reveal>
-      <TiltCard>
         <Link to={`/projets/${project.slug}`} style={{ textDecoration: 'none', display: 'block' }}>
           <div
             onMouseEnter={() => setHovered(true)}
@@ -635,7 +611,6 @@ function Tier2Card({ project }: { project: ReturnType<typeof useProjects>['data'
             </div>
           </div>
         </Link>
-      </TiltCard>
     </Reveal>
   )
 }
