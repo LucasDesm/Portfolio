@@ -67,7 +67,7 @@ function InsermScene() {
               )
             })}
             <motion.rect x={X0 + cObs[i] * W} y={OBS_Y} width={s.obs * W} height={H} fill={s.c}
-              style={{ transformBox: 'fill-box', transformOrigin: 'left center' }}
+              style={{ originX: 0 }}
               animate={reduce ? undefined : { scaleX: [0, 0, 1, 1, 0, 0] }}
               transition={loop(L, [0, start, start + 0.45, 6.3, 6.8, L])}
             />
@@ -108,36 +108,88 @@ function Instrument({ kind, x, y }: { kind: number; x: number; y: number }) {
 
 function QuantumScene() {
   const reduce = useReducedMotion()
-  const R = 17
-  const C = 2 * Math.PI * R
+  const L = 9
+  const SX = 18, SY = 38, SW = 34, SH = 46   // fiche papier
+  const TX = 92                              // tableau de suivi
+  const rowY = (k: number) => 58 + k * 18
+  const sheets = [0.2, 1.6, 3.0]             // arrivée de chaque fiche
+  const show = (r: number) => loop(L, [0, r, r + 0.4, 8.2, 8.7, L])
   return (
     <Frame>
-      {Array.from({ length: 8 }, (_, i) => {
-        const x = 45 + (i % 4) * 50
-        const y = 42 + Math.floor(i / 4) * 48
-        const d = 7 + (i % 3) * 1.5
+      {/* Fiches papier : une par instrument, numérisées l'une après l'autre */}
+      {sheets.map((s, k) => (
+        <motion.g key={k} opacity={reduce && k === 0 ? 1 : 0}
+          animate={reduce ? undefined : { x: [-60, -60, 0, 0, 40, 40], opacity: [0, 0, 1, 1, 0, 0] }}
+          transition={loop(L, [0, s, s + 0.6, s + 0.9, s + 1.3, L])}
+        >
+          <path d={`M${SX},${SY} h${SW - 8} l8,8 v${SH - 8} h${-SW} Z`} fill={colors.bgCard} stroke={colors.textMuted} strokeWidth={0.8} />
+          <path d={`M${SX + SW - 8},${SY} v8 h8`} fill="none" stroke={colors.textMuted} strokeWidth={0.8} />
+          {[12, 18, 24, 30].map(dy => <line key={dy} x1={SX + 5} x2={SX + (dy === 30 ? 16 : 25)} y1={SY + dy} y2={SY + dy} stroke={colors.border} strokeWidth={0.8} />)}
+          <circle cx={SX + SW - 8} cy={SY + SH - 8} r={4} fill="none" stroke={colors.olive} strokeWidth={0.8} />
+          <path d={`M${SX + SW - 10},${SY + SH - 8} l1.6,1.6 l3,-3.2`} fill="none" stroke={colors.olive} strokeWidth={0.8} />
+        </motion.g>
+      ))}
+      <text x={SX + SW / 2} y={SY + SH + 12} textAnchor="middle" {...TEXT}>fiche papier</text>
+      <path d="M62,60 h14 m-4,-3 l4,3 l-4,3" fill="none" stroke={colors.border} strokeWidth={1} />
+
+      {/* Base de suivi numérique */}
+      <text x={TX} y={30} {...TEXT} fill={colors.textMuted}>base de suivi</text>
+      <text x={TX} y={44} {...TEXT} fontSize={6}>instrument</text>
+      <text x={TX + 46} y={44} {...TEXT} fontSize={6}>statut</text>
+      <text x={TX + 104} y={44} {...TEXT} fontSize={6}>validité</text>
+      <line x1={TX} x2={TX + 140} y1={47} y2={47} stroke={colors.border} strokeWidth={0.8} />
+
+      {[0, 1, 2].map(k => {
+        const y = rowY(k)
+        const expires = k === 1   // cette ligne arrive à échéance
         return (
-          <g key={i}>
-            <circle cx={x} cy={y} r={R} fill={colors.bgCard} stroke={colors.borderLight} strokeWidth={2.5} />
-            {/* Validité de l'étalonnage : l'anneau se vide, puis l'instrument est réétalonné */}
-            <motion.circle cx={x} cy={y} r={R} fill="none" strokeWidth={2.5} strokeLinecap="round"
-              strokeDasharray={C} strokeDashoffset={C * 0.3} stroke={colors.olive}
-              transform={`rotate(-90 ${x} ${y})`}
-              animate={reduce ? undefined : {
-                strokeDashoffset: [0, C * 0.55, C * 0.9, C * 0.9, 0],
-                stroke: [colors.olive, colors.olive, A, A, colors.olive],
-              }}
-              transition={{ duration: d, delay: i * 0.6, times: [0, 0.55, 0.9, 0.93, 1], repeat: Infinity, ease: 'linear' }}
+          <motion.g key={k} opacity={reduce ? 1 : 0}
+            animate={reduce ? undefined : { opacity: [0, 0, 1, 1, 0, 0] }}
+            transition={show(sheets[k] + 1.0)}
+          >
+            <g transform={`translate(${TX + 10} ${y}) scale(0.65) translate(${-TX - 10} ${-y})`}>
+              <Instrument kind={k === 2 ? 3 : k} x={TX + 10} y={y} />
+            </g>
+
+            {/* Statut : valide, puis à étalonner le temps de l'étalonnage */}
+            <rect x={TX + 44} y={y - 6} width={48} height={12} rx={6} fill={colors.olive} fillOpacity={0.12} stroke={colors.olive} strokeWidth={0.6} />
+            <motion.text x={TX + 68} y={y + 2.2} textAnchor="middle" {...TEXT} fontSize={6} fill={colors.olive}
+              animate={reduce || !expires ? undefined : { opacity: [1, 1, 0, 0, 1, 1] }}
+              transition={loop(L, [0, 6.0, 6.2, 7.0, 7.2, L])}
+            >valide</motion.text>
+            {expires && !reduce && (
+              <motion.g opacity={0}
+                animate={{ opacity: [0, 0, 1, 1, 0, 0] }}
+                transition={loop(L, [0, 6.0, 6.2, 7.0, 7.2, L])}
+              >
+                <rect x={TX + 44} y={y - 6} width={48} height={12} rx={6} fill={colors.bgCard} stroke={A} strokeWidth={0.8} />
+                <rect x={TX + 44} y={y - 6} width={48} height={12} rx={6} fill={A} fillOpacity={0.12} />
+                <text x={TX + 68} y={y + 2.2} textAnchor="middle" {...TEXT} fontSize={6} fill={A}>à étalonner</text>
+              </motion.g>
+            )}
+            {/* Alerte à l'échéance */}
+            {expires && !reduce && (
+              <motion.circle cx={TX + 68} cy={y} r={10} fill="none" stroke={A} strokeWidth={0.8}
+                opacity={0}
+                animate={{ opacity: [0, 0, 0.8, 0, 0], r: [10, 10, 10, 22, 22] }}
+                transition={loop(L, [0, 6.1, 6.2, 6.9, L])}
+              />
+            )}
+
+            {/* Validité restante avant le prochain étalonnage */}
+            <rect x={TX + 104} y={y - 1.5} width={34} height={3} rx={1.5} fill={colors.borderLight} />
+            <motion.rect x={TX + 104} y={y - 1.5} width={34} height={3} rx={1.5} fill={colors.olive}
+              style={{ originX: 0 }}
+              animate={reduce ? undefined : expires
+                ? { scaleX: [0.7, 0.7, 0.04, 0.04, 1, 1], fill: [colors.olive, colors.olive, A, A, colors.olive, colors.olive] }
+                : { scaleX: [0.9 - k * 0.15, 0.85 - k * 0.15] }}
+              transition={expires ? loop(L, [0, 4.8, 6.2, 6.9, 7.3, L]) : { duration: L, repeat: Infinity, repeatType: 'reverse', ease: 'linear' }}
             />
-            <Instrument kind={i % 4} x={x} y={y} />
-          </g>
+          </motion.g>
         )
       })}
-      <text x={120} y={128} textAnchor="middle" {...TEXT}>parc métrologique · validité d'étalonnage</text>
-      <circle cx={84} cy={140} r={2.5} fill={colors.olive} />
-      <text x={90} y={142.5} {...TEXT}>valide</text>
-      <circle cx={128} cy={140} r={2.5} fill={A} />
-      <text x={134} y={142.5} {...TEXT}>à étalonner</text>
+
+      <text x={120} y={136} textAnchor="middle" {...TEXT}>parc métrologique · digitalisation du suivi</text>
     </Frame>
   )
 }
