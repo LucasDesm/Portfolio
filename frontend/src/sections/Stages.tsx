@@ -5,6 +5,7 @@ import Reveal from '@/components/Reveal'
 import { colors, fonts, ca, contextColors, justify } from '@/lib/tokens'
 import { type Stage } from '@/lib/data'
 import { useStages } from '@/hooks/useStages'
+import StageScene from '@/three/StageScene'
 
 const STAGE_ACCENT = contextColors.Stage
 
@@ -25,24 +26,9 @@ function StageCard({ stage, index }: { stage: Stage; index: number }) {
       alignItems: 'center',
       justifyContent: 'center',
       gap: '16px',
-      padding: '48px 36px',
+      padding: '40px clamp(16px, 4vw, 36px)',
       minHeight: '300px',
     }}>
-      {/* Cercles décoratifs */}
-      {!stage.upcoming && [220, 150, 90].map((size, i) => (
-        <motion.div key={i}
-          animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
-          transition={{ duration: 24 + i * 8, repeat: Infinity, ease: 'linear' }}
-          style={{
-            position: 'absolute', top: '50%', left: '50%',
-            width: size, height: size, borderRadius: '50%',
-            border: `1px solid ${STAGE_ACCENT}${i === 0 ? '14' : i === 1 ? '22' : '38'}`,
-            transform: 'translate(-50%, -50%)',
-            pointerEvents: 'none',
-          }}
-        />
-      ))}
-
       {/* Company + duration pill */}
       <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
         <div style={{
@@ -70,21 +56,10 @@ function StageCard({ stage, index }: { stage: Stage; index: number }) {
         </div>
       </div>
 
-      {/* Highlights */}
-      {stage.highlights && (
-        <div style={{ position: 'relative', zIndex: 1, display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
-          {stage.highlights.map((h, i) => (
-            <div key={h.label} style={{
-              textAlign: 'center',
-              padding: '10px 16px',
-              borderRadius: '10px',
-              background: colors.bgCard,
-              border: `1px solid ${STAGE_ACCENT}30`,
-            }}>
-              <div style={{ fontFamily: fonts.mono, fontSize: '18px', fontWeight: 700, color: i === 0 ? STAGE_ACCENT : colors.text }}>{h.value}</div>
-              <div style={{ fontFamily: fonts.body, fontSize: '10px', color: colors.textLight, marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h.label}</div>
-            </div>
-          ))}
+      {/* Animation du stage (schéma de principe) */}
+      {!stage.upcoming && (
+        <div style={{ position: 'relative', width: '100%', flex: 1, minHeight: '180px' }}>
+          <StageScene slug={stage.slug} />
         </div>
       )}
 
@@ -126,6 +101,18 @@ function StageCard({ stage, index }: { stage: Stage; index: number }) {
       <p style={{ fontFamily: fonts.body, fontSize: '14px', color: colors.textMuted, margin: '0 0 22px', lineHeight: 1.75, ...justify }}>
         {stage.description}
       </p>
+
+      {/* Chiffres clés */}
+      {stage.highlights && (
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '0 0 22px' }}>
+          {stage.highlights.map((h, i) => (
+            <div key={h.label} style={{ padding: '8px 12px', borderRadius: '10px', background: colors.bgCard, border: `1px solid ${STAGE_ACCENT}30` }}>
+              <div style={{ fontFamily: fonts.mono, fontSize: '15px', fontWeight: 700, color: i === 0 ? STAGE_ACCENT : colors.text }}>{h.value}</div>
+              <div style={{ fontFamily: fonts.body, fontSize: '10px', color: colors.textLight, marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{h.label}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Missions */}
       {stage.missions.length > 0 && (

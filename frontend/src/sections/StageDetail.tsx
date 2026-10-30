@@ -3,6 +3,7 @@ import { motion } from 'motion/react'
 import PageTransition from '@/components/PageTransition'
 import { colors, fonts, contextColors, justify } from '@/lib/tokens'
 import { useStage } from '@/hooks/useStages'
+import StageScene from '@/three/StageScene'
 
 const STAGE_ACCENT = contextColors.Stage
 
@@ -76,6 +77,20 @@ export default function StageDetail() {
               {stage.description}
             </p>
           </motion.section>
+
+          {/* ── Animation du stage (schéma de principe) ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            style={{
+              position: 'relative', height: 'clamp(240px, 34vh, 360px)', marginBottom: '32px',
+              borderRadius: '20px', overflow: 'hidden', border: `1px solid ${colors.border}`,
+              background: `linear-gradient(145deg, ${STAGE_ACCENT}07 0%, ${STAGE_ACCENT}14 100%)`,
+            }}
+          >
+            <StageScene slug={stage.slug} />
+          </motion.div>
 
           {/* ── Highlights ── */}
           {stage.highlights && (
