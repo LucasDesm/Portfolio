@@ -6,7 +6,6 @@ import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
 
 const NAV_LINKS = [
   { label: 'Parcours',     to: '/parcours' },
-  { label: 'Stages',       to: '/stages' },
   { label: 'Projets',      to: '/projets' },
   { label: 'Compétences',  to: '/competences' },
   { label: 'Contact',      to: '/contact' },

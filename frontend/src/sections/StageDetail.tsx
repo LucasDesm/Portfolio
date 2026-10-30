@@ -17,7 +17,7 @@ export default function StageDetail() {
         <div style={{ paddingTop: '64px', minHeight: '100svh', background: colors.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ textAlign: 'center' }}>
             <p style={{ fontFamily: fonts.body, color: colors.textMuted, marginBottom: '16px' }}>Stage introuvable.</p>
-            <Link to="/stages" style={{ color: STAGE_ACCENT, fontFamily: fonts.body, fontSize: '14px' }}>← Retour aux stages</Link>
+            <Link to="/parcours" style={{ color: STAGE_ACCENT, fontFamily: fonts.body, fontSize: '14px' }}>← Retour au parcours</Link>
           </div>
         </div>
       </PageTransition>
@@ -36,11 +36,11 @@ export default function StageDetail() {
             transition={{ duration: 0.4 }}
             style={{ paddingTop: '40px', paddingBottom: '8px' }}
           >
-            <Link to="/stages" style={{
+            <Link to="/parcours" style={{
               textDecoration: 'none', fontFamily: fonts.body, fontSize: '13px',
               color: colors.textLight, display: 'inline-flex', alignItems: 'center', gap: '6px',
             }}>
-              ← Stages
+              ← Parcours
             </Link>
           </motion.div>
 

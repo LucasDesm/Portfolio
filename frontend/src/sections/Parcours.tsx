@@ -7,6 +7,8 @@ import { type ParcoursStep } from '@/lib/data'
 import { useParcours } from '@/hooks/useParcours'
 import { useProjects } from '@/hooks/useProjects'
 import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
+import { useStages } from '@/hooks/useStages'
+import StageScene from '@/three/StageScene'
 
 // ─── Tokens ───────────────────────────────────────────────────────────────────
 
@@ -37,6 +39,37 @@ const STEP_HIGHLIGHTS: Record<string, { value: string; label: string }[]> = {
   'coree':         [{ value: 'S3 ESME',    label: 'semestre' },         { value: 'Daegu',      label: 'Corée du Sud' }],
   'stage-inserm':  [{ value: '12 sem.',    label: 'durée' },            { value: '61,8 %',     label: 'familles hors banque' }],
   'pfe':           [{ value: '7 avril 2027', label: 'début' },         { value: '6 mois',     label: 'durée visée' }],
+}
+
+// Étapes « stage » : page de détail et animation associées (ancienne page Stages)
+const STEP_STAGE: Record<string, string> = {
+  'stage-excell':  'laboratoire-excell',
+  'stage-quantum': 'quantum-surgical',
+  'stage-inserm':  'inserm-mrgm',
+}
+
+// ─── Lien vers le détail d'un stage ───────────────────────────────────────────
+
+function StageLink({ slug, accent }: { slug: string; accent: string }) {
+  const { data: stages } = useStages()
+  const stage = stages.find(s => s.slug === slug)
+  if (!stage) return null
+  return (
+    <Link to={`/stages/${slug}`} style={{ textDecoration: 'none' }}>
+      <motion.div
+        whileHover={{ x: 5, boxShadow: `0 6px 24px ${accent}18` }}
+        transition={{ duration: 0.18 }}
+        style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '11px 15px', borderRadius: '10px', background: colors.bgCard, border: `1px solid ${colors.border}`, cursor: 'pointer' }}
+      >
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: accent, flexShrink: 0 }} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: fonts.body, fontSize: '13px', fontWeight: 600, color: colors.text }}>{stage.role}</div>
+          <div style={{ fontFamily: fonts.body, fontSize: '11px', color: colors.textMuted }}>Missions, compétences et contexte</div>
+        </div>
+        <span style={{ fontSize: '13px', color: accent, flexShrink: 0 }}>→</span>
+      </motion.div>
+    </Link>
+  )
 }
 
 // ─── Projet mini-card ─────────────────────────────────────────────────────────
@@ -77,6 +110,7 @@ function Chapter({ step, index, total, onActive }: {
   const highlights = STEP_HIGHLIGHTS[step.id] ?? []
   const flip      = index % 2 === 1   // alternance layout
   const narrow    = useMediaQuery(NARROW)   // téléphone : texte puis visuel, sans colonne collante
+  const stageSlug = STEP_STAGE[step.id]
 
   useEffect(() => { if (inView) onActive(index) }, [inView, index, onActive])
 
@@ -149,6 +183,23 @@ function Chapter({ step, index, total, onActive }: {
         />
       </div>
 
+      {/* ── Stage : animation (schéma de principe) ── */}
+      {stageSlug && (
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+          style={{
+            position: 'relative', height: 'clamp(220px, 32vw, 320px)', marginBottom: '36px',
+            borderRadius: '20px', overflow: 'hidden', border: `1px solid ${colors.border}`,
+            background: `linear-gradient(145deg, ${accent}07 0%, ${accent}14 100%)`,
+          }}
+        >
+          <StageScene slug={stageSlug} />
+        </motion.div>
+      )}
+
       {/* ── Corps : description | visuel (layout alterné) ── */}
       <div style={{
         display: 'grid',
@@ -170,7 +221,7 @@ function Chapter({ step, index, total, onActive }: {
           </motion.p>
 
           {/* Tags */}
-          <div style={{ display: 'flex', gap: '7px', flexWrap: 'wrap', marginBottom: step.projects?.length ? '28px' : 0 }}>
+          <div style={{ display: 'flex', gap: '7px', flexWrap: 'wrap', marginBottom: step.projects?.length || stageSlug ? '28px' : 0 }}>
             {step.tags.map((tag, i) => (
               <motion.span key={tag}
                 initial={{ opacity: 0, scale: 0.85 }}
@@ -184,6 +235,22 @@ function Chapter({ step, index, total, onActive }: {
               </motion.span>
             ))}
           </div>
+
+          {/* Détail du stage */}
+          {stageSlug && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              style={{ marginBottom: step.projects?.length ? '28px' : 0 }}
+            >
+              <p style={{ fontFamily: fonts.body, fontSize: '10px', fontWeight: 700, color: colors.textLight, textTransform: 'uppercase', letterSpacing: '0.12em', margin: '0 0 10px' }}>
+                Détail du stage
+              </p>
+              <StageLink slug={stageSlug} accent={accent} />
+            </motion.div>
+          )}
 
           {/* Projets liés */}
           {step.projects && step.projects.length > 0 && (

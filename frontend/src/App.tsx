@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router'
 import { AnimatePresence, MotionConfig } from 'motion/react'
 import { lazy, Suspense, useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -13,7 +13,6 @@ const Home          = lazy(() => import('@/sections/Home'))
 const Parcours      = lazy(() => import('@/sections/Parcours'))
 const Projets       = lazy(() => import('@/sections/Projets'))
 const ProjetDetail  = lazy(() => import('@/sections/ProjetDetail'))
-const Stages        = lazy(() => import('@/sections/Stages'))
 const StageDetail   = lazy(() => import('@/sections/StageDetail'))
 const Competences   = lazy(() => import('@/sections/Competences'))
 const Contact       = lazy(() => import('@/sections/Contact'))
@@ -66,7 +65,8 @@ function AnimatedRoutes() {
           <Route path="/parcours"      element={<Parcours />} />
           <Route path="/projets"       element={<Projets />} />
           <Route path="/projets/:slug" element={<ProjetDetail />} />
-          <Route path="/stages"        element={<Stages />} />
+          {/* Les stages sont présentés dans le Parcours ; les pages de détail restent */}
+          <Route path="/stages"        element={<Navigate to="/parcours" replace />} />
           <Route path="/stages/:slug"  element={<StageDetail />} />
           <Route path="/competences"   element={<Competences />} />
           <Route path="/contact"       element={<Contact />} />
