@@ -532,10 +532,41 @@ function DetailSection() {
   )
 }
 
-// ─── Cette année : Ingé3, majeure Biotech & Numérique (syllabus ESME) ─────────
-// Compétences en cours d'acquisition : pas de niveau chiffré, distinctes des compétences prouvées.
+// ─── Majeure Biotech & Numérique : modules du syllabus ESME ──────────────────
+// Ingé2 : modules suivis (acquis). Ingé3 : en cours d'acquisition.
+// Pas de niveau chiffré : ce sont des contenus de formation, distincts des compétences prouvées plus haut.
 
-const THIS_YEAR = [
+type Unit = { ue: string; label: string; color: string; modules: { name: string; notions: string }[] }
+
+const INGE2: Unit[] = [
+  {
+    ue: 'UE1',
+    label: 'Imagerie, vision et Big Data',
+    color: domainColors.ml,
+    modules: [
+      { name: 'Techniques d\'imagerie biomédicale', notions: 'IRM, scanner, radiologie X, échographie, TEP ; imagerie morphologique et fonctionnelle' },
+      { name: 'Traitement et analyse d\'images', notions: 'morphologie mathématique, filtrage, histogrammes, format DICOM' },
+      { name: 'Machine Learning', notions: 'choix et évaluation de modèles, méthodes d\'ensemble, Python' },
+      { name: 'Introduction au Big Data', notions: 'Hadoop, HDFS, MapReduce, fouille de données' },
+      { name: 'Données non structurées', notions: 'NoSQL : MongoDB, Cassandra, Neo4j, Redis' },
+    ],
+  },
+  {
+    ue: 'UE2',
+    label: 'E-santé et santé connectée',
+    color: domainColors.embarque,
+    modules: [
+      { name: 'Capteurs et signaux physiologiques', notions: 'conditionnement du signal, étalonnage et calcul d\'incertitude, Arduino, Python' },
+      { name: 'Dispositifs médicaux pour l\'e-santé', notions: 'réglementation, RGPD, normes, recommandations de la HAS' },
+      { name: 'E-santé et santé mobile', notions: 'réseaux de communication, chiffrement, confidentialité des données' },
+      { name: 'Interfaces cerveau-ordinateur', notions: 'acquisition EEG, classification supervisée' },
+      { name: 'UX design et IHM en santé', notions: 'processus UX appliqué aux applications de santé' },
+      { name: 'Ingénierie des dispositifs cardiaques', notions: 'conception d\'un dispositif médical actif implantable' },
+    ],
+  },
+]
+
+const INGE3: Unit[] = [
   {
     ue: 'UE1',
     label: 'Vision, réalité virtuelle et réalité augmentée',
@@ -573,9 +604,16 @@ const THIS_YEAR = [
   },
 ]
 
-function ThisYearSection() {
+function CurriculumSection({ title, status, statusColor, intro, units, links }: {
+  title: string
+  status: string
+  statusColor: string
+  intro: string
+  units: Unit[]
+  links: { kicker: string; label: string; to: string; color: string }[]
+}) {
   return (
-    <section style={{ padding: '80px 0 100px', borderTop: `1px solid ${colors.borderLight}` }}>
+    <section style={{ padding: '80px 0 0', borderTop: `1px solid ${colors.borderLight}` }}>
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -585,19 +623,19 @@ function ThisYearSection() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', margin: '0 0 8px' }}>
           <h2 style={{ fontFamily: fonts.heading, fontSize: 'clamp(28px, 3.5vw, 42px)', fontWeight: 400, color: colors.text, margin: 0, letterSpacing: '-0.02em' }}>
-            Cette année
+            {title}
           </h2>
-          <span style={{ fontFamily: fonts.body, fontSize: '12px', fontWeight: 600, color: colors.accent, background: colors.accentLight, padding: '4px 12px', borderRadius: '20px', border: `1px solid ${ca.accent(0.2)}` }}>
-            en cours · 2026–2027
+          <span style={{ fontFamily: fonts.body, fontSize: '12px', fontWeight: 600, color: statusColor, background: `${statusColor}14`, padding: '4px 12px', borderRadius: '20px', border: `1px solid ${statusColor}33` }}>
+            {status}
           </span>
         </div>
         <p style={{ fontFamily: fonts.body, fontSize: '14px', lineHeight: 1.75, color: colors.textMuted, margin: 0, maxWidth: '640px', ...justify }}>
-          Dernière année de la majeure Biotech & Numérique à l'ESME : compétences en cours d'acquisition, en parallèle du projet de recherche mené avec l'Institut Curie.
+          {intro}
         </p>
       </motion.div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 270px), 1fr))', gap: '20px' }}>
-        {THIS_YEAR.map((ue, i) => (
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 270px), 1fr))', gap: '20px' }}>
+        {units.map((ue, i) => (
           <motion.div key={ue.ue}
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -624,18 +662,45 @@ function ThisYearSection() {
         ))}
       </div>
 
-      {/* Mise en pratique cette année */}
+      {/* Mise en pratique : projet et stage de l'année */}
       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginTop: '20px' }}>
-        <Link to="/projets/institut-curie" style={{ flex: '1 1 min(100%, 300px)', textDecoration: 'none', padding: '16px 20px', borderRadius: '14px', background: colors.bgCard, border: `1px solid ${colors.border}` }}>
-          <div style={{ fontFamily: fonts.mono, fontSize: '10px', color: colors.textLight, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>Projet d'innovation et de recherche</div>
-          <div style={{ fontFamily: fonts.body, fontSize: '14px', fontWeight: 600, color: colors.accent }}>Analyse d'images de cellules · Institut Curie →</div>
-        </Link>
-        <Link to="/contact" style={{ flex: '1 1 min(100%, 300px)', textDecoration: 'none', padding: '16px 20px', borderRadius: '14px', background: colors.bgCard, border: `1px solid ${colors.border}` }}>
-          <div style={{ fontFamily: fonts.mono, fontSize: '10px', color: colors.textLight, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>Stage ingénieur</div>
-          <div style={{ fontFamily: fonts.body, fontSize: '14px', fontWeight: 600, color: colors.rust }}>PFE de 6 mois à partir du 7 avril 2027 →</div>
-        </Link>
+        {links.map(l => (
+          <Link key={l.to} to={l.to} style={{ flex: '1 1 min(100%, 300px)', textDecoration: 'none', padding: '16px 20px', borderRadius: '14px', background: colors.bgCard, border: `1px solid ${colors.border}` }}>
+            <div style={{ fontFamily: fonts.mono, fontSize: '10px', color: colors.textLight, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>{l.kicker}</div>
+            <div style={{ fontFamily: fonts.body, fontSize: '14px', fontWeight: 600, color: l.color }}>{l.label} →</div>
+          </Link>
+        ))}
       </div>
     </section>
+  )
+}
+
+function CurriculumSections() {
+  return (
+    <div style={{ paddingBottom: '100px', display: 'flex', flexDirection: 'column', gap: '80px' }}>
+      <CurriculumSection
+        title="L'an dernier"
+        status="acquis · 2025–2026"
+        statusColor={colors.olive}
+        intro="Première année de la majeure Biotech & Numérique à l'ESME : modules suivis, mis en pratique dans le projet CT-Scan et le stage à l'INSERM."
+        units={INGE2}
+        links={[
+          { kicker: 'Projet d\'application', label: 'CT-Scan & Deep Learning', to: '/projets/ct-scan-deep-learning', color: colors.accent },
+          { kicker: 'Stage d\'application', label: 'Bio-informatique · INSERM', to: '/stages/inserm-mrgm', color: colors.rust },
+        ]}
+      />
+      <CurriculumSection
+        title="Cette année"
+        status="en cours · 2026–2027"
+        statusColor={colors.accent}
+        intro="Dernière année de la majeure Biotech & Numérique à l'ESME : compétences en cours d'acquisition, en parallèle du projet de recherche mené avec l'Institut Curie."
+        units={INGE3}
+        links={[
+          { kicker: 'Projet d\'innovation et de recherche', label: 'Analyse d\'images de cellules · Institut Curie', to: '/projets/institut-curie', color: colors.accent },
+          { kicker: 'Stage ingénieur', label: 'PFE de 6 mois à partir du 7 avril 2027', to: '/contact', color: colors.rust },
+        ]}
+      />
+    </div>
   )
 }
 
@@ -649,7 +714,7 @@ export default function Competences() {
           <Hero />
           <RadarSection />
           <DetailSection />
-          <ThisYearSection />
+          <CurriculumSections />
         </div>
       </div>
     </PageTransition>
