@@ -1030,6 +1030,20 @@ function DossierCard({
 
   const segStart = Math.max(0.05, (index / total) * 0.60)
 
+  // Affiche : image fixe du rendu, visible dès que la carte sort. Le rendu 3D démarre plus tard
+  // (page immobile) et la remplace en fondu dès qu'il annonce être affiché (message « ready »).
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [live, setLive] = useState(false)
+  useEffect(() => {
+    if (!render3D) return
+    const onMessage = (e: MessageEvent) => {
+      const frame = cardRef.current?.querySelector('iframe')
+      if (e.data === 'ready' && frame && e.source === frame.contentWindow) setLive(true)
+    }
+    window.addEventListener('message', onMessage)
+    return () => window.removeEventListener('message', onMessage)
+  }, [render3D])
+
   // Si la page est déjà au milieu du dossier (rechargement), la carte est sortie d'emblée
   const [arrived, setArrived] = useState(() => scrollYProgress.get() >= segStart)
   useMotionValueEvent(scrollYProgress, 'change', v => {
@@ -1057,6 +1071,8 @@ function DossierCard({
       }}
     >
       <motion.div
+        ref={cardRef}
+        data-dossier-card={project.slug}
         whileHover={{ scale: 1.06, boxShadow: `0 28px 72px ${ao(accent, 0.52)}` }}
         transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
         style={{
@@ -1070,17 +1086,26 @@ function DossierCard({
           cursor: 'pointer',
         }}
       >
+        {/* Affiche (voir plus haut) */}
+        <img
+          src={`/projets/posters/${project.slug}.webp`}
+          alt=""
+          aria-hidden
+          data-poster
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: live ? 0 : 1, transition: 'opacity 0.6s ease' }}
+        />
+
         {/* Rendu 3D, monté à son tour (voir ProjetDossier) */}
         {Render3D && render3D && (
           <Suspense fallback={null}>
-            <div style={{ position: 'absolute', inset: 0 }}>
+            <div data-render style={{ position: 'absolute', inset: 0 }}>
               <Render3D />
             </div>
           </Suspense>
         )}
 
         {/* Overlay bas — titre + lien */}
-        <div style={{
+        <div data-overlay style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
           padding: '48px 14px 14px',
           background: `linear-gradient(to top, ${ao(colors.text, 0.9)} 0%, transparent 100%)`,
