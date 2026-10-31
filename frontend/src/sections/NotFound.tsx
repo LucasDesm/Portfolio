@@ -42,7 +42,8 @@ export default function NotFound() {
   const { pathname } = useLocation()
   const [phase, setPhase] = useState<Phase>('lost')
   // Le tracé est réduit de moitié sur téléphone : trait plus épais pour rester lisible
-  const sw = useMediaQuery(NARROW) ? 5 : 3
+  const narrow = useMediaQuery(NARROW)
+  const sw = narrow ? 5 : 3
   const timers = useRef<number[]>([])
 
   useEffect(() => () => timers.current.forEach(clearTimeout), [])
@@ -171,6 +172,18 @@ export default function NotFound() {
               <span>Diagnostic : {restored ? 'rythme sinusal' : 'erreur 404'}</span>
               <span>confiance {restored ? '100' : '99,7'} %</span>
             </div>
+
+            {/* Indice caché : le Konami code (radiographie du site), révélé à qui attend */}
+            {!restored && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: reduce ? 0 : 6, duration: 1.2 }}
+                style={{ padding: '0 18px 14px', fontFamily: fonts.mono, fontSize: '11px', color: colors.textLight }}
+              >
+                Traitement conseillé : {narrow ? '5 taps rapides sur « Lucas Desmartin »' : '↑ ↑ ↓ ↓ ← → ← → B A'}
+              </motion.div>
+            )}
 
             {/* Charge du défibrillateur */}
             <AnimatePresence>

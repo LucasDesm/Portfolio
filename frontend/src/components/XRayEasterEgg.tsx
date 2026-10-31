@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useLocation } from 'react-router'
+import { Link, useLocation } from 'react-router'
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react'
 import { fonts } from '@/lib/tokens'
 
@@ -55,7 +55,11 @@ export default function XRayEasterEgg() {
 
   // Indice pour qui ouvre la console
   useEffect(() => {
-    console.info('%cPsst… ↑ ↑ ↓ ↓ ← → ← → B A', `font: 600 13px ${fonts.mono}; color: #3f5f86`)
+    console.info(
+      '%cPsst… ↑ ↑ ↓ ↓ ← → ← → B A\n%cEt si le cœur vous en dit : /arythmie',
+      `font: 600 13px ${fonts.mono}; color: #3f5f86`,
+      `font: 12px ${fonts.mono}; color: #954130`,
+    )
   }, [])
 
   return (
@@ -136,6 +140,10 @@ export default function XRayEasterEgg() {
               <div>Éléments analysés : {elements.toLocaleString('fr-FR')}</div>
               <div>Ossature : React · TypeScript · Three.js</div>
               <div style={{ color: '#c4c99f', marginTop: '4px' }}>Conclusion : aucune anomalie détectée.</div>
+              <div>
+                Examen complémentaire :{' '}
+                <Link to="/arythmie" style={{ color: FILM_INK, textDecoration: 'underline', textUnderlineOffset: '3px' }}>/arythmie</Link>
+              </div>
               <div style={{ opacity: 0.7, marginTop: '8px', fontSize: '11px' }}>Échap ou clic pour quitter</div>
             </motion.div>
           )}
