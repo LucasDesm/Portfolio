@@ -4,7 +4,6 @@ import { useRef, Suspense, useEffect } from 'react'
 import * as THREE from 'three'
 import { colors, fonts } from '@/lib/tokens'
 import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
-import Embed3D from '@/components/Embed3D'
 
 // ─── Material ─────────────────────────────────────────────────────────────────
 
@@ -397,11 +396,5 @@ export default function HandCanvas() {
   )
 }
 
-// ─── Hand only (sans tableau EMG) ────────────────────────────────────────────
-
-export function HandCanvasOnly() {
-  return <Embed3D src="/3d/hand-embed.html" title="Main robotique EMG 3D" />
-}
-
-// Pas de préchargement : le module est importé par l'accueil, qui n'affiche que l'iframe
-// de la main. Le modèle est chargé à la demande, sur la page du projet.
+// Pas de préchargement : le modèle est chargé à la demande, sur la page du projet.
+// L'accueil et la page Projets affichent la main seule via three/HandEmbed.tsx.

@@ -12,7 +12,7 @@ import { useProjects } from '@/hooks/useProjects'
 import { useMediaQuery, NARROW } from '@/hooks/useMediaQuery'
 import { usePageTitle } from '@/hooks/usePageTitle'
 
-const HandCanvasOnly  = lazy(() => import('@/three/HandCanvas').then(m => ({ default: m.HandCanvasOnly })))
+const HandCanvasOnly  = lazy(() => import('@/three/HandEmbed'))
 const EthylCanvas     = lazy(() => import('@/three/EthylCanvas'))
 const AnemCanvas      = lazy(() => import('@/three/AnemCanvas'))
 const CTScanCanvas    = lazy(() => import('@/three/CTScanCanvas'))

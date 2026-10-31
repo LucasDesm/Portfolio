@@ -234,7 +234,7 @@
 <script type="importmap">
 {
   "imports": {
-    "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+    "three": "https://unpkg.com/three@0.161.0/build/three.module.min.js",
     "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
   }
 }
@@ -327,10 +327,10 @@ const M = {
   solder: new THREE.MeshPhysicalMaterial({ color:0xcfd2d6, metalness:1.0, roughness:0.3 }),
   oledGlass: new THREE.MeshPhysicalMaterial({ color:0x0b0e14, metalness:0.1, roughness:0.12, clearcoat:1, clearcoatRoughness:0.05 }),
   oledScreen: null, // set after canvas texture created
-  ledRedOff: new THREE.MeshPhysicalMaterial({ color:0x4a0b12, transmission:0.4, roughness:0.25, ior:1.5, thickness:3, emissive:0x220204 }),
-  ledGreenOff: new THREE.MeshPhysicalMaterial({ color:0x0a4a1b, transmission:0.4, roughness:0.25, ior:1.5, thickness:3, emissive:0x022208 }),
-  ledRedOn:  new THREE.MeshPhysicalMaterial({ color:0xff2a2a, transmission:0.3, roughness:0.2, ior:1.5, thickness:3, emissive:0xff1515, emissiveIntensity:2 }),
-  ledGreenOn:new THREE.MeshPhysicalMaterial({ color:0x22ff44, transmission:0.3, roughness:0.2, ior:1.5, thickness:3, emissive:0x22ff44, emissiveIntensity:2 }),
+  ledRedOff: new THREE.MeshPhysicalMaterial({ color:0x4a0b12, roughness:0.25, clearcoat:0.8, clearcoatRoughness:0.1, emissive:0x220204 }),
+  ledGreenOff: new THREE.MeshPhysicalMaterial({ color:0x0a4a1b, roughness:0.25, clearcoat:0.8, clearcoatRoughness:0.1, emissive:0x022208 }),
+  ledRedOn:  new THREE.MeshPhysicalMaterial({ color:0xff2a2a, roughness:0.2, clearcoat:0.8, clearcoatRoughness:0.1, emissive:0xff1515, emissiveIntensity:2 }),
+  ledGreenOn:new THREE.MeshPhysicalMaterial({ color:0x22ff44, roughness:0.2, clearcoat:0.8, clearcoatRoughness:0.1, emissive:0x22ff44, emissiveIntensity:2 }),
   ledLeg: new THREE.MeshStandardMaterial({ color:0xc8ccd1, metalness:0.9, roughness:0.35 }),
   switchBody: new THREE.MeshPhysicalMaterial({ color:0x1a1b1e, roughness:0.45, metalness:0.1 }),
   switchLever: new THREE.MeshPhysicalMaterial({ color:0x15161a, roughness:0.35, clearcoat:0.5 }),
@@ -1077,7 +1077,17 @@ function tick(now){
   renderer.render(scene, camera);
   requestAnimationFrame(tick);
 }
-requestAnimationFrame(tick);
+
+// Compilation des shaders en arrière-plan (KHR_parallel_shader_compile) avant le premier affichage :
+// compilés d'un bloc au premier rendu, la douzaine de matériaux physiques figeait toute la page ~2 s.
+// Tous les matériaux sont précompilés, y compris les LED allumées qui n'apparaissent qu'en cours d'animation.
+const warmup = new THREE.Group();
+const warmupGeo = new THREE.BoxGeometry(0.001, 0.001, 0.001);
+Object.values(M).filter(Boolean).forEach(m => warmup.add(new THREE.Mesh(warmupGeo, m)));
+scene.add(warmup);
+renderer.compileAsync(scene, camera)
+  .catch(() => {})
+  .finally(() => { scene.remove(warmup); warmupGeo.dispose(); requestAnimationFrame(tick); });
 
 // Track active drag to pause auto-rotate
 controls.addEventListener('start', ()=> controls.active = true);

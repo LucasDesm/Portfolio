@@ -20,7 +20,7 @@ import { usePageTitle } from '@/hooks/usePageTitle'
 const MotionLink = motion.create(Link)
 
 // ─── Lazy 3D renders (chargés uniquement quand la carte est active) ────────────
-const HandOnlyLazy       = lazy(() => import('@/three/HandCanvas').then(m => ({ default: m.HandCanvasOnly })))
+const HandOnlyLazy       = lazy(() => import('@/three/HandEmbed'))
 const CTScanCanvasLazy   = lazy(() => import('@/three/CTScanCanvas'))
 const GlycemieCanvasLazy = lazy(() => import('@/three/GlycemieCanvas'))
 const EthylCanvasLazy    = lazy(() => import('@/three/EthylCanvas'))
@@ -1015,12 +1015,13 @@ function FolderIcon({ open }: { open: boolean }) {
 }
 
 function DossierCard({
-  project, index, total, pos, scrollYProgress,
+  project, index, total, pos, render3D, scrollYProgress,
 }: {
   project: Project
   index: number
   total: number
   pos: { x: number; y: number }
+  render3D: boolean
   scrollYProgress: MotionValue<number>
 }) {
   const Render3D = PROJECT_3D[project.slug]
@@ -1029,7 +1030,8 @@ function DossierCard({
 
   const segStart = Math.max(0.05, (index / total) * 0.60)
 
-  const [arrived, setArrived] = useState(false)
+  // Si la page est déjà au milieu du dossier (rechargement), la carte est sortie d'emblée
+  const [arrived, setArrived] = useState(() => scrollYProgress.get() >= segStart)
   useMotionValueEvent(scrollYProgress, 'change', v => {
     if (v >= segStart && !arrived) setArrived(true)
     else if (v < segStart && arrived) setArrived(false)
@@ -1068,8 +1070,8 @@ function DossierCard({
           cursor: 'pointer',
         }}
       >
-        {/* Rendu 3D — toujours actif */}
-        {Render3D && (
+        {/* Rendu 3D, monté à son tour (voir ProjetDossier) */}
+        {Render3D && render3D && (
           <Suspense fallback={null}>
             <div style={{ position: 'absolute', inset: 0 }}>
               <Render3D />
@@ -1149,11 +1151,26 @@ function ProjetDossier() {
     if (!el) return
     const obs = new IntersectionObserver(
       ([e]) => { if (e.isIntersecting) setMounted(true) },
-      { threshold: 0.02 }
+      { rootMargin: '0px 0px 150% 0px' }
     )
     obs.observe(el)
     return () => obs.disconnect()
   }, [])
+
+  // Démarrer un rendu 3D est lourd (compilation des shaders, éclairage d'environnement) et fige
+  // l'affichage le temps du calcul. On n'en démarre donc aucun pendant le défilement : un par un,
+  // dès que la page est immobile (dossier proche ou à l'écran), espacés de 1,2 s pour que deux
+  // rendus lourds (main, éthylomètre) ne calculent pas en même temps.
+  const [ready3D, setReady3D] = useState(0)
+  useEffect(() => {
+    if (!mounted || ready3D >= N) return
+    let t = 0
+    const delay = ready3D === 0 ? 400 : 1200
+    const wait = () => { window.clearTimeout(t); t = window.setTimeout(() => setReady3D(r => r + 1), delay) }
+    wait()
+    window.addEventListener('scroll', wait, { passive: true })
+    return () => { window.clearTimeout(t); window.removeEventListener('scroll', wait) }
+  }, [mounted, ready3D, N])
 
   return (
     <div>
@@ -1228,6 +1245,7 @@ function ProjetDossier() {
                 index={i}
                 total={N}
                 pos={positions[i] ?? { x: 0, y: 0 }}
+                render3D={i < ready3D}
                 scrollYProgress={scrollYProgress}
               />
             ))}
