@@ -1,0 +1,61 @@
+# Déploiement complet : site + API Java + API Rust + PostgreSQL.
+# Variables dans .env (modèle : deploy/.env.example). Lancement : docker compose up -d --build
+
+name: portfolio
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: deploy/web.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_DOMAIN: ${SITE_DOMAIN:?définir SITE_DOMAIN dans .env}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - api
+      - signal
+
+  api:
+    build: ./backend-java
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DATABASE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-portfolio}
+      DATABASE_USERNAME: ${POSTGRES_USER:-portfolio}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?définir POSTGRES_PASSWORD dans .env}
+    mem_limit: 512m
+    depends_on:
+      db:
+        condition: service_healthy
+
+  signal:
+    build: ./backend-rust
+    restart: unless-stopped
+    mem_limit: 64m
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-portfolio}
+      POSTGRES_USER: ${POSTGRES_USER:-portfolio}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?définir POSTGRES_PASSWORD dans .env}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  caddy_data:
+  caddy_config:
+  db_data:

@@ -63,6 +63,17 @@ cd frontend
 npm run export-content
 ```
 
+## Déploiement
+
+Le projet complet (site, deux API, PostgreSQL) se déploie sur un serveur avec Docker Compose, derrière Caddy, qui gère le HTTPS :
+
+```bash
+cp deploy/.env.example .env   # domaine et mot de passe de la base
+docker compose up -d --build
+```
+
+Le pas-à-pas (serveur, DNS, sécurité, mises à jour, sauvegardes) est dans [`deploy/README.md`](deploy/README.md).
+
 ## Tests et vérifications
 
 ```bash
