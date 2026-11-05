@@ -196,6 +196,32 @@ export default function Header() {
                 </NavLink>
               )
             })}
+
+            {/* Bouton CV */}
+            <motion.a
+              href="/lucas-desmartin-cv.pdf"
+              download
+              whileHover={{ scale: 1.04, boxShadow: `0 4px 16px ${ca.text(0.12)}` }}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                textDecoration: 'none',
+                padding: '7px 14px',
+                borderRadius: '6px',
+                fontSize: '13px',
+                fontFamily: fonts.body,
+                fontWeight: 600,
+                color: colors.text,
+                background: colors.bgSubtle,
+                border: `1.5px solid ${colors.border}`,
+                display: 'flex', alignItems: 'center', gap: '5px',
+                marginLeft: '4px',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = colors.bgCard }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = colors.bgSubtle }}
+            >
+              <span style={{ fontSize: '11px' }}>↓</span> CV
+            </motion.a>
           </motion.nav>
         )}
       </div>
@@ -236,6 +262,12 @@ export default function Header() {
               }}>
                 Contact
               </NavLink>
+              <a href="/lucas-desmartin-cv.pdf" download onClick={close} style={{
+                flex: '1 1 140px', display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', padding: '14px 20px', borderRadius: '14px',
+                fontFamily: fonts.body, fontSize: '15px', fontWeight: 600, color: colors.text, border: `1.5px solid ${colors.border}`,
+              }}>
+                ↓ CV (PDF)
+              </a>
             </div>
           </motion.nav>
         )}

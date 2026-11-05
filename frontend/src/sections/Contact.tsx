@@ -155,6 +155,8 @@ function InfoPanel() {
         <ContactLink icon="in" label="LinkedIn" href="https://www.linkedin.com/in/lucas-desmartin-953177250/" sublabel="linkedin.com/in/lucas-desmartin" />
         <div style={{ height: 1, background: colors.borderLight }} />
         <ContactLink icon="⌥" label="GitHub" href="https://github.com/LucasDesm" sublabel="github.com/LucasDesm" />
+        <div style={{ height: 1, background: colors.borderLight }} />
+        <ContactLink icon="↓" label="Télécharger le CV" href="/lucas-desmartin-cv.pdf" sublabel="CV PFE · PDF" />
       </motion.div>
 
       {/* Info disponibilité */}
