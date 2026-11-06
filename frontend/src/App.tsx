@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AnimatePresence, MotionConfig } from 'motion/react'
 import { lazy, Suspense, useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Analytics } from '@vercel/analytics/react'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -94,6 +95,7 @@ export default function App() {
         </div>
         <XRayEasterEgg />
       </div>
+      <Analytics />
     </BrowserRouter>
     </MotionConfig>
     </QueryClientProvider>
